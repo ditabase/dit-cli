@@ -1,0 +1,28 @@
+[tool.poetry]
+name = "dit-cli"
+version = "0.1.1"
+description = "The CLI for dit"
+license = "GPL-3.0-or-later"
+authors = ["Isaiah Shiner <shiner.isaiah@gmail.com>"]
+readme = "README.md"
+homepage="https://www.ditabase.io/"
+classifiers=[
+        "Programming Language :: Python :: 3.8",
+        "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
+        "Operating System :: OS Independent",
+    ]
+
+[tool.poetry.dependencies]
+python = "^3.8"
+click = "^7.0"
+
+[tool.poetry.dev-dependencies]
+pytest = "^5.2"
+pylint = "^2.4.4"
+
+[tool.poetry.scripts]
+dit = "dit_cli.cli:main"
+
+[build-system]
+requires = ["poetry>=0.12"]
+build-backend = "poetry.masonry.api"
