@@ -3,6 +3,11 @@
 .pylintrc
 .pytest_cache/
 
+# Python junk
+__pycache__/
+*.py[cod]
+*$py.class
+
 # Distribution / packaging, partially taken from https://www.gitignore.io/api/python,visualstudiocode
 .Python
 build/
@@ -24,4 +29,5 @@ share/python-wheels/
 *.egg
 MANIFEST
 
-# 
+# workpads
+workpads/
