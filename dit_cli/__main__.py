@@ -1,5 +1,5 @@
 """CLI entry point"""
 
-from dit_cli import dit
+from dit_cli import cli
 
-dit.cli()
+cli.main()

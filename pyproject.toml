@@ -15,10 +15,12 @@ classifiers=[
 [tool.poetry.dependencies]
 python = "^3.8"
 click = "^7.0"
+networkx = "^2.4"
 
 [tool.poetry.dev-dependencies]
 pytest = "^5.2"
 pylint = "^2.4.4"
+rope = "^0.16.0"
 
 [tool.poetry.scripts]
 dit = "dit_cli.cli:main"
