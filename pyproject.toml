@@ -16,6 +16,7 @@ classifiers=[
 python = "^3.8"
 click = "^7.0"
 networkx = "^2.4"
+more-itertools = "8.0.2"
 
 [tool.poetry.dev-dependencies]
 pytest = "^5.2"
