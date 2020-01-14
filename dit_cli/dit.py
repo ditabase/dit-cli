@@ -258,16 +258,51 @@ class Parser:
         """Check if str is a value token"""
         return token in self.value_tokens
 
+    def get_xml_tag(self, dit: str) -> str:
+        """Get an XML tag, whether it has a closing '/' or not"""
+        left_brace = dit.find('<')
+
+        if left_brace == -1:
+            raise ValidationError((
+                'Parse Error: No opening brace found.'
+                'Next 30 characters:\n{}'
+            ).format(dit[:30]))
+
+        right_brace = dit.find('>')
+
+        if right_brace == -1:
+            raise ValidationError((
+                'Parse Error: No closing brace found.'
+                'Next 30 characters:\n{}'
+            ).format(dit[:30]))
+
+        if left_brace > right_brace:
+            raise ValidationError((
+                'Parse Error: Missing "<" in "{}"'
+            ).format(dit[:right_brace + 1]))
+
+        tag = dit[left_brace:right_brace + 1]
+
+        # '</description' is 14 chars
+        if len(tag) > 14:
+            raise ValidationError((
+                'Parse Error: Missing ">" in "{}"'
+            ).format(tag))
+
+        return tag
+
     def get_open(self, dit: str) -> (str, str):
         """Get the opening token, raise if there isn't one."""
-        open_raw = dit[dit.index('<'):dit.index('>') + 1]
-        open_value = open_raw[open_raw.index('<') + 1: open_raw.index('>')]
+
+        open_raw = self.get_xml_tag(dit)
         open_regex = '^<([a-z])+>$'
 
         if not re.search(open_regex, open_raw):
             raise ValidationError((
-                'Parse Error: Could not find valid open token within "{}".'
+                'Parse Error: Could not find valid open tag within "{}".'
             ).format(open_raw))
+
+        open_value = open_raw[1: -1]
 
         if not self.is_token(open_value):
             raise ValidationError((
@@ -278,7 +313,7 @@ class Parser:
 
     def get_close(self, dit: str, open_value: str) -> str:
         """Get the closing token, raise if there isn't one."""
-        close_raw = dit[dit.index('<'):dit.index('>') + 1]
+        close_raw = self.get_xml_tag(dit)
         close_regex = '^</' + open_value + '>$'
 
         if not re.search(close_regex, close_raw):
