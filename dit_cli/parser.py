@@ -1,10 +1,12 @@
 """Holds the Parser class"""
 
+from __future__ import annotations
 from typing import List
 
 import re
 
-from dit_cli.exceptions import ValidationError
+from dit_cli.exceptions import ParseError
+from dit_cli.exceptions import FormatError
 
 
 class Parser:
@@ -13,7 +15,7 @@ class Parser:
     Currently, only XML is valid."""
 
     def __init__(self, parser_type: str):
-        self.check_type(parser_type)
+        Parser.check_type(parser_type)
         self.containing_tokens = [
             'header', 'dit', 'objects',
             'fields', 'object', 'field',
@@ -61,30 +63,30 @@ class Parser:
         left_brace = dit.find('<')
 
         if left_brace == -1:
-            raise ValidationError((
-                'Parse Error: No opening brace found.'
+            raise ParseError((
+                'No opening brace found.'
                 'Next 30 characters:\n{}'
             ).format(dit[:30]))
 
         right_brace = dit.find('>')
 
         if right_brace == -1:
-            raise ValidationError((
-                'Parse Error: No closing brace found.'
+            raise ParseError((
+                'No closing brace found.'
                 'Next 30 characters:\n{}'
             ).format(dit[:30]))
 
         if left_brace > right_brace:
-            raise ValidationError((
-                'Parse Error: Missing "<" in "{}"'
+            raise ParseError((
+                'Missing "<" in "{}"'
             ).format(dit[:right_brace + 1]))
 
         tag = dit[left_brace:right_brace + 1]
 
         # '</description' is 14 chars
         if len(tag) > 14:
-            raise ValidationError((
-                'Parse Error: Missing ">" in "{}"'
+            raise ParseError((
+                'Missing ">" in "{}"'
             ).format(tag))
 
         return tag
@@ -96,15 +98,15 @@ class Parser:
         open_regex = '^<([a-z])+>$'
 
         if not re.search(open_regex, open_raw):
-            raise ValidationError((
-                'Parse Error: Could not find valid open tag within "{}".'
+            raise ParseError((
+                'Could not find valid open tag within "{}".'
             ).format(open_raw))
 
         open_value = open_raw[1: -1]
 
         if not self.is_token(open_value):
-            raise ValidationError((
-                'Parse Error: The token "{}" is not a valid token name.'
+            raise ParseError((
+                'The token "{}" is not a valid token name.'
             ).format(open_value))
 
         return (open_raw, open_value)
@@ -115,8 +117,8 @@ class Parser:
         close_regex = '^</' + open_value + '>$'
 
         if not re.search(close_regex, close_raw):
-            raise ValidationError((
-                'Parse Error: Could not find valid close token within "{}".'
+            raise ParseError((
+                'Could not find valid close token within "{}".'
             ).format(close_raw))
         return close_raw
 
@@ -130,7 +132,7 @@ class Parser:
         Will never raise a ValidationException."""
         try:
             return self.get_open(dit)
-        except ValidationError:
+        except ParseError:
             return False
 
     def get_close_if_present(self, dit: str, open_value: str) -> bool:
@@ -138,15 +140,33 @@ class Parser:
         Will never raise a ValidationException."""
         try:
             return self.get_close(dit, open_value)
-        except ValidationError:
+        except ParseError:
             return False
 
-    def check_type(self, parser_type: str):
+    @staticmethod
+    def handle_header(dit: str) -> (str, Parser):
+        """Find, remove and return the <!DOCTYPE dit 'parser'> header"""
+
+        dit_header = dit[: dit.find('>') + 1]
+        doc_type_regex = '^<!DOCTYPE dit ([a-z])+>$'
+
+        if not re.search(doc_type_regex, dit_header):
+            raise FormatError((
+                'File did not begin with "<!DOCTYPE dit xml>". '
+                'Found Header reads: {}'
+            ).format(dit_header))
+
+        parser = Parser(dit[dit.find('dit ') + 4:dit.find('>')])
+        dit = parser.trim_dit(dit, dit_header)
+        return dit, parser
+
+    @staticmethod
+    def check_type(parser_type: str):
         """Raise an error if it's not 'xml'"""
 
         if parser_type != 'xml':
-            raise ValidationError((
-                'Feature WIP: "{}" is not currently supported. '
+            raise FormatError((
+                '"{}" is not currently supported. '
                 'The parser will be eventually be arbitrary, '
                 'but for now, only "xml" is valid'
             ).format(parser_type))

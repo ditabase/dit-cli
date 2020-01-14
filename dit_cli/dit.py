@@ -3,10 +3,10 @@ The parser, tree structure, code eval,
 and everything else will either be here or be called from here."""
 
 from typing import List, Type
-import re
 
 import networkx as nx
 
+from dit_cli.exceptions import DitError
 from dit_cli.exceptions import ValidationError
 from dit_cli.parser import Parser
 
@@ -20,34 +20,15 @@ def validate_dit(dit, file_path):
     # Catch all validation errors. The entire validation is done inside this try.
     try:
         # Strip header and assign parser
-        dit = handle_header(dit)
+        global PARSER
+        (dit, PARSER) = Parser.handle_header(dit)
 
         # Discard dit and get the graph
         graph = get_graph(dit)
 
         return '{} is valid'.format(file_path)
-    except ValidationError as error:
+    except DitError as error:
         return error
-
-
-def handle_header(dit: str) -> str:
-    """Find, remove and return the <!DOCTYPE dit 'parser'> header"""
-
-    global PARSER
-
-    dit_header = dit[: dit.find('>') + 1]
-    doc_type_regex = '^<!DOCTYPE dit ([a-z])+>$'
-    doc_type_error = (
-        'Dit error: file did not begin with "<!DOCTYPE dit xml>". '
-        'Found Header reads: {}'
-    ).format(dit_header)
-
-    if not re.search(doc_type_regex, dit_header):
-        raise ValidationError(doc_type_error)
-
-    PARSER = Parser(dit[dit.find('dit ') + 4:dit.find('>')])
-    dit = PARSER.trim_dit(dit, dit_header)
-    return dit
 
 
 def get_graph(dit: str) -> Type[nx.DiGraph]:
