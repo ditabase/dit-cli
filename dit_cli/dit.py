@@ -14,7 +14,7 @@ from dit_cli.parser import Parser
 PARSER = None
 
 
-def validate_dit(dit, file_path):
+def validate_dit(dit):
     """Validates a string as a dit. Called from the CLI."""
 
     # Catch all validation errors. The entire validation is done inside this try.
@@ -26,7 +26,7 @@ def validate_dit(dit, file_path):
         # Discard dit and get the graph
         graph = get_graph(dit)
 
-        return '{} is valid'.format(file_path)
+        return 'dit is valid, no errors found'
     except DitError as error:
         return error
 

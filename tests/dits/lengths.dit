@@ -1,123 +1,108 @@
 <!DOCTYPE dit xml>
 <dit>
-  <fields>
-    <field>
-      <name>LengthPayload</name>
-      <extends>
-        <extend>
-          <name>Length</name>
-        </extend>
-      </extends>
-      <payload>4 miles</payload>
-    </field>
-    <field>
-      <name>LengthInchPayload</name>
-      <extends>
-        <extend>
-          <name>LengthInch</name>
-        </extend>
-      </extends>
-      <payload>91 inches</payload>
-    </field>
-    <field>
-      <name>LengthInchPunctPayload</name>
-      <extends>
-        <extend>
-          <name>LengthInchPunct</name>
-        </extend>
-      </extends>
-      <payload>24" inches</payload>
-    </field>
-  </fields>
-  <objects>
-    <object>
-      <name>Length</name>
-      <description>Contains a floating point number and string unit, separated by a single space.</description>
-      <example>7 mm</example>
-      <validator>
-        function isNumeric(n) {
-          return !isNaN(parseFloat(n)) && isFinite(n);
-        }
+    <fields>
+        <field>
+            <name>LengthPayload</name>
+            <extends>
+                <extend>
+                    <name>Length</name>
+                </extend>
+            </extends>
+            <payload>4 miles</payload>
+        </field>
+        <field>
+            <name>LengthInchPayload</name>
+            <extends>
+                <extend>
+                    <name>LengthInch</name>
+                </extend>
+            </extends>
+            <payload>91 inches</payload>
+        </field>
+        <field>
+            <name>LengthInchPunctPayload</name>
+            <extends>
+                <extend>
+                    <name>LengthInchPunct</name>
+                </extend>
+            </extends>
+            <payload>24" inches</payload>
+        </field>
+    </fields>
+    <objects>
+        <object>
+            <name>Length</name>
+            <description>Contains a floating point number and string unit, separated by a single space.</description>
+            <example>7 mm</example>
+            <validator>
+                function isNumeric(n) {
+                    return !isNaN(parseFloat(n)) && isFinite(n);
+                }
 
-        if (PAYLOAD.indexOf(' ') === -1) {
-          return `"${PAYLOAD}" was missing a space separator.`;
-        }
+                if (PAYLOAD.indexOf(' ') === -1) {
+                    return `"${PAYLOAD}" was missing a space separator.`;
+                }
 
-        const number = PAYLOAD.substring(0, PAYLOAD.indexOf(' '));
+                const number = PAYLOAD.substring(0, PAYLOAD.indexOf(' '));
 
-        if (!isNumeric(number)) {
-          return `Number field "${number}" was not a number.`;
-        }
+                if (!isNumeric(number)) {
+                    return `Number field "${number}" was not a number.`;
+                }
 
-        if (number < 0) {
-          return `Number field "${number}" cannot be negative.`;
-        }
+                if (number < 0) {
+                    return `Number field "${number}" cannot be negative.`;
+                }
 
-        const units = PAYLOAD.substring(PAYLOAD.indexOf(' ') + 1);
+                const units = PAYLOAD.substring(PAYLOAD.indexOf(' ') + 1);
 
-        if (units === "") {
-          return `Units field "${units}" was blank.`
-        }
+                if (units === "") {
+                    return `Units field "${units}" was blank.`
+                }
 
-        // Unit could be checked against an ISO list of length names, but omitted for simplicity.
+                // Unit could be checked against an ISO list of length names, but omitted for simplicity.
 
-        return true;
-      </validator>
-    </object>
-    <object>
-      <name>LengthInch</name>
-      <description>A length where the unit is always 'inches'.</description>
-      <example>8 inches</example>
-      <extends>
-        <extend>
-          <name>Length</name>
-        </extend>
-      </extends>
-      <validator>
-        if (!PAYLOAD.endsWith(' inches')) {
-            return `Units of "${PAYLOAD}" was not inches.`;
-        }
-        return true;
-      </validator>
-    </object>
-    <object>
-      <name>LengthInchPunct</name>
-      <description>A length where the unit is the '"' quotation mark symbol, meaning inches.</description>
-      <example>3"</example>
-      <overrides>
-        <override>
-          <name>LengthInch</name>
-          <converter>
-            converter = (value) => value.replace('"', ' inches');
-          </converter>
-        </override>
-      </overrides>
-      <validator>
-        if (PAYLOAD.indexOf(' ') !== -1) {
-          return `'${PAYLOAD}' still contained a space separator.`;
-        }
+                return true;
+            </validator>
+        </object>
+        <object>
+            <name>LengthInch</name>
+            <description>A length where the unit is always 'inches'.</description>
+            <example>8 inches</example>
+            <extends>
+                <extend>
+                    <name>Length</name>
+                </extend>
+            </extends>
+            <validator>
+                if (!PAYLOAD.endsWith(' inches')) {
+                        return `Units of "${PAYLOAD}" was not inches.`;
+                }
+                return true;
+            </validator>
+        </object>
+        <object>
+            <name>LengthInchPunct</name>
+            <description>A length where the unit is the '"' quotation mark symbol, meaning inches.</description>
+            <example>3"</example>
+            <overrides>
+                <override>
+                    <name>LengthInch</name>
+                    <converter>
+                        converter = (value) => value.replace('"', ' inches');
+                    </converter>
+                </override>
+            </overrides>
+            <validator>
+                if (PAYLOAD.indexOf(' ') !== -1) {
+                    return `'${PAYLOAD}' still contained a space separator.`;
+                }
 
-        if (!PAYLOAD.endsWith('"')) {
-          return `'${PAYLOAD}' did not end with a " quotation mark.`;
-        }
+                if (!PAYLOAD.endsWith('"')) {
+                    return `'${PAYLOAD}' did not end with a " quotation mark.`;
+                }
 
-        return true;
-      </validator>
-    </object>
-  </objects>
+                return true;
+            </validator>
+        </object>
+    </objects>
 </dit>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

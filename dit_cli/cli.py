@@ -17,12 +17,12 @@ def main():
 def validate(file_path):
     """Validate the following file, according to dit standards"""
 
-    file_text = load_file_to_string(file_path)
-    validation_result = validate_dit(file_text, file_path)
+    file_text = load_file(file_path)
+    validation_result = validate_dit(file_text)
     click.echo(validation_result)
 
 
-def load_file_to_string(file_path):
+def load_file(file_path: str) -> str:
     """Load a file into a string"""
     with open(file_path) as file_object:
         file_text = file_object.read()
