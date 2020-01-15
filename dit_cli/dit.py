@@ -3,11 +3,13 @@ The parser, tree structure, code eval,
 and everything else will either be here or be called from here."""
 
 from typing import List, Type
+import re
 
 import networkx as nx
 
 from dit_cli.exceptions import DitError
 from dit_cli.exceptions import ValidationError
+from dit_cli.exceptions import FormatError
 from dit_cli.parser import Parser
 
 
@@ -44,19 +46,6 @@ def get_graph(dit: str) -> Type[nx.DiGraph]:
 
     add_edges(graph)
 
-    for node in graph.nodes():
-        for extend in graph.nodes[node]['extends']:
-            print('Object {} extends {}'.format(
-                graph.nodes[node]['name'],
-                graph.nodes[node_by_name(graph, extend)]['name']
-            ))
-
-        for override in graph.nodes[node]['overrides'].list:
-            print('Object {} overrides {}'.format(
-                graph.nodes[node]['name'],
-                graph.nodes[node_by_name(graph, override['name'])]['name']
-            ))
-
     return graph
 
 
@@ -70,15 +59,14 @@ def parse_next_token(dit: str, tokens: List[str], graph: Type[nx.DiGraph]) -> st
     if PARSER.is_container(tokens[-1]):
         # while as long as there are tokens, return as soon as there aren't
         while True:
-            open_token = PARSER.get_open(dit)
-            dit = PARSER.trim_dit_safe(dit, open_token[0], tokens)
-            tokens.append(open_token[1])
+            open_raw, open_name = PARSER.get_open(dit)
+            dit = PARSER.trim_dit_safe(dit, open_raw, open_name)
+            tokens.append(open_name)
 
             # Add new nodes/objects as necessary
-            if tokens[-1] == 'object':
-                new_node(graph, False)
-            elif tokens[-1] == 'field':
-                new_node(graph, True)
+            if tokens[-1] in ['object', 'field']:
+                validate_object_during_parse(graph)
+                new_node(graph, tokens[-1] == 'field')
             elif tokens[-1] == 'override':
                 graph.nodes[len(graph) - 1]['overrides'].new_override()
 
@@ -91,6 +79,8 @@ def parse_next_token(dit: str, tokens: List[str], graph: Type[nx.DiGraph]) -> st
             # Should we loop again? Let's see...
             # If the dit is empty, we're done
             if len(dit) == 0:
+                # Make sure we validate the last object we just finished!
+                validate_object_during_parse(graph)
                 return None
 
             # If not, look for tokens.
@@ -141,17 +131,88 @@ def parse_next_token(dit: str, tokens: List[str], graph: Type[nx.DiGraph]) -> st
         ).format(tokens)
 
 
+def validate_object_during_parse(graph: Type[nx.DiGraph]):
+    """Validate basic information about an object during parse time.
+    Cannot validate important things like object relationships or code yet."""
+
+    if len(graph) == 0:
+        return
+
+    node = graph.nodes[len(graph) - 1]
+
+    if 'name' not in node or not node['name']:
+        raise FormatError((
+            'A dit object had no name. '
+            'The entire node follows:\n{}'
+        ).format(node))
+
+    # Currently only white space, should probably ban other stuff
+    invalid_name_regex = r'\s'
+
+    if re.search(invalid_name_regex, node['name']):
+        raise FormatError((
+            'A dit object had an illegal name: "{}"'
+        ).format(node['name']))
+
+    # No duplicate names
+    count = 0
+    for node_id in graph.nodes():
+        if graph.nodes[node_id]['name'] == node['name']:
+            count += 1
+
+    if count > 1:
+        raise FormatError((
+            'There are {} objects with the name "{}"'
+        ).format(count, node['name']))
+
+    # There must be *something* to check the payload with
+    if ('validator' not in node and len(node['extends']) == 0 and
+            len(node['overrides'].list) == 0):
+        raise FormatError((
+            '{} had no validator and did not extend or override anything.'
+        ))
+
+    for extend in node['extends']:
+        if not extend:
+            raise FormatError((
+                '"{}" had an extend with no name.'
+            ).format(node['name']))
+        if re.search(invalid_name_regex, extend):
+            raise FormatError((
+                '"{}" had an extend with an illegal name: "{}"'
+            ).format(node['name'], extend))
+
+    for override in node['overrides'].list:
+        if not override['name']:
+            raise FormatError((
+                '"{}" had an override with no name.'
+            ).format(node['name']))
+        if re.search(invalid_name_regex, override['name']):
+            raise FormatError((
+                '"{}" had an override with an illegal name: "{}"'
+            ).format(node['name'], override['name']))
+        if not override['converter']:
+            raise FormatError((
+                '"{}" overrode "{}" with no converter.'
+            ).format(node['name'], override['name']))
+
+    if node['is_field'] and 'payload' not in node:
+        raise FormatError((
+            '"{}" was a field, but did not have a payload.'
+        ).format(node['name']))
+
+    if not node['is_field'] and 'payload' in node:
+        raise FormatError((
+            '"{}" was an object, but had a payload.'
+        ).format(node['name']))
+
+
 def new_node(graph, is_field):
     """Initialize a new node"""
 
     # Next node index is always at 1 more than the previous, hence len(graph)
     graph.add_node(len(graph))
     index = len(graph) - 1
-    graph.nodes[index]['name'] = None
-    graph.nodes[index]['description'] = None
-    graph.nodes[index]['example'] = None
-    graph.nodes[index]['validator'] = None
-    graph.nodes[index]['payload'] = None
     graph.nodes[index]['is_field'] = is_field
 
     graph.nodes[index]['extends'] = []

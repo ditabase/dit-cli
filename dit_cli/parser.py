@@ -1,7 +1,6 @@
 """Holds the Parser class"""
 
 from __future__ import annotations
-from typing import List
 
 import re
 
@@ -37,11 +36,11 @@ class Parser:
         """Clear value and white space from dit"""
         return dit.replace(replace_str, '', 1).lstrip()
 
-    def trim_dit_safe(self, dit: str, replace_str: str, tokens: List[str]) -> str:
+    def trim_dit_safe(self, dit: str, replace_str: str, open_name: str) -> str:
         """Clear value from the dit,
         and clear white space if the
         current token is not a white space token"""
-        if tokens[-1] in self.white_space_tokens:
+        if open_name in self.white_space_tokens:
             return dit.replace(replace_str, '', 1)
         else:
             return self.trim_dit(dit, replace_str)
