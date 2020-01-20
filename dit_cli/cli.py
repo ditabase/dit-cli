@@ -17,16 +17,8 @@ def main():
 def validate(file_path):
     """Validate the following file, according to dit standards"""
 
-    file_text = load_file(file_path)
-    validation_result = validate_dit(file_text)
-    click.echo(validation_result)
-
-
-def load_file(file_path: str) -> str:
-    """Load a file into a string"""
     with open(file_path) as file_object:
-        file_text = file_object.read()
-        return file_text
+        click.echo(validate_dit(file_object.read()))
 
 
 main.add_command(validate)

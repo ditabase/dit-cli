@@ -18,8 +18,8 @@ class FormatError(DitError):
 class ValidationError(DitError):
     """Raised when anything goes wrong during validation of a dit"""
 
-    def __init__(self, message):
-        super().__init__('Validation Error', message)
+    def __init__(self, message, name):
+        super().__init__('"{}" Error'.format(name), message)
 
 
 class ParseError(DitError):

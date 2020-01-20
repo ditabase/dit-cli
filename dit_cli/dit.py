@@ -7,10 +7,9 @@ import re
 
 import networkx as nx
 
-from dit_cli.exceptions import DitError
-from dit_cli.exceptions import ValidationError
-from dit_cli.exceptions import FormatError
+from dit_cli.exceptions import DitError, FormatError, ParseError
 from dit_cli.parser import Parser
+from dit_cli.evaler import run_scripts
 
 
 PARSER = None
@@ -28,6 +27,21 @@ def validate_dit(dit):
         # Discard dit and get the graph
         graph = get_graph(dit)
 
+        # TODO: Add proper Arborecense/Tree/Branching check.
+        # See https://networkx.github.io/documentation/stable/reference/algorithms/tree.html
+
+        fields = 0
+        for node_id in graph.nodes():
+            validate_object_after_parse(node_id, graph)
+
+            if graph.nodes[node_id]['is_field']:
+                fields += 1
+
+        if fields == 0:
+            raise FormatError((
+                'The dit contained no fields. There is no data to validate.'
+            ))
+
         return 'dit is valid, no errors found'
     except DitError as error:
         return error
@@ -35,7 +49,7 @@ def validate_dit(dit):
 
 def get_graph(dit: str) -> Type[nx.DiGraph]:
     """Returns a filled NetworkX DiGraph representing the dit file"""
-    graph = nx.Graph()
+    graph = nx.DiGraph()
     tokens = []
 
     # The header counts as a containing token
@@ -94,11 +108,9 @@ def parse_next_token(dit: str, tokens: List[str], graph: Type[nx.DiGraph]) -> st
                 pass
             # If neither, that's an error
             else:
-                raise ValidationError((
-                    'Parse Error: Expected an opening token, '
-                    'closing token, or end of file.'
-                    '\nLength of dit: {}'
-                    'Next 30 characters: {}'
+                raise ParseError((
+                    'Expected an opening token, closing token, or end of file.'
+                    '\nLength of dit: {} Next 30 characters: {}'
                 ).format(len(dit), dit[:30]))
 
     # ...or a value token,
@@ -207,16 +219,32 @@ def validate_object_during_parse(graph: Type[nx.DiGraph]):
         ).format(node['name']))
 
 
+def validate_object_after_parse(node_id, graph):
+    """Validate complex information that required the entire graph.
+    Also call actual validation code"""
+    node = graph.nodes[node_id]
+    for extend_name in node['extends']:
+        for override in node['overrides'].list:
+            if extend_name == override['name']:
+                raise FormatError((
+                    '"{}" both extends and overrides "{}"'
+                ).format(node['name'], extend_name))
+
+    if node['is_field']:
+        run_scripts(node_id, graph, node['payload'])
+
+
 def new_node(graph, is_field):
     """Initialize a new node"""
 
-    # Next node index is always at 1 more than the previous, hence len(graph)
+    # Next node_id is always at 1 more than the previous, hence len(graph)
     graph.add_node(len(graph))
-    index = len(graph) - 1
-    graph.nodes[index]['is_field'] = is_field
+    node_id = len(graph) - 1
+    graph.nodes[node_id]['is_field'] = is_field
+    graph.nodes[node_id]['language'] = 'javascript'
 
-    graph.nodes[index]['extends'] = []
-    graph.nodes[index]['overrides'] = OverridesList()
+    graph.nodes[node_id]['extends'] = []
+    graph.nodes[node_id]['overrides'] = OverridesList()
 
 
 def add_edges(graph: Type[nx.DiGraph]):
@@ -228,7 +256,7 @@ def add_edges(graph: Type[nx.DiGraph]):
 
         for over in graph.nodes[node]['overrides'].list:
             graph.add_edge(node, node_by_name(
-                graph, over['name']), relationship='overrides')
+                graph, over['name']), relationship='overrides', converter=over['converter'])
 
 
 def node_by_name(graph: Type[nx.DiGraph], name: str) -> int:

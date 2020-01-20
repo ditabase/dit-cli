@@ -1,0 +1,16 @@
+<!DOCTYPE dit xml>
+<dit>
+    <fields>
+        <field>
+            <name>Fruits</name>
+<validator>
+    let fruits = ['apple', 'banana', 'pear', 'strawberry', 'kiwi'];
+    if (fruits.indexOf(PAYLOAD) === -1) { 
+        return `"${PAYLOAD}" is not a valid fruit.`; 
+    }
+    return true;
+</validator>
+            <payload>kiwi</payload>
+        </field>
+    </fields>
+</dit>

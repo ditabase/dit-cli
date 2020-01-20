@@ -1,3 +1,8 @@
-# Removing this for now, I have no need for a version number in code
-# and if I did, I would prefer to read it from the pyproject.toml
-#__version__ = '0.1.0'
+"""Initialize, set the CONFIG global and create tmp directory"""
+
+from pathlib import Path
+
+from dit_cli.config import get_config
+
+CONFIG = get_config()
+Path(CONFIG['general']['tmp_dir']).mkdir(parents=True, exist_ok=True)

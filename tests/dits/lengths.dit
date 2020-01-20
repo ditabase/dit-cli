@@ -26,7 +26,7 @@
                     <name>LengthInchPunct</name>
                 </extend>
             </extends>
-            <payload>24" inches</payload>
+            <payload>24"</payload>
         </field>
     </fields>
     <objects>
@@ -75,7 +75,7 @@
             </extends>
             <validator>
                 if (!PAYLOAD.endsWith(' inches')) {
-                        return `Units of "${PAYLOAD}" was not inches.`;
+                    return `Units of "${PAYLOAD}" was not inches.`;
                 }
                 return true;
             </validator>
@@ -88,17 +88,17 @@
                 <override>
                     <name>LengthInch</name>
                     <converter>
-                        converter = (value) => value.replace('"', ' inches');
+                        return PAYLOAD.replace('"', ' inches');
                     </converter>
                 </override>
             </overrides>
             <validator>
                 if (PAYLOAD.indexOf(' ') !== -1) {
-                    return `'${PAYLOAD}' still contained a space separator.`;
+                    return `"${PAYLOAD}" still contained a space separator.`;
                 }
 
                 if (!PAYLOAD.endsWith('"')) {
-                    return `'${PAYLOAD}' did not end with a " quotation mark.`;
+                    return `"${PAYLOAD}" did not end with a " quotation mark.`;
                 }
 
                 return true;

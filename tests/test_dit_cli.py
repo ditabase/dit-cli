@@ -1,7 +1,6 @@
 """Pytest unit tests"""
 
 import os
-from dit_cli.cli import load_file
 from dit_cli.dit import validate_dit
 
 DIT_DIR = os.path.join(os.path.dirname(__file__), 'dits/')
@@ -32,7 +31,8 @@ def test_error_json():
 
 def get_file(file_name):
     """Helper to turn a test file name into the file"""
-    return load_file(os.path.join(DIT_DIR, file_name))
+    with open(os.path.join(DIT_DIR, file_name)) as file_object:
+        return file_object.read()
 
 
 def is_file_valid(file_name: str) -> bool:
