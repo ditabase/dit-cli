@@ -19,24 +19,24 @@ def generate_config():
     toml_string = """
     [DEFAULT]
     # language is otherwise specified with '<language>' tags
-    language = 'javascript'
+    language = 'Javascript'
 
     [general]
     tmp_dir = '/tmp/dit/'
 
-    [javascript]
-    file_extension = 'js'
+    [Javascript]
     path = '/usr/bin/nodejs'
+    file_extension = 'js'
     variable_string = 'const @@NAME = @@VALUE;\\n'
     function_string = 'function run() {@@CODE}\\n'
     call_string = 'console.log(`begin--${run()}--end`);'
 
 
-    [python]
-    file_extension = 'py'
+    [Python]
     path = '/usr/bin/python'
-    variable_string = '@@NAME = @@VALUE'
-    function_string = 'def run():\\n@@CODE\\n\\n'
+    file_extension = 'py'
+    variable_string = '@@NAME = @@VALUE\\n'
+    function_string = 'def run():@@CODE\\n'
     call_string = 'print("begin--{}--end".format(run()))'
     """
 

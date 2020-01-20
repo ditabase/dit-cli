@@ -10,6 +10,7 @@ import networkx as nx
 from dit_cli.exceptions import DitError, FormatError, ParseError
 from dit_cli.parser import Parser
 from dit_cli.evaler import run_scripts
+from dit_cli import CONFIG
 
 
 PARSER = None
@@ -51,19 +52,23 @@ def get_graph(dit: str) -> Type[nx.DiGraph]:
     """Returns a filled NetworkX DiGraph representing the dit file"""
     graph = nx.DiGraph()
     tokens = []
+    langs = []
 
     # The header counts as a containing token
     tokens.append('header')
 
+    # Add the default language
+    langs.append(CONFIG['DEFAULT']['language'])
+
     # Initiate the recursive parse, which fills the graph
-    parse_next_token(dit, tokens, graph)
+    parse_next_token(dit, graph, tokens, langs)
 
     add_edges(graph)
 
     return graph
 
 
-def parse_next_token(dit: str, tokens: List[str], graph: Type[nx.DiGraph]) -> str:
+def parse_next_token(dit: str, graph: Type[nx.DiGraph], tokens: List[str], langs: List[str]) -> str:
     """Gather all the dit objects into the DiGraph,
     recursively, one token at a time."""
     global PARSER
@@ -85,7 +90,7 @@ def parse_next_token(dit: str, tokens: List[str], graph: Type[nx.DiGraph]) -> st
                 graph.nodes[len(graph) - 1]['overrides'].new_override()
 
             # Recurse and reassign dit
-            dit = parse_next_token(dit, tokens, graph)
+            dit = parse_next_token(dit, graph, tokens, langs)
 
             # Clear the last token, we just consumed it in the last recurse
             tokens.pop()
@@ -100,6 +105,12 @@ def parse_next_token(dit: str, tokens: List[str], graph: Type[nx.DiGraph]) -> st
             # If not, look for tokens.
             close_token = PARSER.get_close_if_present(dit, tokens[-1])
 
+            # Config closes get removed, then we act like it was never there
+            if close_token == '</config>':
+                langs.pop()
+                dit = PARSER.trim_dit(dit, '</config>')
+                close_token = PARSER.get_close_if_present(dit, tokens[-1])
+
             # If there's a close, that's the base case
             if close_token:
                 return PARSER.trim_dit(dit, close_token)
@@ -113,7 +124,7 @@ def parse_next_token(dit: str, tokens: List[str], graph: Type[nx.DiGraph]) -> st
                     '\nLength of dit: {} Next 30 characters: {}'
                 ).format(len(dit), dit[:30]))
 
-    # ...or a value token,
+    # ...or a value token...
     elif PARSER.is_value(tokens[-1]):
         value = PARSER.get_value(dit, tokens[-1])
         dit = PARSER.trim_dit(dit, value)
@@ -125,15 +136,41 @@ def parse_next_token(dit: str, tokens: List[str], graph: Type[nx.DiGraph]) -> st
         # Assign value based on the token that contained this value
         if tokens[-2] == 'object' or tokens[-2] == 'field':
             node[tokens[-1]] = value
+            if tokens[-1] == 'validator':
+                node['language'] = langs[-1]
         elif tokens[-2] == 'extend':
             node['extends'].append(value)
         elif tokens[-2] == 'override':
             node['overrides'].set_value(tokens[-1], value)
+            if tokens[-1] == 'converter':
+                node['overrides'].set_value('language', langs[-1])
         else:
             assert True, (
                 'Impossible Error: Reached else of value switch '
                 'with tokens[-1]: {}'
             ).format(tokens[-1])
+
+        return dit
+
+    # ...or a config...
+    elif tokens[-1] == 'config':
+        # For now, there is only one config option, so this does not loop/recurse
+        # while True:
+        open_raw, open_name = PARSER.get_open(dit)
+        if open_name != 'language':
+            raise FormatError((
+                'Expected a config tag. Found instead "{}"'
+            ).format(open_raw))
+        dit = PARSER.trim_dit(dit, open_raw)
+
+        # We removed the opening tag, now get the value
+        value = PARSER.get_value(dit, open_name)
+        dit = PARSER.trim_dit(dit, value)
+
+        close_token = PARSER.get_close(dit, open_name)
+        dit = PARSER.trim_dit(dit, close_token)
+
+        langs.append(value)
 
         return dit
 
@@ -241,7 +278,6 @@ def new_node(graph, is_field):
     graph.add_node(len(graph))
     node_id = len(graph) - 1
     graph.nodes[node_id]['is_field'] = is_field
-    graph.nodes[node_id]['language'] = 'javascript'
 
     graph.nodes[node_id]['extends'] = []
     graph.nodes[node_id]['overrides'] = OverridesList()
@@ -255,8 +291,10 @@ def add_edges(graph: Type[nx.DiGraph]):
                 graph, extend), relationship='extends')
 
         for over in graph.nodes[node]['overrides'].list:
-            graph.add_edge(node, node_by_name(
-                graph, over['name']), relationship='overrides', converter=over['converter'])
+            graph.add_edge(node, node_by_name(graph, over['name']),
+                           relationship='overrides',
+                           converter=over['converter'],
+                           language=over['language'])
 
 
 def node_by_name(graph: Type[nx.DiGraph], name: str) -> int:
@@ -274,7 +312,8 @@ class OverridesList:
         """Add a new override object to the end of the list"""
         self.list.append({
             'name': None,
-            'converter': None
+            'converter': None,
+            'language': None
         })
 
     def set_value(self, key, value):

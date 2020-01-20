@@ -19,7 +19,7 @@ class Parser:
             'header', 'dit', 'objects',
             'fields', 'object', 'field',
             'extends', 'extend', 'overrides',
-            'override', 'contains', 'contain'
+            'override', 'contains', 'contain',
         ]
 
         self.value_tokens = [
@@ -31,6 +31,13 @@ class Parser:
         self.white_space_tokens = [
             'validator', 'converter', 'payload'
         ]
+
+        self.config_tokens = [
+            'config', 'language'
+        ]
+
+        self.all_tokens = self.containing_tokens + \
+            self.value_tokens + self.config_tokens
 
     def trim_dit(self, dit: str, replace_str: str) -> str:
         """Clear value and white space from dit"""
@@ -47,7 +54,7 @@ class Parser:
 
     def is_token(self, token: str) -> bool:
         """Check if a str is on any list of valid tokens"""
-        return token in self.containing_tokens or token in self.value_tokens
+        return token in self.all_tokens
 
     def is_container(self, token: str) -> bool:
         """Check if str is a containing token"""
@@ -115,7 +122,7 @@ class Parser:
         close_raw = self.get_xml_tag(dit)
         close_regex = '^</' + open_value + '>$'
 
-        if not re.search(close_regex, close_raw):
+        if not re.search(close_regex, close_raw) and close_raw != '</config>':
             raise ParseError((
                 'Could not find valid close token within "{}".'
             ).format(close_raw))
@@ -126,7 +133,7 @@ class Parser:
         calculated_close = '</{}>'.format(open_value)
         return dit[:dit.index(calculated_close)]
 
-    def get_open_if_present(self, dit: str) -> bool:
+    def get_open_if_present(self, dit: str):
         """Returns the open, or false if there isn't one.
         Will never raise a ValidationException."""
         try:
@@ -134,7 +141,7 @@ class Parser:
         except ParseError:
             return False
 
-    def get_close_if_present(self, dit: str, open_value: str) -> bool:
+    def get_close_if_present(self, dit: str, open_value: str):
         """Returns the close, or false if there isn't one.
         Will never raise a ValidationException."""
         try:

@@ -92,17 +92,18 @@
                     </converter>
                 </override>
             </overrides>
-            <validator>
-                if (PAYLOAD.indexOf(' ') !== -1) {
-                    return `"${PAYLOAD}" still contained a space separator.`;
-                }
+            <config>
+                <language>Python</language>
+                <validator>
+                    if PAYLOAD.find(' ') != -1:
+                        return '"{}" still contained a space separator.'.format(PAYLOAD)
 
-                if (!PAYLOAD.endsWith('"')) {
-                    return `"${PAYLOAD}" did not end with a " quotation mark.`;
-                }
+                    if not PAYLOAD.endswith('"'):
+                        return '"{}" did not end with a " quotation mark.'.format(PAYLOAD)
 
-                return true;
-            </validator>
+                    return 'true'
+                </validator>
+            </config>
         </object>
     </objects>
 </dit>
