@@ -5,7 +5,7 @@
             <name>LengthPayload</name>
             <extends>
                 <extend>
-                    <name>Length</name>
+                    <type>Length</type>
                 </extend>
             </extends>
             <payload>4 miles</payload>
@@ -14,7 +14,7 @@
             <name>LengthInchPayload</name>
             <extends>
                 <extend>
-                    <name>LengthInch</name>
+                    <type>LengthInch</type>
                 </extend>
             </extends>
             <payload>91 inches</payload>
@@ -23,7 +23,7 @@
             <name>LengthInchPunctPayload</name>
             <extends>
                 <extend>
-                    <name>LengthInchPunct</name>
+                    <type>LengthInchPunct</type>
                 </extend>
             </extends>
             <payload>24"</payload>
@@ -70,7 +70,7 @@
             <example>8 inches</example>
             <extends>
                 <extend>
-                    <name>Length</name>
+                    <type>Length</type>
                 </extend>
             </extends>
             <validator>
@@ -86,7 +86,7 @@
             <example>3"</example>
             <overrides>
                 <override>
-                    <name>LengthInch</name>
+                    <type>LengthInch</type>
                     <converter>
                         return PAYLOAD.replace('"', ' inches');
                     </converter>

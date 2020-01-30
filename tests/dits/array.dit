@@ -1,0 +1,108 @@
+<!DOCTYPE dit xml>
+<dit>
+    <config>
+        <language>Python</language>
+        <fields>
+            <field>
+                <name>MeasurementPayload</name>
+                <extends>
+                    <extend>
+                        <type>Measurement</type>
+                    </extend>
+                </extends>
+                <payload><field>
+                    <name>NumberPayload</name>
+                    <extends>
+                        <extend>
+                            <type>Number</type>
+                        </extend>
+                    </extends>
+                    <payload>4</payload>
+                </field> <field>
+                    <name>UnitsPayload</name>
+                    <extends>
+                        <extend>
+                            <type>StringSpacesOnly</type>
+                        </extend>
+                    </extends>
+                    <payload>nautical miles</payload>
+                </field></payload>
+            </field>
+        </fields>
+        <objects>
+            <object>
+                <name>Measurements</name>
+                <description>
+                    A list of measurements for something
+                </description>
+                <example>['8 liters', ']</example>
+                <contains>
+                    <contain>
+                        <name>Magnitude</name>
+                        <type>Number</type>
+                    </contain>
+                    <contain>
+                        <name>Units</name>
+                        <type>StringSpacesOnly</type>
+                    </contain>
+                </contains>
+                <validator>
+                    return 'true'
+                </validator>
+            </object>
+            <object>
+                <name>Measurement</name>
+                <description>
+                    Represents a measurement of any kind.
+                    Contains a Number and String, separated by a space.
+                </description>
+                <example>8 liters</example>
+                <contains>
+                    <contain>
+                        <name>Magnitude</name>
+                        <type>Number</type>
+                    </contain>
+                    <contain>
+                        <name>Units</name>
+                        <type>StringSpacesOnly</type>
+                    </contain>
+                </contains>
+                <validator>
+                    return 'true'
+                </validator>
+            </object>
+            <object>
+                <name>Number</name>
+                <description>A numeric value of any kind.</description>
+                <example>-28.26</example>
+                <validator>
+                    def is_numeric(value):
+                        try:
+                            float(value)
+                            return True
+                        except ValueError:
+                            return False
+                    
+                    if not is_numeric(PAYLOAD):
+                        return '"{}" was not a number.'.format(PAYLOAD)
+                    return 'true'
+                </validator>
+            </object>
+            <object>
+                <name>StringSpacesOnly</name>	
+                <description>
+                    A string which looks like a plain sentence.
+                    No double spaces, tabs, or newlines. 
+                    All other characters are fine.
+                </description>
+                <example>The quick brown fox jumped over the lazy dog.</example>
+                <validator>
+                    import re
+                    if re.match('(\n)|(\t)|(  )', PAYLOAD):
+                        return '"{}" contained a a disallowed character'.format(PAYLOAD)
+                    return 'true'
+                </validator>
+            </object> 
+        </objects>
+    </config>
+</dit>
