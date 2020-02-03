@@ -1,12 +1,21 @@
 # What's the point of dit?
 
-To understand this, we need to forget about dit, about DitaBase, about schemas, objects and the whole mess of specifics and talk about one central idea.
+To understand this, we need to forget about dit, about DitaBase, about schemas, objects and the whole mess of specifics and talk about one central idea:
 
-Data could be a lot better. A *lot* better. Magnitudes better.
+Data could be better. A *lot* better. To explain, I'm going to introduce a concept I'm calling **perfect data.**
 
-To explain, I'm going to introduce a concept I'm calling **perfect data.** Data is perfect when its structure is queryable with any other data of it's type, automatically. If you have to open Excel or do any processing, it's not perfect. And of course if the data has actual errors, that isn't perfect either.
+Imagine the world in the year 2200. All the data just works, right? Doesn't matter the specifics, nuances, or whatever, it all just works together, seamlessly. It would be pretty embarrassing if your automated flying car couldn't play your music because it was in the wrong format. A Starfleet Officer asks the ships computer something, and it doesn't say "I can't answer that because JSON and spreadsheets don't work together." How else can you describe the data in that world other than "perfect"?
 
-The perfectness of a set of data can be expressed by taking a random piece of data from the set, and comparing it to another random piece of data. If the two pieces are instantly and automatically queryable with each other, they are perfect. 
+To be a little more specific, we're going to need some definitions:
+* Data: Any kind of information anywhere in any situation. No limitations.
+
+* Intersection: Two pieces of data have some information that is effectively the same. How are a book and a tax return document related? The book has an author, and tax returns are for a specific person. They intersect at "person".
+
+* Queryable: Searching for something would yield the correct data in a format that could be used. I need to be able to check if the author of the book and the owner of the tax return are actually the same person. Spreadsheets are queryable, PDFs are not.
+
+* Congruent: Two pieces of data for which all intersections are queryable.
+
+* Perfect: A subset of data for which the congruency is higher than say, 75%.
 
 For example:
 
@@ -19,8 +28,11 @@ vs.
         "LastName": "Doe"
     }`
 
-is clearly not perfect, even though the same information is conveyed.
+This data is clearly not congruent, even though the same information is conveyed. Tedious issues like `Name` vs. `name`, or `Street` vs. `St.` also break congruency.
 
-Even tedious issues like `Name` vs. `name` would break data perfection.
+The perfectness of a set of data can be expressed by taking two random pieces of data, (database queries, records, documents, emails, anything) and checking them for congruency. Add another random piece of data and check against all the previous. Divide the number of congruent connections by the total connections and repeat until it converges. Thats your perfection percentage.
 
-You could match them up fairly easily, but any manual processing doesn't count. You will see why later.
+If we checked the perfection of a single company, let's say FedEx, their perfection might be around 40%, since they have at least 1 very large validated database. All the stuff from there would be congruent, and probably nothing else would be. 
+
+But what about global perfect data? Yes, all the data in the world, all of it one one giant pile, pull out two pieces and try to compare them. I would guess the perfection is less than 1%. And why is this?
+
