@@ -1,0 +1,26 @@
+new Fruit fav;
+fav.value = 'kiwi';
+
+new Fruit leastFav;
+leastFav.value = 'pear';
+
+new FavoriteFruits favorites;
+favorites.favorite = fav;
+favorites.leastFavorite = leastFav;
+
+class FavoriteFruits {
+    Fruit favorite;
+    Fruit leastFavorite;
+}
+
+class Fruit {
+    String value;
+    print = value;
+    validator = {{
+        let fruits = ['apple', 'banana', 'pear', 'strawberry', 'kiwi'];
+        if (fruits.indexOf(@@value) === -1) { 
+            return `"${@@value}" is not a valid fruit.`; 
+        }
+        return true;
+    }}
+}
