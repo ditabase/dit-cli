@@ -1,7 +1,7 @@
-class Color {
+Color {
     String value;
-    print = value;
-    validator = {{
+    print value;
+    validator {{
         let colors = ['Red', 'Orange', 'Yellow', 'Green', 'Blue', 'Purple', 'Brown', 'Magenta', 'Tan', 'Cyan', 'Olive', 'Maroon', 'Navy', 'Aquamarine', 'Turquoise', 'Silver', 'Lime', 'Teal', 'Indigo', 'Violet', 'Pink', 'Black', 'White', 'Gray']
         if (colors.indexOf(@@value) === -1) { 
             return `"${@@value}" is not a valid color.`; 
@@ -10,10 +10,10 @@ class Color {
     }}
 }
 
-class Food {
+Food {
     String value;
-    print = value;
-    validator = {{
+    print value;
+    validator {{
         let foods = ['Pasta', 'French Fries', 'Ice Cream', 'Bread', 'Fried Rice', 'Pancakes', 'Burger', 'Pizza', 'Pumpkin Pie', 'Chicken Pot Pie', 'Banana', 'Apple Pie', 'Bagel', 'Muffins', 'Alfredo Sauce', 'Reese's Peanut Cups', 'Ice Cream Cake', 'Cheesecake', 'Cheese', 'Banana Bread', 'Potato Chips', 'Cheetos', 'Doritos', 'Tacos', 'Burritos', 'Chimichanga', 'Enchilada', 'Salsa', 'Marinara Sauce', 'Broccoli', 'Chocolate Covered Strawberries', 'Kiwi', 'Tomato', 'Salad', 'Steak', 'Chicken Tenders', 'Grilled Chicken', 'Ribs', 'Biscuits and Gravy', 'Hot Dogs', 'Fried Chicken', 'Roasted Chicken and Garlic', 'Eggs', 'Bacon', 'Sausage', 'Mashed Potatoes', 'Stuffing', 'Brownies', 'Cookies', 'Submarine Sandwiches', 'Donuts', 'Turkey', 'Cranberry', 'Gravy', 'Green Beans', 'Mac and Cheese', 'Soup', 'Lamb Chops', 'Fried Pork Chops and Gravy', 'Ham', 'Sushi', 'Teriyaki', 'Popcorn', 'Shrimp', 'Lasagna', 'Ravioli', 'Gelatin', 'Pudding', 'Meatballs', 'Gyro Sandwich', 'Pulled Pork', 'Nachos', 'Onion Rings', 'Chocolate Cake', 'Carrot Cake', 'Tater Tots', 'French Toast', 'Baked Potato', 'Olive Garden Breadsticks', 'Crepes', 'Chicken Nuggets', 'Croissant', 'Apple Sauce', 'Green Bean Casserole With Fried Onions', 'Sweet Potatoes', 'Potato', 'Cantaloupe', 'Apple', 'Orange', 'Strawberries', 'Peaches', 'Honeydew', 'Ginger Bread', 'Mango', 'Raspberries', 'Blueberries', 'Corn', 'Tamale', 'Fried Zucchini Blossoms', 'Calzone']
         if (foods.indexOf(@@value) === -1) { 
             return `"${@@value}" is not a valid food.`; 
@@ -22,22 +22,22 @@ class Food {
     }}
 }
 
-class Name {
+Name {
     String givenName;
     String familyName;
-    print = {{ return `${@@givenName} ${@@familyName}`}}
+    print {{ return `${@@givenName} ${@@familyName}` }}
 }
 
-class Kid {
+Kid {
     Name name;
     Color favoriteColor;
     List<Food> favoriteFoods;
 }
 
-class Email {
+Email {
     String value;
-    print = value;
-    validator = {{
+    print value;
+    validator {{
         let re = /(?:[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*|"(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21\x23-\x5b\x5d-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])*")@(?:(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?|\[(?:(?:(2(5[0-5]|[0-4][0-9])|1[0-9][0-9]|[1-9]?[0-9]))\.){3}(?:(2(5[0-5]|[0-4][0-9])|1[0-9][0-9]|[1-9]?[0-9])|[a-z0-9-]*[a-z0-9]:(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21-\x5a\x53-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])+)\])/;
         if(!re.test(@@value)) {
             return `"${@@value}" did not pass the email regex.`;
@@ -46,28 +46,29 @@ class Email {
     }}
 }
 
-class Person {
+Person {
     Name name;
     String address;
     Email email;
 }
 
-class Teacher {
+Teacher {
     extends Person;
     List<String> subjects;
 }
 
-class Classroom {
+Classroom {
     String teacher;
     String roomNumber;
     List<Kid> kids;
 }
 
-class School {
+School {
     String name;
     Person principal;
     List<Classroom> rooms;
-    validator = {{
+    validator {{
+        /*
         console.log(`School Name: "${@@name}"`);
 
         // Javascript, creates a JSON object
@@ -76,18 +77,19 @@ class School {
         console.log(`Principal Name: "${prince.name.print}"`);
         console.log(`Principal Email: "${prince.email.print}"`);
 
+        // Lists of classroom objects
         let rooms = @@rooms;
         console.log(`Second Room Number: "${rooms[1].roomNumber}"`);
         console.log(`Second Room, Kid 5, favorite foods: "${rooms[1].kids[4].favoriteFoods}"`);
-
+        */
         return true;
     }}
 }
 
-new School school;
+School school;
 school.name = 'Creekwater Elementary';
 
-assigner Person p = (given, family, address, email) {
+Person p(given, family, address, email) {
     p.name.givenName = given;
     p.name.familyName = family;
     p.address = address;
@@ -96,92 +98,71 @@ assigner Person p = (given, family, address, email) {
 
 school.principal = p('Jane', 'Smith' '1354 5th St, Apartment 21', 'jsmith@gmail.com');
 
-assigner Classroom c = (teacher, room, kids) {
+Classroom c(teacher,room,kids) {
     c.teacher = teacher;
     c.roomNumber = room;
     c.kids = kids;
 }
 
-assigner Teacher t = (person, subjects) {
+Teacher t(person, subjects) {
     t.Person = person;
     t.subjects = subjects;
 }
 
-assigner Kid k = (given, family, favColor, favFoods) {
+Kid k(given, family, favColor, favFoods) {
     k.name.givenName = given;
     k.name.familyName = family;
-    k.favoriteColor = favColor;
+    k.favoriteColor.value = favColor;
     k.favoriteFoods = favFoods;
 }
 
-school.rooms = [
-    c(t(p('Adam', 'Brown', '940 W Cherry St.', 'adam.brown34@gmail.com'), ['Chemistry', 'Algebra']), '125B', [
-        k('Erick', 'Faller, 'Blue', ['Pizza', 'Cake']),
-        k('Carrie', 'Dejarnette, 'Blue', ['Pizza', 'Cake']),
-        k('Dean', 'Lacombe, 'Blue', ['Pizza', 'Cake']),
-        k('Emmy', 'Greenland, 'Blue', ['Pizza', 'Cake']),
-        k('Shanika', 'Secrest, 'Blue', ['Pizza', 'Cake']),
-        k('Matilde', 'Mazzola, 'Blue', ['Pizza', 'Cake']),
-        k('Megan', 'Monk, 'Blue', ['Pizza', 'Cake']),
-        k('Santa', 'Pietrowski, 'Blue', ['Pizza', 'Cake']),
-        k('Katharyn', 'Chun, 'Blue', ['Pizza', 'Cake']),
-        k('Amelia', 'Avilla, 'Blue', ['Pizza', 'Cake']),
-        k('Carie', 'Clopton, 'Blue', ['Pizza', 'Cake']),
-        k('Arline', 'Vencill, 'Blue', ['Pizza', 'Cake']),
-        k('Francesco', 'Kies, 'Blue', ['Pizza', 'Cake']),
-        k('Awilda', 'Heatherington, 'Blue', ['Pizza', 'Cake']),
-        k('Marilu', 'Tippie, 'Blue', ['Pizza', 'Cake']),
-        k('Bradley', 'Ronco, 'Blue', ['Pizza', 'Cake']),
-        k('Ronna', 'Foucher, 'Blue', ['Pizza', 'Cake']),
-        k('Yuette', 'Marini, 'Blue', ['Pizza', 'Cake']),
-        k('Enedina', 'Mckissack, 'Blue', ['Pizza', 'Cake']),
-        k('Aron', 'Crossland, 'Blue', ['Pizza', 'Cake']),
+Food f(food) {
+    f.value = food;
+}
+
+school.rooms=[
+    c(t(p('Adam','Brown','940 W Cherry St.','adam.brown34@gmail.com'),['Chemistry','Algebra']),'125B',[
+        k('Erick','Faller,'Blue',[f('Pizza'),f('Cake')]),
+        k('Carrie','Dejarnette,'Blue',[f('Pizza'),f('Cake')]),
+        k('Dean','Lacombe,'Blue',[f('Pizza'),f('Cake')]),
+        k('Emmy','Greenland,'Blue',[f('Pizza'),f('Cake')]),
+        k('Shanika','Secrest,'Blue',[f('Pizza'),f('Cake')]),
+        k('Matilde','Mazzola,'Blue',[f('Pizza'),f('Cake')]),
+        k('Megan','Monk,'Blue',[f('Pizza'),f('Cake')]),
+        k('Santa','Pietrowski,'Blue',[f('Pizza'),f('Cake')]),
+        k('Katharyn','Chun,'Blue',[f('Pizza'),f('Cake')]),
+        k('Amelia','Avilla,'Blue',[f('Pizza'),f('Cake')]),
+        k('Carie','Clopton,'Blue',[f('Pizza'),f('Cake')]),
+        k('Arline','Vencill,'Blue',[f('Pizza'),f('Cake')]),
+        k('Francesco','Kies,'Blue',[f('Pizza'),f('Cake')]),
+        k('Awilda','Heatherington,'Blue',[f('Pizza'),f('Cake')]),
+        k('Marilu','Tippie,'Blue',[f('Pizza'),f('Cake')]),
+        k('Bradley','Ronco,'Blue',[f('Pizza'),f('Cake')]),
+        k('Ronna','Foucher,'Blue',[f('Pizza'),f('Cake')]),
+        k('Yuette','Marini,'Blue',[f('Pizza'),f('Cake')]),
+        k('Enedina','Mckissack,'Blue',[f('Pizza'),f('Cake')]),
+        k('Aron','Crossland,'Blue',[f('Pizza'),f('Cake')]),
     ]),
     c(t(p('Julie', 'Waybright', '12 Ferry Way', 'sillyspazmonkey@gmail.com'), ['American History', 'Government']), '123', [
-        k('Erick', 'Faller, 'Blue', ['Pizza', 'Cake']),
-        k('Carrie', 'Dejarnette, 'Blue', ['Pizza', 'Cake']),
-        k('Dean', 'Lacombe, 'Blue', ['Pizza', 'Cake']),
-        k('Emmy', 'Greenland, 'Blue', ['Pizza', 'Cake']),
-        k('Shanika', 'Secrest, 'Blue', ['Pizza', 'Cake']),
-        k('Matilde', 'Mazzola, 'Blue', ['Pizza', 'Cake']),
-        k('Megan', 'Monk, 'Blue', ['Pizza', 'Cake']),
-        k('Santa', 'Pietrowski, 'Blue', ['Pizza', 'Cake']),
-        k('Katharyn', 'Chun, 'Blue', ['Pizza', 'Cake']),
-        k('Amelia', 'Avilla, 'Blue', ['Pizza', 'Cake']),
-        k('Carie', 'Clopton, 'Blue', ['Pizza', 'Cake']),
-        k('Arline', 'Vencill, 'Blue', ['Pizza', 'Cake']),
-        k('Francesco', 'Kies, 'Blue', ['Pizza', 'Cake']),
-        k('Awilda', 'Heatherington, 'Blue', ['Pizza', 'Cake']),
-        k('Marilu', 'Tippie, 'Blue', ['Pizza', 'Cake']),
-        k('Bradley', 'Ronco, 'Blue', ['Pizza', 'Cake']),
-        k('Ronna', 'Foucher, 'Blue', ['Pizza', 'Cake']),
-        k('Yuette', 'Marini, 'Blue', ['Pizza', 'Cake']),
-        k('Enedina', 'Mckissack, 'Blue', ['Pizza', 'Cake']),
-        k('Aron', 'Crossland, 'Blue', ['Pizza', 'Cake']),
+        k('Erick', 'Faller, 'Blue', [f('Pizza'),f('Cake')]),
+        k('Carrie', 'Dejarnette, 'Blue', [f('Pizza'),f('Cake')]),
+        k('Dean', 'Lacombe, 'Blue', [f('Pizza'),f('Cake')]),
+        k('Emmy', 'Greenland, 'Blue', [f('Pizza'),f('Cake')]),
+        k('Shanika', 'Secrest, 'Blue', [f('Pizza'),f('Cake')]),
+        k('Matilde', 'Mazzola, 'Blue', [f('Pizza'),f('Cake')]),
+        k('Megan', 'Monk, 'Blue', [f('Pizza'),f('Cake')]),
+        k('Santa', 'Pietrowski, 'Blue', [f('Pizza'),f('Cake')]),
+        k('Katharyn', 'Chun, 'Blue', [f('Pizza'),f('Cake')]),
+        k('Amelia', 'Avilla, 'Blue', [f('Pizza'),f('Cake')]),
+        k('Carie', 'Clopton, 'Blue', [f('Pizza'),f('Cake')]),
+        k('Arline', 'Vencill, 'Blue', [f('Pizza'),f('Cake')]),
+        k('Francesco', 'Kies, 'Blue', [f('Pizza'),f('Cake')]),
+        k('Awilda', 'Heatherington, 'Blue', [f('Pizza'),f('Cake')]),
+        k('Marilu', 'Tippie, 'Blue', [f('Pizza'),f('Cake')]),
+        k('Bradley', 'Ronco, 'Blue', [f('Pizza'),f('Cake')]),
+        k('Ronna', 'Foucher, 'Blue', [f('Pizza'),f('Cake')]),
+        k('Yuette', 'Marini, 'Blue', [f('Pizza'),f('Cake')]),
+        k('Enedina', 'Mckissack, 'Blue', [f('Pizza'),f('Cake')]),
+        k('Aron', 'Crossland, 'Blue', [f('Pizza'),f('Cake')]),
     ])
-]
-
-school.rooms += 
-c(t(p('Tom', 'Waybright', '12 Ferry Way', 'tomwaybright@gmail.com'), ['English']), [
-    k('Erick', 'Faller, 'Blue', ['Pizza', 'Cake']),
-    k('Carrie', 'Dejarnette, 'Blue', ['Pizza', 'Cake']),
-    k('Dean', 'Lacombe, 'Blue', ['Pizza', 'Cake']),
-    k('Emmy', 'Greenland, 'Blue', ['Pizza', 'Cake']),
-    k('Shanika', 'Secrest, 'Blue', ['Pizza', 'Cake']),
-    k('Matilde', 'Mazzola, 'Blue', ['Pizza', 'Cake']),
-    k('Megan', 'Monk, 'Blue', ['Pizza', 'Cake']),
-    k('Santa', 'Pietrowski, 'Blue', ['Pizza', 'Cake']),
-    k('Katharyn', 'Chun, 'Blue', ['Pizza', 'Cake']),
-    k('Amelia', 'Avilla, 'Blue', ['Pizza', 'Cake']),
-    k('Carie', 'Clopton, 'Blue', ['Pizza', 'Cake']),
-    k('Arline', 'Vencill, 'Blue', ['Pizza', 'Cake']),
-    k('Francesco', 'Kies, 'Blue', ['Pizza', 'Cake']),
-    k('Awilda', 'Heatherington, 'Blue', ['Pizza', 'Cake']),
-    k('Marilu', 'Tippie, 'Blue', ['Pizza', 'Cake']),
-    k('Bradley', 'Ronco, 'Blue', ['Pizza', 'Cake']),
-    k('Ronna', 'Foucher, 'Blue', ['Pizza', 'Cake']),
-    k('Yuette', 'Marini, 'Blue', ['Pizza', 'Cake']),
-    k('Enedina', 'Mckissack, 'Blue', ['Pizza', 'Cake']),
-    k('Aron', 'Crossland, 'Blue', ['Pizza', 'Cake']),
-])
-
+];

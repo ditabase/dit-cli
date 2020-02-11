@@ -1,18 +1,3 @@
-new Fruit fav;
-fav.value = 'kiwi';
-
-new Fruit leastFav;
-leastFav.value = 'pear';
-
-new FavoriteFruits favorites;
-favorites.favorite = fav;
-favorites.leastFavorite = leastFav;
-
-class FavoriteFruits {
-    Fruit favorite;
-    Fruit leastFavorite;
-}
-
 class Fruit {
     String value;
     print = value;
@@ -24,3 +9,18 @@ class Fruit {
         return true;
     }}
 }
+
+class FavoriteFruits {
+    Fruit favorite;
+    Fruit leastFavorite;
+}
+
+Fruit fav;
+fav.value = 'kiwi';
+
+Fruit leastFav;
+leastFav.value = 'pear';
+
+FavoriteFruits favorites;
+favorites.favorite = fav;
+favorites.leastFavorite = leastFav;

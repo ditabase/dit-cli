@@ -1,0 +1,23 @@
+Thing {
+    String value;
+}
+
+Thing thing;
+thing.value = 'a string value';
+thing.value = ['a list', 'of strings']
+
+Thing otherThing;
+thing.value = otherThing; //An object
+
+Thing t(value) {
+    t.value = value;//value can be a string, list or object, as before.
+}
+
+OtherThing t2(value2, value3) {
+    t2.value2 = value2;
+    t2.value3 = value3;
+}
+
+thing.value = t('a string value');
+thing.value = t(['a list', 'of strings']);
+thing.value = t2(t('thing'), t('more thing'));
