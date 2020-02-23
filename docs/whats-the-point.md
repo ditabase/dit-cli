@@ -11,7 +11,7 @@ To be a little more specific, we're going to need some definitions:
 
 * Intersection: Two pieces of data have some information that is effectively the same. How are a book and a tax return document related? The book has an author, and tax returns are for a specific person. They intersect at "person".
 
-* Queryable: Searching for something would yield the correct data in a format that could be used. I need to be able to check if the author of the book and the owner of the tax return are actually the same person. Spreadsheets are queryable, PDFs are not.
+* Queryable: Searching for something would yield the correct data in a format that could be used. I need to be able to check if the author of the book and the owner of the tax return are actually the same person. Spreadsheets are queryable, PDFs are not. Note that these interactions must be automated. Even if a human could easily discern the correct answer, or activate a script that could, it must happen without a human ever knowing the script was even necessary.
 
 * Congruent: Two pieces of data for which all intersections are queryable.
 
@@ -32,7 +32,10 @@ This data is clearly not congruent, even though the same information is conveyed
 
 The perfectness of a set of data can be expressed by taking two random pieces of data, (database queries, records, documents, emails, anything) and checking them for congruency. Add another random piece of data and check against all the previous. Divide the number of congruent connections by the total connections and repeat until it converges. Thats your perfection percentage.
 
-If we checked the perfection of a single company, let's say FedEx, their perfection might be around 40%, since they have at least 1 very large validated database. All the stuff from there would be congruent, and probably nothing else would be. 
+If we checked the perfection of a single company, let's say FedEx, their perfection might be around 40%, since they have at least 1 very large validated database. All the stuff from there would be congruent, and probably nothing else would be. Data in just the USA would probably be more perfect than say, India.
 
-But what about global perfect data? Yes, all the data in the world, all of it one one giant pile, pull out two pieces and try to compare them. I would guess the perfection is less than 1%. And why is this?
+But what about global perfect data? Yes, all the data in the world, all of it one one giant pile, pull out two pieces and try to compare them. I would guess the perfection is less than 1%.
 
+The stated goal of DitaBase is to get global data perfection above by 70% by 2030.
+
+// This document is incomplete, more to follow.
