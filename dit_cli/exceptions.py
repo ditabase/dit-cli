@@ -12,18 +12,25 @@ class FormatError(DitError):
     """Raised when the file has an illegal style or structure"""
 
     def __init__(self, message):
-        super().__init__('Format Error', message)
+        super().__init__('FormatError', message)
 
 
 class ValidationError(DitError):
     """Raised when anything goes wrong during validation of a dit"""
 
     def __init__(self, message, name):
-        super().__init__('"{}" Error'.format(name), message)
+        super().__init__(f'<{name}>ValidationError', message)
 
 
 class ParseError(DitError):
     """Raised when there anything goes wrong during paring the file"""
 
     def __init__(self, message):
-        super().__init__('Parse Error', message)
+        super().__init__('ParseError', message)
+
+
+class TreeError(DitError):
+    """Raised when anything goes wrong with tree functions"""
+
+    def __init__(self, message):
+        super().__init__('TreeError', message)

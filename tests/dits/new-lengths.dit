@@ -72,6 +72,16 @@ Length2D {
     }}
 }
 
+Length l(mag, uni) {
+    magnitude.value = mag;
+    units.value = uni;
+}
+
+LengthInchPunct inch(mag, uni) {
+    magnitude.value = mag;
+    units.value = uni;
+}
+
 Measurement temperature;
 temperature.magnitude.value = '-17.3';
 temperature.units.value = 'Degrees Celsius');
@@ -88,19 +98,9 @@ LengthInchPunct inchPunct;
 inchPunct.magnitude.value = '3';
 inchPunct.units.value = 'inches';
 
-Length l(mag, uni) {
-    l.magnitude.value = mag;
-    l.units.value = uni;
-}
-
 Length2D metricBoard;
 metricBoard.width = l('48', 'millimeters');
 metricBoard.length = l('98', 'millimeters');
-
-LengthInchPunct inch(mag, uni) {
-    inch.magnitude.value = mag;
-    inch.units.value = uni;
-}
 
 Length2D inchBoard;
 inchBoard.width = inch('2', 'inches');

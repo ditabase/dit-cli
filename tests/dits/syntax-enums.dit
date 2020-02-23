@@ -1,0 +1,108 @@
+A {
+    String a;
+    String z;
+    print {{ return `${@@a} @@}} ${@@z}`; }}
+    validator {{
+        return true;
+    }}
+}
+
+B {
+    String a;
+    String b;
+}
+
+C {
+    A a;
+    B b;
+    
+    print a; // Print a's print method.
+    //print A; Illegal nonsense. A is just a class. It has no meaning here.
+    print b;
+
+    print a.a; // Prints just the 'String a' from A.
+    print a.z; // These prints are identical to 'c' function and variable
+    print b.a; // assignments. The only difference is the leading portion.
+    print b.b; // Here and in the function, assume they are 'this.a.a'
+}
+
+C c(a, z, a2, b) {
+    a.a = a; // Identical to print and assignments
+    a.z = z; // Think 'this.a.a', the 'this' is implicit, since you can't
+    b.a = a2; // assign anything besides 'this'
+    b.b = b;
+}
+
+C c;
+
+c.a.a = 'great'; // Identical to print and function syntax, the 'this' is now 'c'
+c.a.a = 'pie';
+c.a.z = 'It\'s a bad omen';
+c.b.a = "3\" tall";
+c.b.b = 'His name is ';
+
+D {
+    extends A, B;
+
+    A a;
+    print A; // Inherit the print method from A
+    print a; // Prints 'a' from 'A'. 'a' from 'B' is hidden, because it was
+             // extended second.
+    print B.a; //Prints 'a' from 'B';
+    print B; // Raises DitReferenceError, B has no print method
+
+    print a; // Identical to references from 'd' function, variable assignments
+    print z; // Once again, the 'this' is implicit.
+    print B.a;
+    print b;
+}
+
+D d(a, z, a2, b) {
+    a = a;
+    z = z;
+    B.a = a2;
+    b = b;
+}
+
+D d;
+
+d.a = 'a';
+d.z = 'b';
+d.B.a = 'c';
+d.b = 'd';
+d.a = 'something new';
+d.B.a = 'also new';
+d.A.a = 'should work';
+
+E {
+    list 1 String list_1;
+    list 2 String list_2;
+    list 3 String list_3;
+}
+
+E e;
+
+e.list_1 = ['n', 'n', "n", 'n'];
+e.list_2 = [['n', 'n'], ['n', 'n'], ['n', 'n'], ['n', 'n']];
+e.list_3 = [
+    [['n', 'n'], ['n', 'n'], ['n', 'n']],
+    [['n', 'n'], ['n', 'n'], ['n', 'n']],
+    [['n', 'n'], ['n', 'n'], ['n', 'n']],
+    [['n', 'n'], ['n', 'n'], ['n', 'n']]
+];
+
+F {
+    A a;
+    B b;
+}
+
+A a;
+a.a = 'some info';
+a.z = 'not a test';
+
+F f;
+
+f.a = a;
+a.a = 'that info was bad';
+
+f.b = c.b;

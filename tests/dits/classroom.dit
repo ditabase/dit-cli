@@ -90,38 +90,39 @@ School school;
 school.name = 'Creekwater Elementary';
 
 Person p(given, family, address, email) {
-    p.name.givenName = given;
-    p.name.familyName = family;
-    p.address = address;
-    p.email = email;
+    name.givenName = given;
+    name.familyName = family;
+    address = address;
+    email = email;
 }
 
 school.principal = p('Jane', 'Smith' '1354 5th St, Apartment 21', 'jsmith@gmail.com');
 
 Classroom c(teacher,room,kids) {
-    c.teacher = teacher;
-    c.roomNumber = room;
-    c.kids = kids;
+    teacher = teacher;
+    roomNumber = room;
+    kids = kids;
 }
 
 Teacher t(person, subjects) {
-    t.Person = person;
-    t.subjects = subjects;
+    Person = person;
+    subjects = subjects;
 }
 
 Kid k(given, family, favColor, favFoods) {
-    k.name.givenName = given;
-    k.name.familyName = family;
-    k.favoriteColor.value = favColor;
-    k.favoriteFoods = favFoods;
+    name.givenName = given;
+    name.familyName = family;
+    favoriteColor.value = favColor;
+    favoriteFoods = favFoods;
 }
 
 Food f(food) {
-    f.value = food;
+    value = food;
 }
 
 school.rooms=[
-    c(t(p('Adam','Brown','940 W Cherry St.','adam.brown34@gmail.com'),['Chemistry','Algebra']),'125B',[
+    c(t(p('Adam','Brown','940 W Cherry St.','adam.brown34@gmail.com'),['Chemistry','Algebra']),'125B',
+    [
         k('Erick','Faller,'Blue',[f('Pizza'),f('Cake')]),
         k('Carrie','Dejarnette,'Blue',[f('Pizza'),f('Cake')]),
         k('Dean','Lacombe,'Blue',[f('Pizza'),f('Cake')]),
@@ -143,7 +144,8 @@ school.rooms=[
         k('Enedina','Mckissack,'Blue',[f('Pizza'),f('Cake')]),
         k('Aron','Crossland,'Blue',[f('Pizza'),f('Cake')]),
     ]),
-    c(t(p('Julie', 'Waybright', '12 Ferry Way', 'sillyspazmonkey@gmail.com'), ['American History', 'Government']), '123', [
+    c(t(p('Julie', 'Waybright', '12 Ferry Way', 'sillyspazmonkey@gmail.com'), ['American History', 'Government']), '123',
+    [
         k('Erick', 'Faller, 'Blue', [f('Pizza'),f('Cake')]),
         k('Carrie', 'Dejarnette, 'Blue', [f('Pizza'),f('Cake')]),
         k('Dean', 'Lacombe, 'Blue', [f('Pizza'),f('Cake')]),
