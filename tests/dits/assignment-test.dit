@@ -1,5 +1,6 @@
 // An extremely simple dit to demonstrate the new parser style
 
+// Call a spade a spade, so objects are classes now
 class Fruit {
     String value; // classes can contain things
     print = value; // custom print attribute
@@ -16,7 +17,7 @@ class Fruit {
 }
 
 class FavoriteFruits {
-    // Can contain other objects now
+    // Can contain other classes now, which was the main purpose for the new syntax.
     Fruit favorite;
     Fruit leastFavorite;
 
@@ -30,3 +31,5 @@ fav.value = 'kiwi';
 FavoriteFruits favorites;
 favorites.favorite = fav;
 favorites.leastFavorite.value = 'pear';
+
+// At this point, the validators for all objects get run.
