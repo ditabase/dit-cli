@@ -1,12 +1,14 @@
 # What's the point of dit?
 
-Dit is a solution to a problem. A big problem, but one that doesn't obviously exist. To make sense of it, we need to forget about dit and all the specifics and talk about one central concept:
+Dit is a solution to a problem – one that, on the surface, isn’t very obvious. To make sense of it, we need to forget about dit and all the specifics and talk about one central concept:
 
-Data could be better. A *lot* better. Magnitudes better.
+Data could be better.
 
-Imagine the world 200 years from now. All the data just works, right? Doesn't matter the specifics, nuances, or details, it all just works together, seamlessly. It would be pretty embarrassing if your automated flying car couldn't play your music because it was in the wrong format. When a Starfleet Officer asks the ship's computer something, it doesn't say "I can't answer that because JSON and spreadsheets don't work together." How else can you describe the data in that world other than "perfect"?
+Imagine the world 200 years from now. Everything just works, right? Seamlessly. It would be pretty embarrassing if your automated flying car couldn't play your music because it was in the wrong format. When a Starfleet Officer asks the ship's computer something, it doesn't say "I can't answer that because JSON and spreadsheets don't work together." How else can you describe the data in that world other than "perfect"?
 
-And this is the problem. Data needs to be perfect, and it's not. The reason this problem isn't obvious is because it's so hard to imagine that there could be a solution. Which is why we have tons of industry specific, end-to-end solutions. The point of dit is to be a bridge between disparate, end-end solutions.
+And this is the problem. Data needs to be perfect, and it's not. It's much easier to make a small, specific solutions for data, which is why we have tons of industry specific, end-to-end solutions.
+
+Data could be better. A *lot* better. Magnitudes better. And that’s exactly the point of dit: to be a bridge between disparate, end-end solutions, and make data perfect.
 
 ## Definitions
 "Perfect" is an accurate name, but it's fairly vague. Let me be a little clearer about what I mean:
