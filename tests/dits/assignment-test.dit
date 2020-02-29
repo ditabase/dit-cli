@@ -1,9 +1,14 @@
+// An extremely simple dit to demonstrate the new parser style
+
 class Fruit {
-    String value;
-    print = value;
+    String value; // classes can contain things
+    print = value; // custom print attribute
+
+    // Language agnostic validators
     validator = {{
         let fruits = ['apple', 'banana', 'pear', 'strawberry', 'kiwi'];
         if (fruits.indexOf(@@value) === -1) { 
+            // Access to any dit variable in code with double @ escape
             return `"${@@value}" is not a valid fruit.`; 
         }
         return true;
@@ -11,16 +16,17 @@ class Fruit {
 }
 
 class FavoriteFruits {
+    // Can contain other objects now
     Fruit favorite;
     Fruit leastFavorite;
+
+    // Print can use code, similar to toString
+    print {{ return `Favorite: ${@@favorite.value} Least Favorite: ${@@leastFavorite.value}`; }}
 }
 
 Fruit fav;
 fav.value = 'kiwi';
 
-Fruit leastFav;
-leastFav.value = 'pear';
-
 FavoriteFruits favorites;
 favorites.favorite = fav;
-favorites.leastFavorite = leastFav;
+favorites.leastFavorite.value = 'pear';
