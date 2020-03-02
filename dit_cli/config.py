@@ -7,14 +7,15 @@ import toml
 def get_config() -> dict:
     """Get the config, or generate it if not present"""
     path = get_path()
-    if not os.path.isfile(path):
-        print('No config file found. Generating one at {}'.format(path))
-        generate_config()
-
+    # TODO: Re-enable this
+    # if not os.path.isfile(path):
+    #    print('No config file found. Generating one at {}'.format(path))
+    #    generate_config(path)
+    generate_config(path)
     return toml.load(path)
 
 
-def generate_config():
+def generate_config(path: str):
     """Generate the config file in the home directory"""
     toml_string = """
     [DEFAULT]
@@ -27,22 +28,31 @@ def generate_config():
     [Javascript]
     path = '/usr/bin/nodejs'
     file_extension = 'js'
-    variable_string = 'const @@NAME = @@VALUE;\\n'
     function_string = 'function run() {@@CODE}\\n'
     call_string = 'console.log(`begin--${run()}--end`);'
-
+    null_type = 'null'
+    str_open = "'"
+    str_close = "'"
+    list_open = '['
+    list_delimiter = ','
+    list_close = ']'
 
     [Python]
     path = '/usr/bin/python'
     file_extension = 'py'
-    variable_string = '@@NAME = @@VALUE\\n'
     function_string = 'def run():@@CODE\\n'
     call_string = 'print("begin--{}--end".format(run()))'
+    null_type = 'None'
+    str_open = "'"
+    str_close = "'"
+    list_open = '['
+    list_delimiter = ','
+    list_close = ']'
     """
 
     parsed_toml = toml.loads(toml_string)
 
-    with open(get_path(), 'w') as config_file:
+    with open(path, 'w') as config_file:
         toml.dump(parsed_toml, config_file)
 
 

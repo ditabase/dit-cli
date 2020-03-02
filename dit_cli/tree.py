@@ -12,8 +12,8 @@ class Node:
         self.extends: List[int] = []
         # {name: str, prefix: str, id_: int, list_depth: int, data: ?}
         self.contains: List[dict] = []
-        self.validator: str = None  # Code
-        self.print: dict = None  # {code, variable}, only one populated
+        self.validator: dict = None  # {code, language}
+        self.print: dict = None  # {code, language, variable}
         self.conflicts: List[dict] = []  # {class_, var}
 
 
@@ -74,15 +74,17 @@ class Tree:
                    'data': None, 'prefix': None}
         self.cur().contains.append(contain)
 
-    def set_print(self, variable: List[str] = None, code: str = None):
+    def set_print(self, variable: List[str] = None,
+                  code: str = None, language: str = None):
         # Make sure variable to be printed is defined
         if variable:
             _process_var(self, variable, class_=self.cur())
 
-        self.cur().print = {'variable': variable, 'code': code}
+        self.cur().print = {'variable': variable,
+                            'code': code, 'language': language}
 
-    def set_validator(self, code: str):
-        self.cur().validator = code
+    def set_validator(self, code: str, language: str):
+        self.cur().validator = {'code': code, 'language': language}
 
     def is_defined(self, variable: List[str]):
         _process_var(self, variable)
@@ -90,8 +92,16 @@ class Tree:
     def assign_var(self, variable: List[str], data):
         _process_var(self, variable, data=data)
 
-    def get_node(self, variable: List[str]):
-        return _process_var(self, variable)
+    def get_contain(self, variable: List[str], class_: Node = None,
+                    obj: Node = None):
+        return _process_var(self, variable, class_=class_, obj=obj)
+
+    def get_data(self, variable: List[str]):
+        result = self.get_contain(variable)
+        try:
+            return result['data']  # If it really is a contain
+        except TypeError:
+            return result
 
 
 class Assigner:
@@ -100,8 +110,22 @@ class Assigner:
     def __init__(self, name: str, id_: int):
         self.name: str = name
         self.id_: int = id_
-        self.param_count: int = None
         self.assignments: List[dict] = []  # {variable, position}
+
+    def get_object(self, tree: Tree, paramenters):
+        if len(paramenters) < len(self.assignments):
+            raise TreeError(f'Not enough arguments for assigner "{self.name}"')
+        if len(paramenters) > len(self.assignments):
+            raise TreeError(f'Too many arguments for assigner "{self.name}')
+
+        # TODO: All assigned objects have no name. Might be a problem...
+        # but I'm not sure, and I'm not going to mess with it now.
+        obj = Node(None, 'object')
+        obj.extends.append(self.id_)
+        for assign in self.assignments:
+            _process_var(tree, assign['variable'], class_=tree.nodes[self.id_],
+                         obj=obj, data=paramenters[assign['position']])
+        return obj
 
 
 class Assigners:
@@ -138,17 +162,27 @@ class Assigners:
 
             self.cur().assignments.append(assignment)
 
+    def is_defined(self, name: str):
+        for id_, assign in enumerate(self.assigners):
+            if name == assign.name:
+                return assign
 
-def _process_var(tree: Tree, variable: List[str], class_: Node = None, data=None):
+        raise TreeError(f'Undefined assigner "{name}"')
+
+
+def _process_var(tree: Tree, variable: List[str], class_: Node = None,
+                 obj=None, data=None):
 
     if not class_:
-        obj = tree.nodes[_id_from_name(variable[0], tree.nodes)]
+        node_id = _id_from_name(variable[0], tree.nodes)
+        if len(variable) == 1 and data is not None:  # assign entire node
+            tree.nodes[node_id].contains = data.contains
+            return
+        obj = tree.nodes[node_id]
         if obj.type_ == 'class':
             raise TreeError(f'Cannot assign to class: {variable[0]}')
         class_ = tree.nodes[obj.extends[0]]
         variable.pop(0)
-    else:
-        obj = None
 
     prefix = None
     for index, var in enumerate(variable):
@@ -192,7 +226,7 @@ def _process_var(tree: Tree, variable: List[str], class_: Node = None, data=None
             if data is None and contain is None:
                 return None
             elif data is None and contain is not None:
-                return contain['data']
+                return contain
             elif data is not None and contain is None:
                 new_contain = result[1].copy()
                 new_contain['data'] = data
@@ -204,56 +238,6 @@ def _process_var(tree: Tree, variable: List[str], class_: Node = None, data=None
                 contain['data'] = data
                 return old_data
     return obj
-
-    '''
-    for index, var in enumerate(variable):
-        result = _recurse_var(var, class_, tree)
-        if result[0] == 'contain':
-            contain = result[1]
-            if index < len(variable) - 1:  # There are more elements
-                if contain['id_'] == -1:
-                    raise TreeError(
-                        f'Cannot reference string "{var}" in "{variable}"')
-                class_ = tree.nodes[contain['id_']]
-            if data:
-                found = _find_contain(obj, var, prefix)
-                if index < len(variable) - 1:
-                    if found is not None:
-                        obj = obj.contains[found]['data']
-                    else:
-                        contain = contain.copy()
-                        new_obj = Node(var, 'object')
-                        new_obj.extends.append(contain['id_'])
-                        contain['data'] = new_obj
-                        contain['prefix'] = prefix
-                        obj.contains.append(contain)
-                        obj = new_obj
-                else:
-                    if found is not None:
-                        obj.contains[found]['data'] = data
-                    else:
-                        contain = contain.copy()
-                        contain['data'] = data
-                        contain['prefix'] = prefix
-                        obj.contains.append(contain)
-            prefix = None
-        elif result[0] == 'extend':
-            extend = result[1]
-            class_ = result[2]
-            if index < len(variable) - 1:
-                if class_.conflicts and data:
-                    for con in class_.conflicts:
-                        if (con['class_'] == extend.name and
-                                con['var'] == variable[index + 1]):
-                            prefix = extend.name + '.' + variable[index + 1]
-                            break
-                class_ = extend
-            elif data:
-                raise TreeError(
-                    f'Cannot assign to class: {var}')
-        elif result[0] == 'not found':
-            raise TreeError(f'Undefined variable "{var}" in "{variable}"')
-    '''
 
 
 def _get_prefix(var: str, extend: Node, class_: Node) -> str:

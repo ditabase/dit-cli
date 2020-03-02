@@ -1,0 +1,29 @@
+A {
+    String value;
+    validator Python {{
+        if @@value is None:
+            return 'value must be assigned'
+        if @@value == 'A bad value':
+            return 'The value was bad'
+        return 'true'
+    }}
+}
+
+A a;
+a.value = 'A good value value';
+
+B {
+    String value;
+    validator Javascript {{
+        if (@@value == null) {
+            return 'value must be assigned';
+        }
+        if (@@value == 'A javascript thing') {
+            return 'It\'s not supposed to be javascript';
+        }
+        return true;
+    }}
+}
+
+B b;
+b.value = "A python thing";

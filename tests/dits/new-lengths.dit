@@ -1,10 +1,10 @@
 Number {
     String value;
     print value;
-    validator {{
-        num = @@value;
+    validator Javascript {{
+        const num = @@value;
         if (isNaN(parseFloat(num)) || !isFinite(num)) {
-            return `"${num}" is not a number.`;
+            return `"${num}" is not @@@@ @@@value number.`;
         }
         return true;
     }}
@@ -13,7 +13,7 @@ Number {
 StringSpacesOnly {
     String value;
     print value;
-    validator {{
+    validator Javascript {{
         let str = @@value;
         if (/[\t\r\n\f]/.test(str)) {
             return `The following string contains whitespace other than spaces:
@@ -26,13 +26,13 @@ StringSpacesOnly {
 Measurement {
     Number magnitude;
     StringSpacesOnly units;
-    print {{ return `${@@magnitude.value} ${@@units.value}`; }}
+    print Javascript {{ return `${@@magnitude.value} ${@@units.value}`; }}
 }
 
 Length {
     extends Measurement;
     print Measurement;
-    validator {{
+    validator Javascript {{
         let num = parseFloat(@@magnitude.value)
         if (num < 0) {
             return `Number "${num}" is negative.`;
@@ -44,7 +44,7 @@ Length {
 LengthInch {
     extends Length;
     print Length;
-    validator {{
+    validator Javascript {{
         let units = @@units.value;
         if (units != 'inches') {
             return `Units "${units}" was not inches.`;
@@ -55,14 +55,14 @@ LengthInch {
 
 LengthInchPunct {
     extends LengthInch;
-    print {{ return `"${@@magnitude.value}"` }}
+    print Javascript {{ return `${@@magnitude.value}"` }}
 }
 
 Length2D {
     Length length;
     Length width;
-    print {{ return `${@@print(width)} x ${@@print(length)}`; }}
-    validator {{
+    print Javascript {{ return `${@@print(width)} x ${@@print(length)}`; }}
+    validator Javascript {{
         let len = parseFloat(@@length.magnitude.value);
         let wid = parseFloat(@@width.magnitude.value);
         if (len < wid) {
@@ -84,7 +84,7 @@ LengthInchPunct inch(mag, uni) {
 
 Measurement temperature;
 temperature.magnitude.value = '-17.3';
-temperature.units.value = 'Degrees Celsius');
+temperature.units.value = 'Degrees Celsius';
 
 Length miles;
 miles.magnitude.value = '23';

@@ -1,5 +1,5 @@
 """Fill the tree by parsing through the dit string.
-Runs entirely functionally from parse()."""
+Runs entirely functionally from parse(), assigning to tree."""
 
 
 from __future__ import annotations
@@ -8,7 +8,8 @@ from typing import List
 import re
 
 from dit_cli.exceptions import ParseError
-from dit_cli.tree import Tree, Assigners
+from dit_cli.tree import Tree, Assigners, Node
+from dit_cli import CONFIG, traverse
 
 
 def parse(dit: str) -> Tree:
@@ -29,6 +30,50 @@ def parse(dit: str) -> Tree:
             dit = _parse_comment(dit)
 
     return tree
+
+
+def prep_code(code: str, class_: Node, obj: Node, tree: Tree) -> str:
+    start = 0
+    while True:
+        escape = code.find('@@', start)
+        if escape == -1:
+            break
+        if code[escape:escape + 4] == '@@@@':
+            code = code[:escape] + code[escape + 2:]  # Keep only one @@
+            start = escape + 2
+            continue
+        if code[escape:escape + 3] == '@@@':
+            escape += 1
+
+        raw_var = _find_name(code[escape + 2:])
+        variable = _parse_variable(raw_var)
+        contain = tree.get_contain(variable, class_=class_, obj=obj)
+
+        value = _get_var_string(contain, class_)
+
+        code = code[:escape] + value + code[escape + 2 + len(raw_var):]
+        start = escape + len(value)
+
+    return code
+
+
+def _get_var_string(contain, class_: Node):
+    lang = CONFIG[class_.validator['language']]
+    if contain is None:
+        return lang['null_type']
+    data = []
+    for item in traverse(contain['data']):
+        if contain['id_'] == -1:
+            data.append(lang['str_open'] + item + lang['str_close'])
+
+    if len(data) == 1:
+        return data[0]
+    else:
+        value = lang['list_open']
+        for item in data:
+            value += item + lang['list_delimiter']
+        value += lang['list_close']
+        return value
 
 
 def _parse_class(dit: str, tree: Tree) -> str:
@@ -67,14 +112,16 @@ def _parse_class(dit: str, tree: Tree) -> str:
                 tree.set_print(variable)
             elif end == '{{':
                 # 'print {{ console.log('some custom code'); }}
-                _regex_helper(line, r'^print \s*\{\{$', 'print')
+                _regex_helper(line, r'^print name\s*\{\{$', 'print')
+                language = _find_name(_rep_strip(dit, 'print'))
                 (dit, code) = _parse_escape(dit, '{{', '}}', '@@')
-                tree.set_print(code=code)
+                tree.set_print(code=code, language=language)
         elif token == 'validator':
             # 'validator {{ return 'Some custom validation code'; }}
-            _regex_helper(line, r'^validator \s*\{\{$', 'validator')
+            _regex_helper(line, r'^validator name\s*\{\{$', 'validator')
+            language = _find_name(_rep_strip(dit, 'validator'))
             (dit, code) = _parse_escape(dit, '{{', '}}', '@@')
-            tree.set_validator(code)
+            tree.set_validator(code, language)
         elif token == '//':
             dit = _parse_comment(dit)
         elif token == 'list':
@@ -155,35 +202,57 @@ def _parse_assign(dit: str, tree: Tree, assigners: Assigners) -> str:
         if token == "'" or token == '"':
             (dit, string) = _parse_escape(dit, token, token, '\\')
             data.append(string)
-            if dit[0] == ',':
-                dit = _rep_strip(dit, ',')
         elif token == '[':
-            memory.append(']')
+            memory.append((']', None))
             data.append(None)  # Used as a unique placeholder
             dit = _rep_strip(dit, token)
         elif token == ']':
+            if len(memory) == 0:
+                raise ParseError(f'Closing "]" but no opening "["')
             mem = memory.pop()
-            if mem != ']':
-                raise ParseError(f'"{mem}" expected, found instead "]"')
-            list_ = []
-            while data[-1] is not None:
-                list_.append(data.pop())
-            data[-1] = list_
+            if mem[0] != ']':
+                raise ParseError(f'"{mem[0]}" expected, found instead "]"')
+            data[-1] = _list_from_data(data)
             dit = _rep_strip(dit, token)
-            if dit[0] == ',':
-                dit = _rep_strip(dit, ',')
+        elif token == ')':
+            if len(memory) == 0:
+                raise ParseError(f'Closing ")" but no opening "("')
+            mem = memory.pop()
+            if mem[0] != ')':
+                raise ParseError(f'"{mem[0]}" expected, found instead ")"')
+            parameters = _list_from_data(data)
+            data[-1] = mem[1].get_object(tree, parameters)
+            dit = _rep_strip(dit, token)
         elif re.match(r'^[A-Za-z_]$', token):
-            line = _find_name(dit)
-            dit = _rep_strip(dit, line)
-            data.append(tree.get_node(_parse_variable(line)))
+            name = _find_name(dit)
+            dit = _rep_strip(dit, name)
+            if dit[0] == '(':
+                memory.append((')', assigners.is_defined(name)))
+                data.append(None)  # Used as a unique placeholder
+                dit = _rep_strip(dit, '(')
+            else:
+                data.append(tree.get_data(_parse_variable(name)))
         else:
             raise ParseError('Expected ";"')
 
+        if len(dit) == 0:
+            raise ParseError('Expected ";"')
+        if dit[0] == ',':
+            dit = _rep_strip(dit, ',')
+
     if memory:
-        raise ParseError(f'Assign ended, but expected "{memory}"')
+        raise ParseError(f'Expected "{memory[0][0]}"')
 
     tree.assign_var(variable, data[0])
     return _rep_strip(dit, ';')
+
+
+def _list_from_data(data):
+    for index, item in enumerate(reversed(data)):
+        if item is None:
+            list_ = data[-index: len(data)]
+            del data[-index: len(data)]
+            return list_
 
 
 def _parse_declaration(dit: str) -> (str, str):
@@ -236,7 +305,7 @@ def _nearest_token(dit: str, tokens: List[str]) -> str:
 
 
 def _find_name(dit: str) -> str:
-    """Returns everything up to the nearest token, any token.
+    """Returns everything up to the nearest token, any token except periods.
     Useful when a name ends in white space, or some other limiter."""
     tokens = [' ', '\t', '\n', '{', ';', '=', '(', ',']
     return dit[:dit.find(_nearest_token(dit, tokens))]

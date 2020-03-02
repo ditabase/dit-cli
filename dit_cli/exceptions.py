@@ -19,7 +19,7 @@ class ValidationError(DitError):
     """Raised when anything goes wrong during validation of a dit"""
 
     def __init__(self, message, name):
-        super().__init__(f'<{name}>ValidationError', message)
+        super().__init__(f'ValidationError<{name}>', message)
 
 
 class ParseError(DitError):
