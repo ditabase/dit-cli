@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "dit-cli"
-version = "0.1.1"
+version = "0.2.0"
 description = "The CLI for dit"
 license = "GPL-3.0-or-later"
 authors = ["Isaiah Shiner <shiner.isaiah@gmail.com>"]
@@ -15,7 +15,6 @@ classifiers=[
 [tool.poetry.dependencies]
 python = "^3.8"
 click = "^7.0"
-networkx = "^2.4"
 more-itertools = "8.0.2"
 scipy = "^1.4.1"
 toml = "^0.10.0"
