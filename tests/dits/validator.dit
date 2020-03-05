@@ -1,0 +1,76 @@
+A {
+    String value;
+    print value;
+    validator Python {{
+        if @@value is None:
+            return 'value must be assigned'
+        if @@value == 'A bad value':
+            return 'The value was bad'
+        return 'true'
+    }}
+}
+
+A a;
+a.value = 'A good value value';
+
+B {
+    list String list;
+    String value;
+    print Javascript {{
+        var list = @@list;
+        list.push(@@value);
+        return list.join(" ");
+    }}
+    validator Javascript {{
+        const list = @@list;
+        if (list === null || @@value === null) {
+            return 'values must be assigned';
+        }
+        
+        for (var i = 0; i < list.length; i++) {
+            if (list[i] === 'Python') {
+                return 'It\'s actually Javascript';
+            }
+        }
+
+        return true;
+    }}
+}
+
+B b;
+b.list = ['It\'s','a', 'list', 'test', 'for'];
+b.value = 'something good';
+
+C {
+    A a;
+    B b;
+    validator Javascript {{
+        const a = @@print(a);
+        const print_val = @@print(b);
+        const b = @@b;
+
+        if (a === 'A good value value') {
+            if (b['value'] !== 'something good') {
+                return 'Was hoping b would also be something good...';
+            }
+        }
+
+        if (b.print !== print_val) {
+            return 'That shouldn\'t be possible';
+        }
+
+        if (b.name !== 'b') {
+            return 'Name "${b.name} wasn\'t "b"';
+        }
+
+        if (b.class !== 'B') {
+            return 'Type "${b.class} wasn\'t "B"';
+        }
+
+        return true;
+    }}
+}
+
+C c;
+c.a = a;
+c.b = b;

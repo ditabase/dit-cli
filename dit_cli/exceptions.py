@@ -1,5 +1,7 @@
 """All Exceptions used by dit_cli"""
 
+from subprocess import CalledProcessError
+
 
 class DitError(Exception):
     """Base Class for all dit exceptions"""
@@ -16,10 +18,21 @@ class FormatError(DitError):
 
 
 class ValidationError(DitError):
-    """Raised when anything goes wrong during validation of a dit"""
+    """Raised when a validator returns something other than true"""
 
     def __init__(self, message, name):
         super().__init__(f'ValidationError<{name}>', message)
+
+
+class CodeError(DitError):
+    """Raised when a code block has any kind of language specifc error"""
+
+    def __init__(self, error: CalledProcessError, class_,
+                 purpose: str, lang: dict):
+        message = (
+            f'{class_.name} {lang["name"]} {purpose}\n'
+            f'Error message follows:\n\n{error.stderr.decode("utf-8")}')
+        super().__init__('CodeError', message)
 
 
 class ParseError(DitError):

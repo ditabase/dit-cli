@@ -1,0 +1,38 @@
+A {
+    String value;
+    print Python {{
+        return '1 The value is ' + @@value
+    }}
+    validator Python {{
+        value = @@value
+        if value == 'red':
+            return f'"{value}" should not be red'
+        return 'true'
+    }}
+}
+
+B {
+    extends A;
+    print Python {{
+        return '2 The value is ' + @@value
+    }}
+    validator Python {{
+        value = @@value
+        if value == 'yellow':
+            return f'"{value}" should not be yellow'
+        return 'true'
+    }}
+}
+
+C {
+    B b;
+    validator Python {{
+        value = @@print(b)
+        if 'blue' in value:
+            return f'"{value}" should not have blue'
+        return 'true'
+    }}
+}
+
+C c;
+c.b.value = 'green';

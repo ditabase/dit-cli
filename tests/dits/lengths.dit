@@ -1,109 +1,110 @@
-<!DOCTYPE dit xml>
-<dit>
-    <fields>
-        <field>
-            <name>LengthPayload</name>
-            <extends>
-                <extend>
-                    <type>Length</type>
-                </extend>
-            </extends>
-            <payload>4 miles</payload>
-        </field>
-        <field>
-            <name>LengthInchPayload</name>
-            <extends>
-                <extend>
-                    <type>LengthInch</type>
-                </extend>
-            </extends>
-            <payload>91 inches</payload>
-        </field>
-        <field>
-            <name>LengthInchPunctPayload</name>
-            <extends>
-                <extend>
-                    <type>LengthInchPunct</type>
-                </extend>
-            </extends>
-            <payload>24"</payload>
-        </field>
-    </fields>
-    <objects>
-        <object>
-            <name>Length</name>
-            <description>Contains a floating point number and string unit, separated by a single space.</description>
-            <example>7 mm</example>
-            <validator>
-                function isNumeric(n) {
-                    return !isNaN(parseFloat(n)) && isFinite(n);
-                }
+Number {
+    String value;
+    print value;
+    validator Javascript {{
+        const num = @@print(value);
+        if (isNaN(parseFloat(num)) || !isFinite(num)) {
+            return `"${num}" is not a number.`;
+        }
+        return true;
+    }}
+}
 
-                if (PAYLOAD.indexOf(' ') === -1) {
-                    return `"${PAYLOAD}" was missing a space separator.`;
-                }
+StringSpacesOnly {
+    String value;
+    print value;
+    validator Javascript {{
+        let str = @@value;
+        if (/[\t\r\n\f]/.test(str)) {
+            return `The following string contains whitespace other than spaces:
+            "${str}"`;
+        }
+        return true;
+    }}
+}
 
-                const number = PAYLOAD.substring(0, PAYLOAD.indexOf(' '));
+Measurement {
+    Number magnitude;
+    StringSpacesOnly units;
+    print Javascript {{ return `${@@magnitude.value} ${@@units.value}`; }}
+}
 
-                if (!isNumeric(number)) {
-                    return `Number field "${number}" was not a number.`;
-                }
+Length {
+    extends Measurement;
+    print Measurement;
+    validator Javascript {{
+        let num = parseFloat(@@magnitude.value)
+        if (num < 0) {
+            return `Number "${num}" is negative.`;
+        }
+        return true;
+    }}
+}
 
-                if (number < 0) {
-                    return `Number field "${number}" cannot be negative.`;
-                }
+LengthInch {
+    extends Length;
+    print Length;
+    validator Javascript {{
+        let units = @@units.value;
+        if (units != 'inches') {
+            return `Units "${units}" was not inches.`;
+        }
+        return true;
+    }}
+}
 
-                const units = PAYLOAD.substring(PAYLOAD.indexOf(' ') + 1);
+LengthInchPunct {
+    extends LengthInch;
+    print Javascript {{ 
+        // Notice the " so will be 36" instead of 36 inches
+        return `${@@magnitude.value}"`; 
+    }}
+}
 
-                if (units === "") {
-                    return `Units field "${units}" was blank.`
-                }
+Length2D {
+    Length length;
+    Length width;
+    print Javascript {{ return `${@@print(width)} x ${@@print(length)}`; }}
+    validator Javascript {{
+        let len = parseFloat(@@length.magnitude.value);
+        let wid = parseFloat(@@width.magnitude.value);
+        if (len < wid) {
+            return `length "${len}" < width "${wid}". Length must be greater.`;
+        }
+        return true;
+    }}
+}
 
-                // Unit could be checked against an ISO list of length names, but omitted for simplicity.
+Length l(mag, uni) {
+    magnitude.value = mag;
+    units.value = uni;
+}
 
-                return true;
-            </validator>
-        </object>
-        <object>
-            <name>LengthInch</name>
-            <description>A length where the unit is always 'inches'.</description>
-            <example>8 inches</example>
-            <extends>
-                <extend>
-                    <type>Length</type>
-                </extend>
-            </extends>
-            <validator>
-                if (!PAYLOAD.endsWith(' inches')) {
-                    return `Units of "${PAYLOAD}" was not inches.`;
-                }
-                return true;
-            </validator>
-        </object>
-        <object>
-            <name>LengthInchPunct</name>
-            <description>A length where the unit is the '"' quotation mark symbol, meaning inches.</description>
-            <example>3"</example>
-            <overrides>
-                <override>
-                    <type>LengthInch</type>
-                    <converter>
-                        return PAYLOAD.replace('"', ' inches');
-                    </converter>
-                </override>
-            </overrides>
-            <config>
-                <language>Python</language>
-                <validator>
-                    if PAYLOAD.find(' ') != -1:
-                        return '"{}" still contained a space separator.'.format(PAYLOAD)
+LengthInchPunct inch(mag, uni) {
+    magnitude.value = mag;
+    units.value = uni;
+}
 
-                    if not PAYLOAD.endswith('"'):
-                        return '"{}" did not end with a " quotation mark.'.format(PAYLOAD)
+Measurement temperature;
+temperature.magnitude.value = '-17.3';
+temperature.units.value = 'Degrees Celsius';
 
-                    return 'true'
-                </validator>
-            </config>
-        </object>
-    </objects>
-</dit>
+Length miles;
+miles.magnitude.value = '23';
+miles.units.value = 'miles';
+
+LengthInch inches;
+inches.magnitude.value = '7';
+inches.units.value = 'inches';
+
+LengthInchPunct inchPunct;
+inchPunct.magnitude.value = '3';
+inchPunct.units.value = 'inches';
+
+Length2D metricBoard;
+metricBoard.width = l('48', 'millimeters');
+metricBoard.length = l('98', 'millimeters');
+
+Length2D inchBoard;
+inchBoard.width = inch('2', 'inches');
+inchBoard.length = inch('4', 'inches');

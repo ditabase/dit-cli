@@ -1,45 +1,48 @@
 """Pytest unit tests"""
 
 import os
-from dit_cli.dit import validate_dit
+from dit_cli.cli import validate_dit
 
 DIT_DIR = os.path.join(os.path.dirname(__file__), 'dits/')
 VALID_STR = 'dit is valid, no errors found'
 
 
+def test_classroom():
+    result = validate_dit(get_file('classroom.dit'))
+    assert result == VALID_STR
+
+
+def test_extension():
+    result = validate_dit(get_file('extension.dit'))
+    assert result == VALID_STR
+
+
+def test_fruits():
+    result = validate_dit(get_file('fruits.dit'))
+    assert result == VALID_STR
+
+
 def test_lengths():
-    """Check that lengths.dit is valid"""
-    assert is_file_valid('lengths.dit')
+    result = validate_dit(get_file('lengths.dit'))
+    assert result == VALID_STR
 
 
-def test_basic():
-    """Check that test.dit is valid"""
-    assert is_file_valid('basic.dit')
+def test_multiple_inheritance():
+    result = validate_dit(get_file('multiple_inheritance.dit'))
+    assert result == VALID_STR
 
 
-def test_error_doc():
-    """Test that the missing doc type error is correct"""
-    assert is_error_valid(
-        'error-doctype.dit', 'Found Header reads: <!DOCTYE dit xml>')
+def test_syntax_enums():
+    result = validate_dit(get_file('syntax_enums.dit'))
+    assert result == VALID_STR
 
 
-def test_error_json():
-    """Test that a json parser type error is correct"""
-    assert is_error_valid(
-        'error-json.dit', '"json" is not currently supported.')
+def test_validator():
+    result = validate_dit(get_file('syntax_enums.dit'))
+    assert result == VALID_STR
 
 
 def get_file(file_name):
     """Helper to turn a test file name into the file"""
     with open(os.path.join(DIT_DIR, file_name)) as file_object:
         return file_object.read()
-
-
-def is_file_valid(file_name: str) -> bool:
-    """Helper to test the validation of a test file"""
-    return validate_dit(get_file(file_name)) == VALID_STR
-
-
-def is_error_valid(file_name: str, error: str) -> bool:
-    """Helper to test the error returned by a dit"""
-    return str(validate_dit(get_file(file_name))).find(error) != -1

@@ -42,7 +42,6 @@ sister.a.a = 'not great';
 D {
     extends A, B;
 
-    A a;
     print A; // Inherit the print method from A
     print a; // Prints 'a' from 'A'. 'a' from 'B' is hidden, because it was
              // extended second.
@@ -58,17 +57,14 @@ D {
 D d;
 
 d.a = 'a';
-d.z = 'b';
-d.B.a = 'c';
-d.b = 'd';
-d.a = 'something new';
-d.B.a = 'also new';
-d.A.a = 'should work';
+d.z = 'z';
+d.B.a = 'b a';
+d.b = 'b';
 
 E {
-    list 1 String list_1;// List depth 1
-    list 2 String list_2;// 2D list
-    list 3 String list_3;// 3D list, and so on.
+    list String list_1;// List depth 1
+    list String list_2;// 2D list
+    list String list_3;// 3D list, and so on.
 }
 
 E e;
@@ -100,7 +96,7 @@ D d(a, z, a2, b) {
 F {
     C c;
     D d;
-    list 1 String a_list;
+    list String a_list;
 }
 
 F f(c, d, li) {

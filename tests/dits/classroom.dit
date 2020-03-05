@@ -14,7 +14,7 @@ Food {
     String value;
     print value;
     validator Javascript {{
-        let foods = ['Pasta', 'French Fries', 'Ice Cream', 'Bread', 'Fried Rice', 'Pancakes', 'Burger', 'Pizza', 'Pumpkin Pie', 'Chicken Pot Pie', 'Banana', 'Apple Pie', 'Bagel', 'Muffins', 'Alfredo Sauce', 'Reese's Peanut Cups', 'Ice Cream Cake', 'Cheesecake', 'Cheese', 'Banana Bread', 'Potato Chips', 'Cheetos', 'Doritos', 'Tacos', 'Burritos', 'Chimichanga', 'Enchilada', 'Salsa', 'Marinara Sauce', 'Broccoli', 'Chocolate Covered Strawberries', 'Kiwi', 'Tomato', 'Salad', 'Steak', 'Chicken Tenders', 'Grilled Chicken', 'Ribs', 'Biscuits and Gravy', 'Hot Dogs', 'Fried Chicken', 'Roasted Chicken and Garlic', 'Eggs', 'Bacon', 'Sausage', 'Mashed Potatoes', 'Stuffing', 'Brownies', 'Cookies', 'Submarine Sandwiches', 'Donuts', 'Turkey', 'Cranberry', 'Gravy', 'Green Beans', 'Mac and Cheese', 'Soup', 'Lamb Chops', 'Fried Pork Chops and Gravy', 'Ham', 'Sushi', 'Teriyaki', 'Popcorn', 'Shrimp', 'Lasagna', 'Ravioli', 'Gelatin', 'Pudding', 'Meatballs', 'Gyro Sandwich', 'Pulled Pork', 'Nachos', 'Onion Rings', 'Chocolate Cake', 'Carrot Cake', 'Tater Tots', 'French Toast', 'Baked Potato', 'Olive Garden Breadsticks', 'Crepes', 'Chicken Nuggets', 'Croissant', 'Apple Sauce', 'Green Bean Casserole With Fried Onions', 'Sweet Potatoes', 'Potato', 'Cantaloupe', 'Apple', 'Orange', 'Strawberries', 'Peaches', 'Honeydew', 'Ginger Bread', 'Mango', 'Raspberries', 'Blueberries', 'Corn', 'Tamale', 'Fried Zucchini Blossoms', 'Calzone']
+        let foods = ['Pasta', 'French Fries', 'Ice Cream', 'Bread', 'Fried Rice', 'Pancakes', 'Burger', 'Pizza', 'Pumpkin Pie', 'Chicken Pot Pie', 'Banana', 'Apple Pie', 'Bagel', 'Muffins', 'Alfredo Sauce', 'Reese\'s Peanut Cups', 'Ice Cream Cake', 'Cheesecake', 'Cheese', 'Banana Bread', 'Potato Chips', 'Cheetos', 'Doritos', 'Tacos', 'Burritos', 'Chimichanga', 'Enchilada', 'Salsa', 'Marinara Sauce', 'Broccoli', 'Chocolate Covered Strawberries', 'Kiwi', 'Tomato', 'Salad', 'Steak', 'Chicken Tenders', 'Grilled Chicken', 'Ribs', 'Biscuits and Gravy', 'Hot Dogs', 'Fried Chicken', 'Roasted Chicken and Garlic', 'Eggs', 'Bacon', 'Sausage', 'Mashed Potatoes', 'Stuffing', 'Brownies', 'Cookies', 'Submarine Sandwiches', 'Donuts', 'Turkey', 'Cranberry', 'Gravy', 'Green Beans', 'Mac and Cheese', 'Soup', 'Lamb Chops', 'Fried Pork Chops and Gravy', 'Ham', 'Sushi', 'Teriyaki', 'Popcorn', 'Shrimp', 'Lasagna', 'Ravioli', 'Gelatin', 'Pudding', 'Meatballs', 'Gyro Sandwich', 'Pulled Pork', 'Nachos', 'Onion Rings', 'Chocolate Cake', 'Carrot Cake', 'Tater Tots', 'French Toast', 'Baked Potato', 'Olive Garden Breadsticks', 'Crepes', 'Chicken Nuggets', 'Croissant', 'Apple Sauce', 'Green Bean Casserole With Fried Onions', 'Sweet Potatoes', 'Potato', 'Cantaloupe', 'Apple', 'Orange', 'Strawberries', 'Peaches', 'Honeydew', 'Ginger Bread', 'Mango', 'Raspberries', 'Blueberries', 'Corn', 'Tamale', 'Fried Zucchini Blossoms', 'Calzone']
         if (foods.indexOf(@@value) === -1) { 
             return `"${@@value}" is not a valid food.`; 
         }
@@ -31,7 +31,7 @@ Name {
 Kid {
     Name name;
     Color favoriteColor;
-    list 1 Food favoriteFoods;
+    list Food favoriteFoods;
 }
 
 Email {
@@ -54,34 +54,23 @@ Person {
 
 Teacher {
     extends Person;
-    list 1 String subjects;
+    list String subjects;
 }
 
 Classroom {
-    String teacher;
+    Teacher teacher;
     String roomNumber;
-    list 1 Kid kids;
+    list Kid kids;
 }
 
 School {
     String name;
     Person principal;
-    list 1 Classroom rooms;
+    list Classroom rooms;
     validator Javascript {{
-        /*
-        console.log(`School Name: "${@@name}"`);
-
-        // Javascript, creates a JSON object
+        // In Javascript, creates a JSON object
         // No matter what language, creates a dictionary/list/strings
         let prince = @@principal;
-        console.log(`Principal Name: "${prince.name.print}"`);
-        console.log(`Principal Email: "${prince.email.print}"`);
-
-        // Lists of classroom objects
-        let rooms = @@rooms;
-        console.log(`Second Room Number: "${rooms[1].roomNumber}"`);
-        console.log(`Second Room, Kid 5, favorite foods: "${rooms[1].kids[4].favoriteFoods}"`);
-        */
         return true;
     }}
 }
@@ -96,7 +85,11 @@ Person p(given, family, address, email) {
     email = email;
 }
 
-school.principal = p('Jane', 'Smith' '1354 5th St, Apartment 21', 'jsmith@gmail.com');
+Email e(email) {
+    value = email;
+}
+
+school.principal = p('Jane', 'Smith' '1354 5th St, Apartment 21', e('jsmith@gmail.com'));
 
 Classroom c(teacher,room,kids) {
     teacher = teacher;
@@ -125,55 +118,55 @@ Food f(food) {
 
 school.rooms=[
     c(
-        t('Adam','Brown','940 W Cherry St.','adam.brown34@gmail.com',['Chemistry','Algebra']),
+        t('Adam','Brown','940 W Cherry St.',e('adam.brown34@gmail.com'),['Chemistry','Algebra']),
         '125B',
         [
-            k('Erick','Faller','Blue',[f('Pizza'),f('Cake')]),
-            k('Carrie','Dejarnette','Blue',[f('Pizza'),f('Cake')]),
-            k('Dean','Lacombe','Blue',[f('Pizza'),f('Cake')]),
-            k('Emmy','Greenland','Blue',[f('Pizza'),f('Cake')]),
-            k('Shanika','Secrest','Blue',[f('Pizza'),f('Cake')]),
-            k('Matilde','Mazzola','Blue',[f('Pizza'),f('Cake')]),
-            k('Megan','Monk','Blue',[f('Pizza'),f('Cake')]),
-            k('Santa','Pietrowski','Blue',[f('Pizza'),f('Cake')]),
-            k('Katharyn','Chun','Blue',[f('Pizza'),f('Cake')]),
-            k('Amelia','Avilla','Blue',[f('Pizza'),f('Cake')]),
-            k('Carie','Clopton','Blue',[f('Pizza'),f('Cake')]),
-            k('Arline','Vencill','Blue',[f('Pizza'),f('Cake')]),
-            k('Francesco','Kies','Blue',[f('Pizza'),f('Cake')]),
-            k('Awilda','Heatherington','Blue',[f('Pizza'),f('Cake')]),
-            k('Marilu','Tippie','Blue',[f('Pizza'),f('Cake')]),
-            k('Bradley','Ronco','Blue',[f('Pizza'),f('Cake')]),
-            k('Ronna','Foucher','Blue',[f('Pizza'),f('Cake')]),
-            k('Yuette','Marini','Blue',[f('Pizza'),f('Cake')]),
-            k('Enedina','Mckissack','Blue',[f('Pizza'),f('Cake')]),
-            k('Aron','Crossland','Blue',[f('Pizza'),f('Cake')]),
+            k('Erick','Faller','Magenta',[f('Pizza'),f('Pancakes')]),
+            k('Carrie','Dejarnette','Orange',[f('Pasta'),f('Mac and Cheese')]),
+            k('Dean','Lacombe','Purple',[f('Gravy'),f('Doritos')]),
+            k('Emmy','Greenland','Blue',[f('Tacos'),f('Mango')]),
+            k('Shanika','Secrest','Blue',[f('Eggs'),f('Fried Chicken')]),
+            k('Matilde','Mazzola','Red',[f('Ice Cream'),f('Turkey')]),
+            k('Megan','Monk','Orange',[f('Cranberry'),f('Pancakes')]),
+            k('Santa','Pietrowski','Blue',[f('Cookies'),f('Doritos')]),
+            k('Katharyn','Chun','Green',[f('Fried Chicken'),f('Fried Chicken')]),
+            k('Amelia','Avilla','Blue',[f('Chocolate Covered Strawberries'),f('Chocolate Cake')]),
+            k('Carie','Clopton','Red',[f('Orange'),f('Chocolate Cake')]),
+            k('Arline','Vencill','Purple',[f('Honeydew'),f('Apple Sauce')]),
+            k('Francesco','Kies','Blue',[f('Blueberries'),f('Pudding')]),
+            k('Awilda','Heatherington','Yellow',[f('Pizza'),f('Pancakes')]),
+            k('Marilu','Tippie','Green',[f('Cheesecake'),f('Ribs')]),
+            k('Bradley','Ronco','Cyan',[f('Apple Pie'),f('Apple Sauce')]),
+            k('Ronna','Foucher','Silver',[f('Ice Cream'),f('Donuts')]),
+            k('Yuette','Marini','Blue',[f('Pumpkin Pie'),f('Fried Chicken')]),
+            k('Enedina','Mckissack','Red',[f('Lasagna'),f('Chocolate Cake')]),
+            k('Aron','Crossland','Green',[f('Ham'),f('Pudding')]),
         ]
     ),
     c(
-        t('Julie', 'Waybright', '12 Ferry Way', 'sillyspazmonkey@gmail.com', ['American History', 'Government']),
+        t('Julie', 'Waybright', '12 Ferry Way', e('sillyspazmonkey@gmail.com'), ['American History', 'Government']),
         '123',
         [
-            k('Erick', 'Faller', 'Blue', [f('Pizza'),f('Cake')]),
-            k('Carrie', 'Dejarnette', 'Blue', [f('Pizza'),f('Cake')]),
-            k('Dean', 'Lacombe', 'Blue', [f('Pizza'),f('Cake')]),
-            k('Emmy', 'Greenland', 'Blue', [f('Pizza'),f('Cake')]),
-            k('Shanika', 'Secrest', 'Blue', [f('Pizza'),f('Cake')]),
-            k('Matilde', 'Mazzola', 'Blue', [f('Pizza'),f('Cake')]),
-            k('Megan', 'Monk', 'Blue', [f('Pizza'),f('Cake')]),
-            k('Santa', 'Pietrowski', 'Blue', [f('Pizza'),f('Cake')]),
-            k('Katharyn', 'Chun', 'Blue', [f('Pizza'),f('Cake')]),
-            k('Amelia', 'Avilla', 'Blue', [f('Pizza'),f('Cake')]),
-            k('Carie', 'Clopton', 'Blue', [f('Pizza'),f('Cake')]),
-            k('Arline', 'Vencill', 'Blue', [f('Pizza'),f('Cake')]),
-            k('Francesco', 'Kies', 'Blue', [f('Pizza'),f('Cake')]),
-            k('Awilda', 'Heatherington', 'Blue', [f('Pizza'),f('Cake')]),
-            k('Marilu', 'Tippie', 'Blue', [f('Pizza'),f('Cake')]),
-            k('Bradley', 'Ronco', 'Blue', [f('Pizza'),f('Cake')]),
-            k('Ronna', 'Foucher', 'Blue', [f('Pizza'),f('Cake')]),
-            k('Yuette', 'Marini', 'Blue', [f('Pizza'),f('Cake')]),
-            k('Enedina', 'Mckissack', 'Blue', [f('Pizza'),f('Cake')]),
-            k('Aron', 'Crossland', 'Blue', [f('Pizza'),f('Cake')]),
+            k('Harvir', 'Crosby', 'Green', [f('Pancakes'),f('Chocolate Cake')]),
+            k('Samuel', 'Kirk', 'Red', [f('Ribs'),f('Chocolate Cake')]),
+            k('Bayley', 'Bullock', 'Blue', [f('Pizza'),f('Ginger Bread')]),
+            k('Abraham', 'Barrett', 'Orange', [f('Ribs'),f('Mac and Cheese')]),
+            k('Cadence', 'Fry', 'Magenta', [f('Donuts'),f('Pancakes')]),
+            k('Corrie', 'Roche', 'Blue', [f('Pizza'),f('Donuts')]),
+            k('Enrique', 'Lewis', 'Pink', [f('Pizza'),f('Chocolate Cake')]),
+            k('Santa', 'Pietrowski', 'Navy', [f('Mac and Cheese'),f('Donuts')]),
+            k('Laith', 'Handley', 'Brown', [f('Fried Chicken'),f('Ginger Bread')]),
+            k('Chester', 'Rubio', 'Red', [f('Pancakes'),f('Chocolate Cake')]),
+            k('Junior', 'Pittman', 'Blue', [f('Mango'),f('Doritos')]),
+            k('Lawrence', 'Acevedo', 'Purple', [f('Pizza'),f('Ginger Bread')]),
+            k('Nafeesa', 'Wheeler', 'Cyan', [f('Pudding'),f('Pudding')]),
+            k('Chris', 'Ramirez', 'Red', [f('Pizza'),f('Mac and Cheese')]),
+            k('Jareth', 'Lozano', 'Orange', [f('Mango'),f('Turkey')]),
+            k('Colette', 'Combs', 'Orange', [f('Pancakes'),f('Turkey')]),
+            k('Glenn', 'Wormald', 'Blue', [f('Fried Chicken'),f('Chocolate Cake')]),
+            k('Portia', 'Poole', 'Yellow', [f('Pizza'),f('Mac and Cheese')]),
+            k('Atticus', 'Collier', 'Blue', [f('Apple Sauce'),f('Chocolate Cake')]),
+            k('Yisroel', 'Ross', 'Green', [f('Doritos'),f('Apple Sauce')]),
         ]
     )
 ];
