@@ -5,7 +5,7 @@ import click
 
 from dit_cli.exceptions import DitError
 from dit_cli.parser import parse
-from dit_cli.evaler import validate_object
+from dit_cli.evaler import validate_object, serialize
 
 
 @click.group()
@@ -14,15 +14,23 @@ def main():
 
 
 @click.command()
-@click.argument('file_path')
-def validate(file_path):
-    """Validate the following file, according to dit standards"""
-
-    with open(file_path) as file_object:
-        click.echo(validate_dit(file_object.read()))
+@click.argument('filepath', type=click.File('r'))
+def validate(filepath):
+    """Validate the file"""
+    click.echo(validate_dit(filepath.read()))
 
 
-def validate_dit(dit):
+@click.command()
+@click.argument('filepath', type=click.File('r'))
+@click.argument('query')
+def query(filepath, query):
+    """Return data from @@variable sequence"""
+    if query[:2] == '@@':
+        query = query[2:]
+    click.echo(validate_dit(filepath.read(), query=query))
+
+
+def validate_dit(dit, query=None):
     """Validates a string as a dit."""
 
     # Catch all validation errors. The entire validation is done inside this try.
@@ -37,12 +45,16 @@ def validate_dit(dit):
             if node.type_ == 'object':
                 validate_object(node, tree)
 
-        return 'dit is valid, no errors found'
+        if query is None:
+            return 'dit is valid, no errors found'
+        else:
+            return serialize(query, tree)
     except DitError as error:
         return error
 
 
 main.add_command(validate)
+main.add_command(query)
 
 if __name__ == '__main__':
     main()

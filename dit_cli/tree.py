@@ -213,7 +213,7 @@ def _process_var(tree: Tree, variable: List[str], class_: Node = None,
     # and the fact that contain info and node info are seperated.
     # I think refactoring the data structures would make this much more
     # readable without changing the flow control at all.
-
+    first_var = None
     if not class_:
         node_id = _id_from_name(variable[0], tree)
         if len(variable) == 1 and data is not None:  # assign entire node
@@ -223,13 +223,14 @@ def _process_var(tree: Tree, variable: List[str], class_: Node = None,
         if obj.type_ == 'class':
             raise TreeError(f'Cannot assign to class: {variable[0]}')
         class_ = tree.nodes[obj.extends[0]]
-        variable.pop(0)
+        first_var = variable.pop(0)
 
     prefix = None
     for index, var in enumerate(variable):
         result = _recurse_var(var, class_, tree)
         if result[0] == 'not found':
-            raise TreeError(f'Undefined variable "{var}" in "{variable}"')
+            var_string = _print_var(variable, first_var)
+            raise TreeError(f'Undefined variable "{var}"{var_string}')
 
         if index < len(variable) - 1:  # There are more elements
             if result[0] == 'extend':
@@ -240,8 +241,9 @@ def _process_var(tree: Tree, variable: List[str], class_: Node = None,
                 class_contain = result[1]
                 obj_contain = _find_contain(obj, var, prefix)
                 if class_contain['id_'] == -1:
+                    var_string = _print_var(variable, first_var)
                     raise TreeError(
-                        f'Cannot reference string "{var}" in "{variable}"')
+                        f'Cannot reference string "{var}"{var_string}')
 
                 if data is not None and obj_contain is None:
                     new_obj = Node(var, 'object')
@@ -381,3 +383,12 @@ def _id_from_name(name: str, tree: Tree) -> int:
             return id_
 
     raise TreeError(f'Undefined variable "{name}"')
+
+
+def _print_var(variable: List[str], first_var):
+    if first_var:
+        variable.insert(0, first_var)
+    if len(variable) == 1:
+        return ''
+    else:
+        return ' in "' + '.'.join(variable) + '"'

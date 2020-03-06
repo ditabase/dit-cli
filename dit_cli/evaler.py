@@ -101,11 +101,9 @@ def _prep_code(obj: Node, tree: Tree, code: str, lang: dict) -> str:
             print_ = False
             raw_var = find_name(code[escape + 2:])
 
-        variable = parse_variable(raw_var)
-        contain = tree.get_contain(
-            variable, class_=tree.nodes[obj.extends[0]], obj=obj)
         # Starts the serialization recursion chain
-        value = _ser_contain(contain, lang, tree, print_)
+        value = serialize(raw_var, tree, class_=tree.nodes[obj.extends[0]],
+                          obj=obj, lang=lang)
         start = escape + len(value)
 
         if print_:
@@ -114,6 +112,23 @@ def _prep_code(obj: Node, tree: Tree, code: str, lang: dict) -> str:
             code = code[:escape] + value + code[escape + 2 + len(raw_var):]
 
     return code
+
+
+def serialize(var: str, tree: Tree, class_: Node = None, obj: Node = None,
+              lang: dict = CONFIG['Javascript']) -> str:
+    """Convert a variable sequence into a
+    string representation of that variable"""
+    print_ = False
+    if var[:6] == 'print(':
+        print_ = True
+        var = var[6:-1]
+
+    variable = parse_variable(var)
+    result = tree.get_contain(variable, class_=class_, obj=obj)
+    if isinstance(result, Node):
+        return _ser_obj(result, lang, tree, print_)
+    else:
+        return _ser_contain(result, lang, tree, print_)
 
 
 def _ser_contain(contain, lang: dict, tree: Tree, print_: bool) -> str:

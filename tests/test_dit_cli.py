@@ -42,6 +42,11 @@ def test_validator():
     assert result == VALID_STR
 
 
+def test_query():
+    result = validate_dit(get_file('fruits.dit'), 'fav.value')
+    assert result == '"kiwi"'
+
+
 def get_file(file_name):
     """Helper to turn a test file name into the file"""
     with open(os.path.join(DIT_DIR, file_name)) as file_object:
