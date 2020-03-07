@@ -1,7 +1,4 @@
 # dit - The universal container file
-
-Interface for working with .dit files
-
 ![Short Demo](docs/gifs/short.gif)
 
 Dit is a new way of storing data, designed to be as generic as possible. It uses embedded scripts for validation, custom print functions, and more. Dits can be used to transport data across different formats and platforms, so sharing data is much easier. See more at [the official website.](https://www.ditabase.io/)
@@ -15,14 +12,14 @@ Dit can be installed with [pip for python](https://pip.pypa.io/en/stable/install
 ## Usage
 
     dit validate [filename]
-Validate a dit file. Returns either an error message, or 'dit is valid, no errors found'
+Validate a dit file. Returns either an error message, or 'dit is valid, no errors found'.
 
     dit query [filename] [query_string]
 Validate a dit file, and then return a value based on the query. A query should resemble a `@@` variable sequence found in dit code.
 
     '@@top_level_object' -> serialize the entire object
     '@@top_level_object.some_value' -> serialize that value, whatever it is
-    '@@print(top_level_object) -> Use the object's print function, if it has one.
+    '@@print(top_level_object)' -> Use the object's print function, if it has one.
 
 ## dit quickstart
 
@@ -36,7 +33,7 @@ Name {
 }
 ```
 
-This is a dit class, with a single contained (instance) variable. String is the only primitive type. Everything in dit is either a string, object, or a list.
+This is a dit class, with a single contained (instance) variable. String is the only primitive type. Everything is either a string, object, or list.
 
 Now that we have a class, we can make an object and assign it.
 
@@ -55,7 +52,7 @@ The double at symbol `@@` is the dit escape sequence, used to reference variable
     dit query name.dit @@name
     {"class":"Name","value":"John"}
 
-The default print language is Javascript, but this is highly configurable. Let's add a custom print function.
+The default print language is Javascript, which means JSON, but this is highly configurable. Let's add a custom print function.
 
 ```
 Name {
@@ -87,7 +84,7 @@ Name {
         return 'My name is ' + @@value
     }}
     validator Javascript {{
-        // Let's use Javascript here, I like the regex syntax better.
+        // Let's use Javascript here, I prefer the regex syntax.
         let name = @@value;
         if (!/^[A-Z][A-z]+$/.test(name)) {
             return `Not a valid name: "${name}"`
@@ -129,7 +126,7 @@ Name middleName1;
 Name middleName2;//This would be awful
 ```
 
-So, we can use an Assigner, which will create an anonymous object for us on the fly. Assigners can only have assignment statements currently, but they will probably look more like arbitrary functions in the future.
+So, we can use an assigner, which will create an anonymous object for us on the fly. Assigners can only have assignment statements currently, but they will probably look more like arbitrary functions in the future.
 
 ```
 Name n(name) {
