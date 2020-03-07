@@ -195,7 +195,9 @@ def _ser_obj(obj: Node, lang: dict, tree: Tree, print_: bool) -> str:
         return lang['str_open'] + identifier + lang['str_close'] + \
             lang['obj_colon'] + value + lang['obj_delimiter']
 
-    value += field('name', _ser_str(obj.name, lang))
+    # This information is redundant.
+    # It could be added back conditionally, but removed entirely for now.
+    # value += field('name', _ser_str(obj.name, lang))
     value += field('class', _ser_str(tree.nodes[obj.extends[0]].name, lang))
     if class_.print is not None:
         value += field('print', _run_print(obj, class_, lang, tree))
