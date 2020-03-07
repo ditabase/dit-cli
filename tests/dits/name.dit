@@ -1,0 +1,39 @@
+Name {
+    String value;
+    print Python {{
+        return 'My name is ' + @@value
+    }}
+    validator Javascript {{
+        // Let's use Javascript here, I like the regex syntax better.
+        let name = @@value;
+        if (!/^[A-Z][A-z]+$/.test(name)) {
+            return `Not a valid name: "${name}"`
+        }
+        return true;
+    }}
+}
+
+FullName {
+    Name givenName;
+    list Name middleNames;
+    Name familyName;
+    print Python {{
+        full = @@givenName.value
+        for mid in (@@middleNames):#Returns a list of Python dictionaries
+            full += ' ' + mid['value']
+        full += ' ' + @@familyName.value
+        return 'Hi! My name is ' + full
+    }}
+}
+
+Name name;
+name.value = 'Isaiah';
+
+Name n(name) {
+    value = name;
+}
+
+FullName myName;
+myName.givenName = name;
+myName.middleNames = [n('Leopold'), n('Koser')];
+myName.familyName.value = 'Shiner';
