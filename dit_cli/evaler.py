@@ -126,7 +126,11 @@ def serialize(var: str, tree: Tree, class_: Node = None, obj: Node = None,
     variable = parse_variable(var)
     result = tree.get_contain(variable, class_=class_, obj=obj)
     if isinstance(result, Node):
-        return _ser_obj(result, lang, tree, print_)
+        if print_:
+            class_ = tree.nodes[result.extends[0]]
+            return _run_print(result, class_, lang, tree)
+        else:
+            return _ser_obj(result, lang, tree, print_)
     else:
         return _ser_contain(result, lang, tree, print_)
 

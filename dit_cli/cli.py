@@ -27,6 +27,7 @@ def query(filepath, query):
     """Return data from @@variable sequence"""
     if query[:2] == '@@':
         query = query[2:]
+    query = query.replace("'", '').replace('"', '')
     click.echo(validate_dit(filepath.read(), query=query))
 
 
