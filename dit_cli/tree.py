@@ -244,6 +244,14 @@ def _process_var(tree: Tree, variable: List[str], class_: Node = None,
                     var_string = _print_var(variable, first_var)
                     raise TreeError(
                         f'Cannot reference string "{var}"{var_string}')
+                if class_contain['list_']:
+                    # TODO: You should be able to reference lists of objects.
+                    # It would implicitly understand that you want to
+                    # mess with each item in the list, rather than the list
+                    # as a whole.
+                    var_string = _print_var(variable, first_var)
+                    raise TreeError(
+                        f'Cannot reference list "{var}"{var_string}')
 
                 if data is not None and obj_contain is None:
                     new_obj = Node(var, 'object')
