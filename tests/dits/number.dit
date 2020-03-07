@@ -1,11 +1,11 @@
 Number {
     String value;
-    print value;    
+    print value;
     validator Python {{
         num = @@value
         if not num.isnumeric():
             return f'"{num}" is not a number'
-        return 'true'
+        return True
     }}
 }
 

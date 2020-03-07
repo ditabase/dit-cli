@@ -6,7 +6,7 @@ A {
             return 'value must be assigned'
         if @@value == 'A bad value':
             return 'The value was bad'
-        return 'true'
+        return True
     }}
 }
 

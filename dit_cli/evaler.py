@@ -55,7 +55,7 @@ def _run_validator(obj: Node, class_: Node, tree: Tree):
         lang = CONFIG[class_.validator['lang']]
         code = _prep_code(obj, tree, class_.validator['code'], lang)
         result = _run_code(class_, 'Validator', code, lang)
-        if result != 'true':
+        if result.casefold() != 'true':
             raise ValidationError(result, obj.name)
 
 

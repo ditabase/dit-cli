@@ -7,7 +7,7 @@ A {
         value = @@value
         if value == 'red':
             return f'"{value}" should not be red'
-        return 'true'
+        return True
     }}
 }
 
@@ -20,7 +20,7 @@ B {
         value = @@value
         if value == 'yellow':
             return f'"{value}" should not be yellow'
-        return 'true'
+        return True
     }}
 }
 
@@ -30,7 +30,7 @@ C {
         value = @@print(b)
         if 'blue' in value:
             return f'"{value}" should not have blue'
-        return 'true'
+        return True
     }}
 }
 
