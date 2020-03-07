@@ -208,7 +208,10 @@ def _process_var(tree: Tree, variable: List[str], class_: Node = None,
 
     # TODO: _process_var needs refactor
     # This is probably the worst/most ugly code in the project.
-    # I'm not sure it can be easily refactored without violating DRY.
+    # The CRUD should be split into separate functions, which means
+    # a lot more helper functions so that each Read and Update aren't
+    # repeating code.
+    #
     # My code smell tells me the real issue is with the dictionaries,
     # and the fact that contain info and node info are seperated.
     # I think refactoring the data structures would make this much more
