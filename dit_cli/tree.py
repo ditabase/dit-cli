@@ -1,6 +1,7 @@
 """Tree of dit classes and objects, represented by node objects."""
 from typing import List
 from dit_cli.exceptions import TreeError
+from dit_cli import CONFIG
 
 
 class Node:
@@ -93,11 +94,20 @@ class Tree:
             if result is not None:
                 id_ = _id_from_name(result.name, self)
 
+        # Make sure language exists in config
+        # WET also appears in set_validator
+        if lang and not lang in CONFIG:
+            raise TreeError(f'"{lang}" does not exist in .dit-languages')
+
         self.cur().print = {'variable': variable,
                             'code': code, 'lang': lang, 'id_': id_}
 
     def set_validator(self, code: str, lang: str):
         """Give the current node a validator"""
+        # Make sure language exists in config
+        # WET also appears in set_validator
+        if lang and not lang in CONFIG:
+            raise TreeError(f'"{lang}" does not exist in .dit-languages')
         self.cur().validator = {'code': code, 'lang': lang}
 
     def is_defined(self, variable: List[str]):
