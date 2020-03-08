@@ -18,8 +18,8 @@ def test_extension():
 
 
 def test_fruits():
-    result = validate_dit(get_file('fruits.dit'))
-    assert result == VALID_STR
+    result = validate_dit(get_file('fruits.dit'), 'fav.value')
+    assert result == '"kiwi"'
 
 
 def test_lengths():
@@ -32,6 +32,11 @@ def test_multiple_inheritance():
     assert result == VALID_STR
 
 
+def test_name():
+    result = validate_dit(get_file('name.dit'), 'print(myName)')
+    assert result == '"Hi! My name is Isaiah Leopold Koser Shiner"'
+
+
 def test_syntax_enums():
     result = validate_dit(get_file('syntax_enums.dit'))
     assert result == VALID_STR
@@ -40,11 +45,6 @@ def test_syntax_enums():
 def test_validator():
     result = validate_dit(get_file('syntax_enums.dit'))
     assert result == VALID_STR
-
-
-def test_query():
-    result = validate_dit(get_file('fruits.dit'), 'fav.value')
-    assert result == '"kiwi"'
 
 
 def get_file(file_name):
