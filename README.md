@@ -1,5 +1,5 @@
 # dit - The universal container file
-![Short Demo](https://github.com/isaiahshiner/dit-cli/blob/master/docs/gifs/short.gif)
+![Short Demo](https://raw.githubusercontent.com/isaiahshiner/dit-cli/master/docs/gifs/short.gif)
 
 Dit is a new way of storing data, designed to be as generic as possible. It uses embedded scripts for validation, custom print functions, and more. Dits can be used to transport data across different formats and platforms, so sharing data is much easier. See more at [the official website.](https://www.ditabase.io/)
 
@@ -212,7 +212,7 @@ The real documentation is entirely WIP right now, so if you have questions, plea
 
 ## Why? What's the point?
 
-The long answer is written [here.](docs/whats-the-point.md)
+The long answer is written [here.](https://github.com/isaiahshiner/dit-cli/blob/master/docs/whats-the-point.md)
 
 The short answer is that there's nothing out there that does everything.
 
