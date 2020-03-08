@@ -1,10 +1,8 @@
 Name {
     String value;
-    print Python {{
-        return 'My name is ' + @@value
-    }}
+    print value;
     validator Javascript {{
-        // Let's use Javascript here, I like the regex syntax better.
+        // This is real Javascript (nodejs)
         let name = @@value;
         if (!/^[A-Z][A-z]+$/.test(name)) {
             return `Not a valid name: "${name}"`
@@ -13,13 +11,23 @@ Name {
     }}
 }
 
+OtherName {
+    extends Name;
+    validator Python {{
+        if @@value == 'Tom':
+            return 'I don\'t like the name Tom."
+        return True
+    }}
+}
+
 FullName {
     Name givenName;
     list Name middleNames;
     Name familyName;
     print Python {{
+        # Python and Javascript are supported out of the box
         full = @@givenName.value
-        for mid in (@@middleNames):#Returns a list of Python dictionaries
+        for mid in (@@middleNames): # Returns a list of Python dictionaries
             full += ' ' + mid['value']
         full += ' ' + @@familyName.value
         return 'Hi! My name is ' + full
