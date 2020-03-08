@@ -37,11 +37,19 @@ FullName {
 Name name;
 name.value = 'Isaiah';
 
-Name n(name) {
-    value = name;
+// It's okay for assigners to have single letter names.
+Name n(nameParam) {
+    value = nameParam;
+    // We could have more parameters and assignments if needed
 }
 
 FullName myName;
+
+// Assign an existing object
 myName.givenName = name;
+
+// Use the 'n' assigner inside a list
 myName.middleNames = [n('Leopold'), n('Koser')];
+
+// Assign the string directly
 myName.familyName.value = 'Shiner';

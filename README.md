@@ -152,6 +152,35 @@ Cool! Let's give it a try:
 
     dit query name.dit '@@print(myName)'
     "Hi! My name is Isaiah Leopold Koser Shiner"
+    dit query name.dit '@@myName' | python -m json.tool > output.json
+    cat output.json
+    {
+        "class": "FullName",
+        "print": "Hi! My name is Isaiah Leopold Koser Shiner",
+        "givenName": {
+            "class": "Name",
+            "print": "Isaiah",
+            "value": "Isaiah"
+        },
+        "middleNames": [
+            {
+                "class": "Name",
+                "print": "Leopold",
+                "value": "Leopold"
+            },
+            {
+                "class": "Name",
+                "print": "Koser",
+                "value": "Koser"
+            }
+        ],
+        "familyName": {
+            "class": "Name",
+            "print": "Shiner",
+            "value": "Shiner"
+        }
+    }
+
 
 Finally, let's take a quick look at inheritance.
 
