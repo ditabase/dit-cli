@@ -115,7 +115,7 @@ def _prep_code(obj: Node, tree: Tree, code: str, lang: dict) -> str:
 
 
 def serialize(var: str, tree: Tree, class_: Node = None, obj: Node = None,
-              lang: dict = CONFIG['Javascript']) -> str:
+              lang: dict = CONFIG[CONFIG['general']['serializer']]) -> str:
     """Convert a variable sequence into a
     string representation of that variable"""
     print_ = False

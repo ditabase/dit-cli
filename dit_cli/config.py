@@ -25,6 +25,7 @@ def generate_config(path: str):
     toml_string = """
     [general]
     tmp_dir = '/tmp/dit/'
+    serializer = 'Javascript'
 
     [Javascript]
     name = 'Javascript'
