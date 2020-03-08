@@ -1,5 +1,5 @@
 # dit - The universal container file
-![Short Demo](docs/gifs/short.gif)
+![Short Demo](https://github.com/isaiahshiner/dit-cli/blob/master/docs/gifs/short.gif)
 
 Dit is a new way of storing data, designed to be as generic as possible. It uses embedded scripts for validation, custom print functions, and more. Dits can be used to transport data across different formats and platforms, so sharing data is much easier. See more at [the official website.](https://www.ditabase.io/)
 
@@ -23,7 +23,7 @@ Validate a dit file, and then return a value based on a query string. A query sh
 
 ## dit quickstart
 
-To start, you'll need a dit. You can see examples in [tests/dits](tests/dits).
+To start, you'll need a dit. You can see examples in [tests/dits](https://github.com/isaiahshiner/dit-cli/tree/master/tests/dits).
 
 Let's make a simple dit, `name.dit`:
 
