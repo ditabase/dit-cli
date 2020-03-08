@@ -59,10 +59,6 @@ C {
             return 'That shouldn\'t be possible';
         }
 
-        if (b.name !== 'b') {
-            return 'Name "${b.name} wasn\'t "b"';
-        }
-
         if (b.class !== 'B') {
             return 'Type "${b.class} wasn\'t "B"';
         }

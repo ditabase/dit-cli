@@ -95,10 +95,8 @@ def _prep_code(obj: Node, tree: Tree, code: str, lang: dict) -> str:
             escape += 1
 
         if code[escape + 2:escape + 8] == 'print(':
-            print_ = True
-            raw_var = find_name(code[escape + 8:])
+            raw_var = code[escape + 2:code.find(')') + 1]
         else:
-            print_ = False
             raw_var = find_name(code[escape + 2:])
 
         # Starts the serialization recursion chain
@@ -106,10 +104,7 @@ def _prep_code(obj: Node, tree: Tree, code: str, lang: dict) -> str:
                           obj=obj, lang=lang)
         start = escape + len(value)
 
-        if print_:
-            code = code[:escape] + value + code[escape + 9 + len(raw_var):]
-        else:
-            code = code[:escape] + value + code[escape + 2 + len(raw_var):]
+        code = code[:escape] + value + code[escape + 2 + len(raw_var):]
 
     return code
 

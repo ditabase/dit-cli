@@ -1,6 +1,7 @@
 """Pytest unit tests"""
 
 import os
+import json
 from dit_cli.cli import validate_dit
 
 DIT_DIR = os.path.join(os.path.dirname(__file__), 'dits/')
@@ -43,8 +44,13 @@ def test_syntax_enums():
 
 
 def test_validator():
-    result = validate_dit(get_file('syntax_enums.dit'))
+    result = validate_dit(get_file('validator.dit'))
     assert result == VALID_STR
+
+
+def test_json():
+    result = validate_dit(get_file('name.dit'), 'myName')
+    json.loads(result)
 
 
 def get_file(file_name):
