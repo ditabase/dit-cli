@@ -15,7 +15,7 @@ Dit can be installed with [pip for python](https://pip.pypa.io/en/stable/install
 Validate a dit file. Returns either an error message, or 'dit is valid, no errors found'.
 
     dit query [filename] [query_string]
-Validate a dit file, and then return a value based on a query string. A query should resemble a `@@` variable sequence found in dit code.
+Validate a dit file, and then return a value based on a query string. A query should resemble a double at `@@` variable sequence found in dit code.
 
     '@@top_level_object' -> serialize the entire object
     '@@top_level_object.some_value' -> serialize that value, whatever it is
@@ -197,7 +197,7 @@ OtherName {
 Child classes have all the fields of their parents, so `value` exists in `OtherName` implicitly. All the `Names` are validated by the parent, then the child. Print functions must be explicitly inherited by type, like `print Name;`.
 
 
-`extends` must be the first thing in a class, if it is to appear at all. To inherit from multiple classes, just separate with commas, like `extends Name, AndSomeOtherObject;`. If there are name conflicts, the first extended class take's precedence, then the second class must explicitly be called out:
+`extends` must be the first thing in a class, if it is to appear at all. To inherit from multiple classes, just separate with commas, like `extends Name, AndSomeOtherObject;`. If there are name conflicts, the first extended class takes precedence, then the second class must explicitly be called out:
 
 ```
 C {
@@ -216,9 +216,9 @@ The long answer is written [here.](https://github.com/isaiahshiner/dit-cli/blob/
 
 The short answer is that there's nothing out there that does everything.
 
-* You can write your own custom validation code for each project, each situation, but that is a horrible violation of [DRY](https://en.wikipedia.org/wiki/Don%27t_repeat_yourself). Not that *you're* repeating yourself, but that everyone else is repeating each other.
+* You can write your own custom validation code for each project, each situation, but that is a huge violation of [DRY](https://en.wikipedia.org/wiki/Don%27t_repeat_yourself). Not that *you're* repeating yourself, but that everyone else is repeating each other.
   
-* Schema.org has a wonderful set of schemas, for almost every situation imaginable, but that's all they are, just schemas. I know where I would start if I was laying out a [Person Schema](https://schema.org/Person), but validation is still my problem. And furthermore, Schema.org is a relatively closed system. I can't just whip up a child of another schema if I want to, the way I can with dit.
+* Schema.org has a wonderful set of schemas, for almost every situation imaginable, but that's all they are, just schemas. I know where I would start if I were laying out a [Person Schema](https://schema.org/Person), but validation is still my problem. And furthermore, Schema.org is a relatively closed system. I can't just whip up a child of another schema if I want to, the way I can with dit.
 
 * JSON-Schema, JSON-LD, IPLD, all suffer from the general problem that they choose a specific way to implement things, which makes them wonderful, but not universal. Dit is [not trying to replace](https://xkcd.com/927/) every other way to write down data, only be a bridge between them. Dit relies heavily on JSON because it's so good, but in the edge cases, you can use CSV, or something else custom. Even if one format can cover 60%, the network effect of including the other 40% is incredibly valuable.
 
