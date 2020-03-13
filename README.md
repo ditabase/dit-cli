@@ -189,7 +189,7 @@ OtherName {
     extends Name;
     validator Python {{
         if @@value == 'Tom':
-            return 'I don\'t like the name Tom."
+            return "I don't like the name Tom."
         return True
     }}
 }
