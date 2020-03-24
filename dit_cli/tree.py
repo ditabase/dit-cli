@@ -230,6 +230,8 @@ def _process_var(tree: Tree, variable: List[str], class_: Node = None,
     if not class_:
         node_id = _id_from_name(variable[0], tree)
         if len(variable) == 1 and data is not None:  # assign entire node
+            if isinstance(data, str):
+                raise TreeError(f'Cannot assign string to object')
             tree.nodes[node_id].contains = data.contains
             return
         obj = tree.nodes[node_id]
