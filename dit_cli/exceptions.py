@@ -31,7 +31,7 @@ class CodeError(DitError):
                  purpose: str, lang: dict):
         message = (
             f'{name} {lang["name"]} {purpose}\n'
-            f'Error message follows:\n\n{error.stderr.decode("utf-8")}')
+            f'Error message follows:\n\n{error.stderr.decode()}')
         super().__init__('CodeError', message)
 
 
