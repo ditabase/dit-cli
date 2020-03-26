@@ -240,18 +240,50 @@ def _parse_declaration(dit: str) -> (str, str):
 
 def _parse_escape(dit: str, left: str, right: str, esc: str) -> (str, str):
     """Parse a sequence with escaped ending tokens, like "3\""
+    Also processes escape sequences. \\ are converted to \, @@}} to }}, etc.
+    @@variable sequences are processed during eval time, in _prep_code()
 
     Dit must start at the very beginning of the sequence.
     Will return a tuple with the replaced dit and the sequence"""
-    end = 0
+    fnd_right = len(left)
+    fnd_esc = len(left)
+
+    # Find the right-side closing sequence, then break
     while True:
-        end = dit.find(right, end + len(right))
-        if end == -1:
+        fnd_right = dit.find(right, fnd_right)
+        fnd_esc = dit.find(esc, fnd_esc)
+        if fnd_right == -1:
             raise ParseError(f'Missing closing sequence: {right}')
-        if dit[end - len(right): end] != esc:
-            break
-    sequence = dit[dit.find(left) + len(left): end]
-    dit = dit[end + len(right):].lstrip()
+        if fnd_esc == -1 or fnd_right < fnd_esc:
+            break  # Found it!
+
+        # There is an escape to process
+        if esc == '@@':
+            if dit[fnd_esc: fnd_esc + 4] == r'@@}}':
+                dit = dit[:fnd_esc] + dit[fnd_right:]
+
+            # Special case for @@ right next to the actual closing braces.
+            # We recognize the escape, but don't consume it.
+            elif dit[fnd_esc: fnd_esc + 6] == r'@@@@}}':
+                break
+
+        elif esc == '\\':
+            # Literal \ in dit strings.
+            char = dit[fnd_esc + 1: fnd_esc + 2]
+            if char in ["'", '"', '\\']:
+                dit = dit[:fnd_esc] + dit[fnd_esc + 1:]
+            elif char == 't':
+                dit = dit[:fnd_esc] + '\t' + dit[fnd_esc + 2:]
+            elif char == 'n':
+                dit = dit[:fnd_esc] + '\n' + dit[fnd_esc + 2:]
+            else:
+                raise ParseError(f'Unrecognized escape character: "\\{char}"')
+
+        fnd_esc += len(esc)
+        fnd_right = fnd_esc
+
+    sequence = dit[dit.find(left) + len(left): fnd_right]
+    dit = dit[fnd_right + len(right):].lstrip()
     return (dit, sequence)
 
 

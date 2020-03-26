@@ -54,7 +54,7 @@ def _run_validator(obj: Node, class_: Node, tree: Tree):
     if class_.validator:
         lang = CONFIG[class_.validator['lang']]
         code = _prep_code(obj, tree, class_.validator['code'], lang)
-        result = _run_code(class_, 'Validator', code, lang)
+        result = _run_code(class_.name, 'Validator', code, lang)
         if result.casefold() != 'true':
             raise ValidationError(result, obj.name)
 
@@ -76,7 +76,7 @@ def _run_print(obj: Node, class_: Node, caller_lang: dict, tree: Tree) -> str:
         # which means we indirectly recurse _prep_code.
         print_lang = CONFIG[class_.print['lang']]
         code = _prep_code(obj, tree, class_.print['code'], print_lang)
-        print_value = _run_code(class_, 'Print', code, print_lang)
+        print_value = _run_code(class_.name, 'Print', code, print_lang)
         return _ser_str(print_value, caller_lang)
 
 
@@ -147,6 +147,10 @@ def _ser_contain(contain, lang: dict, tree: Tree, print_: bool) -> str:
 
 def _ser_str(str_: str, lang: dict):
     # The only base case in the entire serialization system
+    if lang['str_escape'] in str_:
+        str_ = str_.replace(
+            lang['str_escape'], lang['str_escape'] + lang['str_escape'])
+
     if lang['str_open'] in str_:
         str_ = str_.replace(
             lang['str_open'], lang['str_escape'] + lang['str_open'])
@@ -154,6 +158,12 @@ def _ser_str(str_: str, lang: dict):
     if lang['str_open'] != lang['str_close'] and lang['str_close'] in str_:
         str_ = str_.replace(
             lang['str_close'], lang['str_escape'] + lang['str_close'])
+
+    if '\n' in str_:
+        str_ = str_.replace('\n', lang['str_newline'])
+
+    if '\t' in str_:
+        str_ = str_.replace('\t', lang['str_tab'])
 
     return lang['str_open'] + str_ + lang['str_close']
 
@@ -204,11 +214,13 @@ def _ser_obj(obj: Node, lang: dict, tree: Tree, print_: bool) -> str:
     return value
 
 
-def _run_code(class_: Node, purpose: str, code: str, lang: dict) -> str:
-    # Use subprocess to actually run the given code.
-    path = _get_file_path(class_.name, purpose, lang['file_extension'])
+def _run_code(name: str, purpose: str, code: str, lang: dict) -> str:
+    """Write the code to a file based on the specified language.
+    Then run code and get result using the subprocess.run command."""
+    path = _get_file_path(name, purpose, lang['file_extension'])
     file_string = lang['function_string'] + lang['call_string']
     file_string = file_string.replace(r'\n', '\n')
+    file_string = file_string.replace(r'\t', '\t')
     file_string = file_string.replace('@@CODE', code)
 
     with open(path, 'w') as code_file:
@@ -220,9 +232,9 @@ def _run_code(class_: Node, purpose: str, code: str, lang: dict) -> str:
         # Fix this before anything else
         output = subprocess.run(cmd, check=True, capture_output=True)
     except subprocess.CalledProcessError as error:
-        raise CodeError(error, class_, purpose, lang)
+        raise CodeError(error, name, purpose, lang)
 
-    raw = str(output.stdout)
+    raw = output.stdout.decode()
     begin = 'begin--'
     end = '--end'
     return raw[raw.find(begin) + len(begin):raw.find(end)]

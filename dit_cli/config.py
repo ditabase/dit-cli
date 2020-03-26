@@ -38,6 +38,8 @@ def generate_config(path: str):
     str_open = '"'
     str_close = '"'
     str_escape = '\\'
+    str_newline = '\\n'
+    str_tab = '\\t'
 
     list_open = '['
     list_delimiter = ','
@@ -59,6 +61,8 @@ def generate_config(path: str):
     str_open = '"'
     str_close = '"'
     str_escape = '\\'
+    str_newline = '\\n'
+    str_tab = '\\t'
 
     list_open = '['
     list_delimiter = ','

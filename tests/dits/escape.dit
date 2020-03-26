@@ -1,0 +1,62 @@
+Escape {
+    String value;
+    print value;
+
+    validator Python {{
+        value = @@value
+        possible_values = (
+            ["Let's",
+            '3" Long',
+            "I'm just playin'",
+            "Difference of sets A and B, or A\\B",
+            'This is a backslash: \\',
+            'Metric\tValue',
+            'One Fish\nTwo Fish\nRed Fish\nBlue Fish'])
+
+        if value not in possible_values:
+            return f'Value not accurate: {value}'
+        return True
+    }}
+}
+
+Escape escape1;
+Escape escape2;
+Escape escape3;
+Escape escape4;
+Escape escape5;
+Escape escape6;
+
+escape1.value = 'Let\'s';
+escape2.value = "3\" Long";
+escape3.value = 'I\'m just playin\'';
+escape4.value = 'Difference of sets A and B, or A\\B';
+escape5.value = 'Metric\tValue';
+escape6.value = 'One Fish\nTwo Fish\nRed Fish\nBlue Fish';
+
+Braced {
+    // This is just to test escaping braces
+    String value;
+
+    validator Python {{
+        value = @@value
+        possible_values = (
+        ['Double Right Brace @@}}',
+         'Double At Symbol @@@@',
+         'Quadruple Right Brace @@}}@@}}',
+         'Quadruple At Symbol @@@@@@@@'])
+
+        if value not in possible_values:
+            return f'The sequence actually looks like this: {value}'
+        return True
+    }}
+}
+
+Braced braced1;
+Braced braced2;
+Braced braced3;
+Braced braced4;
+
+braced1.value = 'Double Right Brace }}';
+braced2.value = 'Double At Symbol @@';
+braced3.value = 'Quadruple Right Brace }}}}';
+braced4.value = 'Quadruple At Symbol @@@@';
