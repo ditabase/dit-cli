@@ -22,16 +22,16 @@ def validate(filepath):
 
 @click.command()
 @click.argument('filepath', type=click.File('r'))
-@click.argument('query')
-def query(filepath, query):
+@click.argument('query_string')
+def query(filepath, query_string):
     """Return data from @@variable sequence"""
-    if query[:2] == '@@':
-        query = query[2:]
-    query = query.replace("'", '').replace('"', '')
-    click.echo(validate_dit(filepath.read(), query=query))
+    query_string = query_string.replace("'", '').replace('"', '')
+    if query_string[:2] == '@@':
+        query_string = query_string[2:]
+    click.echo(validate_dit(filepath.read(), query_string=query_string))
 
 
-def validate_dit(dit, query=None):
+def validate_dit(dit, query_string=None):
     """Validates a string as a dit."""
 
     # Catch all validation errors. The entire validation is done inside this try.
@@ -46,10 +46,10 @@ def validate_dit(dit, query=None):
             if node.type_ == 'object':
                 validate_object(node, tree)
 
-        if query is None:
+        if query_string is None:
             return 'dit is valid, no errors found'
         else:
-            return serialize(query, tree)
+            return serialize(query_string, tree)
     except DitError as error:
         return error
 
