@@ -2,6 +2,7 @@
 .vscode
 .pylintrc
 .pytest_cache/
+pytest.ini
 
 # Python junk
 __pycache__/
