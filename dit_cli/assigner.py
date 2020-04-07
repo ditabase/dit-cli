@@ -46,7 +46,7 @@ class Assigner:
             self.namespace.raise_if_undefined(expr)
             if assign['arg'] not in args:
                 raise AssignError(
-                    f'Undefined arg "{assign["args"]}" for Assigner {self.name}')
+                    f'Undefined arg "{assign["arg"]}" for Assigner {self.name}')
             for pos, arg in enumerate(args):
                 if arg == assign['arg']:
                     assignment = {'expr': assign['expr'], 'pos': pos}
