@@ -2,16 +2,21 @@
 
 import os
 import subprocess
+from dataclasses import dataclass
+from typing import Any
+from copy import copy
 
 from dit_cli import CONFIG
-from dit_cli.tree import Node, Tree
-from dit_cli.parser import parse_variable, find_name
+from dit_cli.namespace import Namespace
+from dit_cli.node import Node
+from dit_cli.parser import parse_expr, find_name
+from dit_cli.dataclasses import Expression, Attribute, EvalContext
 from dit_cli.exceptions import ValidationError, CodeError
 
 
-def validate_object(obj: Node, tree: Tree):
+def validate_object(obj: Node):
     """Run all relevant validators for this object.
-    First everything it contains, then all extended validators,
+    First all of its attributes, then all extended validators,
     then the validator of this object itself"""
 
     # Note: the evaler system is highly recursive.
@@ -21,14 +26,15 @@ def validate_object(obj: Node, tree: Tree):
     # Base case methods which have no recursion whatsoever are
     # _ser_string and _run_code.
 
-    # Recurse anything this object contains first
-    for contain in obj.contains:
-        if contain['id_'] != -1:
-            for list_item in _traverse(contain['data']):  # In case it's a list
-                validate_object(list_item, tree)
+    # Recurse anything this object's attributes first
+    for attr in obj.attrs:
+        if attr.class_ != 'String':
+            for list_item in _traverse(attr.data):  # In case it's a list
+                validate_object(list_item)
 
     # Then deal with this object itself
-    _run_validator(obj, tree.nodes[obj.extends[0]], tree)
+    eva = EvalContext(obj, obj.extends[0], obj.namespace)
+    _run_validator(eva)
 
 
 def _traverse(item):
@@ -45,42 +51,48 @@ def _traverse(item):
         yield item
 
 
-def _run_validator(obj: Node, class_: Node, tree: Tree):
+def _run_validator(eva: EvalContext):
     # Recurse to the highest inherited class validator first
-    for extend in class_.extends:
-        _run_validator(obj, tree.nodes[extend], tree)
+    for extend in eva.class_.extends:
+        new_eva = copy(eva)
+        new_eva.class_ = extend
+        _run_validator(new_eva)
 
     # Then run this validator
-    if class_.validator:
-        lang = CONFIG[class_.validator['lang']]
-        code = _prep_code(obj, tree, class_.validator['code'], lang)
-        result = _run_code(class_.name, 'Validator', code, lang)
+    if eva.class_.validator:
+        eva.lang = CONFIG[eva.class_.validator['lang']]
+        code = _prep_code(eva, eva.class_.validator['code'])
+        result = _run_code(eva.class_.name, 'Validator', code, eva.lang)
         if result.casefold() != 'true':
-            raise ValidationError(result, obj.name)
+            raise ValidationError(result, eva.obj.name)
 
 
-def _run_print(obj: Node, class_: Node, caller_lang: dict, tree: Tree) -> str:
+def _run_print(eva: EvalContext) -> str:
     # If a validator needed a print, find out how to print that object
-    if class_.print is None:
-        return _ser_obj(obj, caller_lang, tree, False)
-    elif class_.print['variable'] is not None:
-        if class_.print['id_'] is not None:
-            return _run_print(obj, tree.nodes[class_.print['id_']],
-                              caller_lang, tree)
-        else:
-            contain = tree.get_contain(class_.print['variable'],
-                                       class_=class_, obj=obj)
-            return _ser_contain(contain, caller_lang, tree, True)
+
+    if eva.class_.print is None:
+        return _ser_obj(eva)
+    elif eva.class_.print['class_']:
+        eva.class_ = eva.class_.print['class_']
+        return _run_print(eva)
+    elif eva.class_.print['expr']:
+        expr = Expression(eva.namespace, eva.class_,
+                          eva.obj, eva.class_.print['expr'])
+        attr = eva.class_.namespace.read(expr)
+        return _ser_attribute(eva, attr)
     else:
         # Run code, similar structure to running code in the validator,
         # which means we indirectly recurse _prep_code.
-        print_lang = CONFIG[class_.print['lang']]
-        code = _prep_code(obj, tree, class_.print['code'], print_lang)
-        print_value = _run_code(class_.name, 'Print', code, print_lang)
-        return _ser_str(print_value, caller_lang)
+        # We also need to make a new eva, to avoid making
+        # mutable changes to the old one.
+        print_eva = copy(eva)
+        print_eva.lang = CONFIG[eva.class_.print['lang']]
+        code = _prep_code(print_eva, eva.class_.print['code'])
+        value = _run_code(print_eva.class_.name, 'Print', code, print_eva.lang)
+        return _ser_str(value, eva.lang)
 
 
-def _prep_code(obj: Node, tree: Tree, code: str, lang: dict) -> str:
+def _prep_code(eva: EvalContext, code: str) -> str:
     # Replace all @@ dit escape sequences with variables
     start = 0
     while True:
@@ -95,57 +107,57 @@ def _prep_code(obj: Node, tree: Tree, code: str, lang: dict) -> str:
             escape += 1
 
         if code[escape + 2:escape + 8] == 'print(':
-            raw_var = code[escape + 2:code.find(')') + 1]
+            query = code[escape + 2:code.find(')') + 1]
         else:
-            raw_var = find_name(code[escape + 2:])
+            query = find_name(code[escape + 2:])
 
         # Starts the serialization recursion chain
-        value = serialize(raw_var, tree, class_=tree.nodes[obj.extends[0]],
-                          obj=obj, lang=lang)
+        value = serialize(eva, query)
         start = escape + len(value)
 
-        code = code[:escape] + value + code[escape + 2 + len(raw_var):]
+        code = code[:escape] + value + code[escape + 2 + len(query):]
 
     return code
 
 
-def serialize(var: str, tree: Tree, class_: Node = None, obj: Node = None,
-              lang: dict = CONFIG[CONFIG['general']['serializer']]) -> str:
-    """Convert a variable sequence into a
+def serialize(eva: EvalContext, query: str) -> str:
+    """Convert a query sequence into a
     string representation of that variable"""
-    print_ = False
-    if var[:6] == 'print(':
-        print_ = True
-        var = var[6:-1]
+    if eva.lang is None:
+        eva.lang = CONFIG[CONFIG['general']['serializer']]
 
-    variable = parse_variable(var)
-    result = tree.get_contain(variable, class_=class_, obj=obj)
+    if query[:6] == 'print(':
+        eva.print_ = True
+        query = query[6:-1]
+    else:
+        # Always set to False in case mutable changes to this eva
+        # have set it to True. Could also create new eva's at
+        # the correct places. This seems simplier.
+        eva.print_ = False
+
+    expr = Expression(eva.namespace, eva.class_, eva.obj, parse_expr(query))
+    result = eva.namespace.read(expr)
     if isinstance(result, Node):
-        if print_:
-            class_ = tree.nodes[result.extends[0]]
-            return _run_print(result, class_, lang, tree)
-        else:
-            return _ser_obj(result, lang, tree, print_)
+        return _handle_new_obj(eva, result)
     else:
-        return _ser_contain(result, lang, tree, print_)
+        # The only other possible return is an attribute
+        return _ser_attribute(eva, result)
 
 
-def _ser_contain(contain, lang: dict, tree: Tree, print_: bool) -> str:
-    if contain is None:
-        return lang['null_type']
-    elif contain['list_']:
-        return _ser_list(contain['id_'], contain['data'], lang, tree, print_)
-    elif contain['id_'] == -1:
-        return _ser_str(contain['data'], lang)
-    elif print_:
-        obj = contain['data']
-        class_ = tree.nodes[obj.extends[0]]
-        return _run_print(obj, class_, lang, tree)
+def _ser_attribute(eva: EvalContext, attr: Attribute) -> str:
+    if attr is None:
+        return eva.lang['null_type']
+    elif attr.list_:
+        new_eva = copy(eva)
+        new_eva.class_ = attr.class_
+        return _ser_list(new_eva, attr.data)
+    elif attr.class_ == 'String':
+        return _ser_str(attr.data, eva.lang)
     else:
-        return _ser_obj(contain['data'], lang, tree, print_)
+        return _handle_new_obj(eva, attr.data)
 
 
-def _ser_str(str_: str, lang: dict):
+def _ser_str(str_: str, lang: dict) -> str:
     # The only base case in the entire serialization system
     if lang['str_escape'] in str_:
         str_ = str_.replace(
@@ -168,49 +180,44 @@ def _ser_str(str_: str, lang: dict):
     return lang['str_open'] + str_ + lang['str_close']
 
 
-def _ser_list(id_: int, item, lang: dict, tree: Tree, print_: bool) -> str:
+def _ser_list(eva: EvalContext, item: Any) -> str:
     if isinstance(item, list):
-        value = lang['list_open']
+        value = eva.lang['list_open']
         for i in item:
             # Serialize any depth of list by recursing
-            value += _ser_list(id_, i, lang, tree, print_)
-            value += lang['list_delimiter']
+            value += _ser_list(eva, i)
+            value += eva.lang['list_delimiter']
         # Replace last comma with ]
-        value = value[:-1] + lang['list_close']
+        value = value[:-1] + eva.lang['list_close']
         return value
     else:
-        if id_ == -1:
-            return _ser_str(item, lang)
-        elif print_:
-            obj = item
-            class_ = tree.nodes[obj.extends[0]]
-            return _run_print(obj, class_, lang, tree)
+        if eva.class_ == 'String':
+            return _ser_str(item, eva.lang)
         else:
-            return _ser_obj(item, lang, tree, print_)
+            return _handle_new_obj(eva, item)
 
 
-def _ser_obj(obj: Node, lang: dict, tree: Tree, print_: bool) -> str:
+def _ser_obj(eva: EvalContext) -> str:
     # Basically serialize like JSON, which works in javascript and python,
     # and could be made to work anywhere, although more customization in
     # the future is likely.
-    value = lang['obj_open']
-    class_ = tree.nodes[obj.extends[0]]
+    value = eva.lang['obj_open']
 
     def field(identifier: str, value: str) -> str:
-        return lang['str_open'] + identifier + lang['str_close'] + \
-            lang['obj_colon'] + value + lang['obj_delimiter']
+        return eva.lang['str_open'] + identifier + eva.lang['str_close'] + \
+            eva.lang['obj_colon'] + value + eva.lang['obj_delimiter']
 
     # This information is redundant.
     # It could be added back conditionally, but removed entirely for now.
     # value += field('name', _ser_str(obj.name, lang))
-    value += field('class', _ser_str(tree.nodes[obj.extends[0]].name, lang))
-    if class_.print is not None:
-        value += field('print', _run_print(obj, class_, lang, tree))
-    for con in obj.contains:
-        value += field(con['name'], _ser_contain(con, lang, tree, print_))
+    value += field('class', _ser_str(eva.class_.name, eva.lang))
+    if eva.class_.print is not None:
+        value += field('print', _run_print(eva))
+    for attr in eva.obj.attrs:
+        value += field(attr.name, _ser_attribute(eva, attr))
 
     # Replace last comma with }
-    value = value[:-1] + lang['obj_close']
+    value = value[:-1] + eva.lang['obj_close']
     return value
 
 
@@ -238,6 +245,18 @@ def _run_code(name: str, purpose: str, code: str, lang: dict) -> str:
     begin = 'begin--'
     end = '--end'
     return raw[raw.find(begin) + len(begin):raw.find(end)]
+
+
+def _handle_new_obj(eva: EvalContext, obj: Node) -> str:
+    new_eva = copy(eva)
+    new_eva.obj = obj
+    new_eva.class_ = new_eva.obj.extends[0]
+    new_eva.namespace = new_eva.obj.namespace
+
+    if new_eva.print_:
+        return _run_print(new_eva)
+    else:
+        return _ser_obj(new_eva)
 
 
 def _get_file_path(name: str, purpose: str, ext: str) -> str:

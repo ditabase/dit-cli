@@ -6,55 +6,66 @@ from __future__ import annotations
 from typing import List
 
 import re
+from urllib.request import urlopen
+from urllib.error import HTTPError, URLError
 
 from dit_cli.exceptions import ParseError
-from dit_cli.tree import Tree, Assigners
+from dit_cli.namespace import Namespace
+from dit_cli.node import Node
+from dit_cli.assigner import Assigner
 
 
-def parse(dit: str) -> Tree:
+def parse(dit: str) -> Namespace:
     """Parse the given dit file, and return a valid tree"""
-    tree = Tree()
-    assigners = Assigners()
+    namespace = Namespace()
 
     while len(dit) > 0:
-        token = _nearest_token(dit, ['{', '(', ';', '=', '//'])
+        token = _nearest_token(dit, ['{', '(', ';', '=', '//', 'import'])
         if token == '{':
-            dit = _parse_class(dit, tree)
+            dit = _parse_class(dit, namespace)
         elif token == '(':
-            dit = _parse_assigner(dit, tree, assigners)
+            dit = _parse_assigner(dit, namespace)
         elif token == ';':
-            dit = _parse_object(dit, tree)
+            dit = _parse_object(dit, namespace)
         elif token == '=':
-            dit = _parse_assign(dit, tree, assigners)
+            dit = _parse_assign(dit, namespace)
         elif token == '//':
             dit = _parse_comment(dit)
+        elif token == 'import':
+            dit = _parse_import(dit, namespace)
 
-    return tree
+    return namespace
 
 
-def _parse_class(dit: str, tree: Tree) -> str:
+def _parse_class(dit: str, namespace: Namespace) -> str:
     # Some_Class {
     #   extends Some_Other_Class, more_classes;
-    #   Some_Class some_contained_object;
+    #   Some_Class some_attribute;
     #   list Some_Class some_object;
-    #   print some_contained_object; // could be this or
+    #   print some_attribute; // could be this or
     #   print some_language {{ A code block }}
     #   validator some_language {{ A code block }}
     # }
     line = dit[:dit.find('{') + 1]
     _regex_helper(line, r'^name\s*{$', 'class')
-    tree.new(find_name(dit), 'class')
+    class_ = Node(namespace, find_name(dit), 'class')
+    namespace.nodes.append(class_)
     dit = _rep_strip(dit, line)
+
+    # remove leading comments
+    while dit.startswith('//'):
+        dit = _parse_comment(dit)
 
     # extends must come first
     if dit.startswith('extends'):
         # 'extends some_class, second_class;'
         line = dit[:dit.find(';') + 1]
-        _regex_helper(line, r'^extends \s*name(,\s*name)*;$', 'extends')
+        _regex_helper(line, r'^extends \s*expr(,\s*expr)*;$', 'extends')
         ext = line[len('extends') + 1: line.find(';')]
         ext = ''.join(ext.split())  # Remove all whitespace
         for extend in ext.split(','):
-            tree.add_extend(extend)
+            expr = parse_expr(extend)
+            class_.add_extend(expr)
         dit = _rep_strip(dit, line)
 
     while dit[0] != '}':
@@ -66,33 +77,33 @@ def _parse_class(dit: str, tree: Tree) -> str:
             raise ParseError('"extends" must come first, or not at all')
         elif token == ';':
             # 'some_class some_object_name;'
-            (type_name, var_name) = _parse_declaration(line)
-            tree.add_contain(type_name, var_name)
+            (type_expr, var_name) = _parse_declaration(line)
+            class_.add_attribute(type_expr, var_name)
         elif token == 'print':
             if end == ';':
-                # 'print some_variable'
-                _regex_helper(line, r'^print \s*variable;$', 'print')
-                variable = parse_variable(_rep_strip(line, 'print'))
-                tree.set_print(variable)
+                # 'print some_expression'
+                _regex_helper(line, r'^print \s*expr;$', 'print')
+                expr = parse_expr(_rep_strip(line, 'print'))
+                class_.set_print(expr)
             elif end == '{{':
-                # 'print {{ console.log('some custom code'); }}
+                # 'print language {{ console.log('some custom code'); }}
                 _regex_helper(line, r'^print name\s*\{\{$', 'print')
                 lang = find_name(_rep_strip(dit, 'print'))
                 (dit, code) = _parse_escape(dit, '{{', '}}', '@@')
-                tree.set_print(code=code, lang=lang)
+                class_.set_print(code=code, lang=lang)
         elif token == 'validator':
-            # 'validator {{ return 'Some custom validation code'; }}
+            # 'validator language {{ return 'Some custom validation code'; }}
             _regex_helper(line, r'^validator name\s*\{\{$', 'validator')
             lang = find_name(_rep_strip(dit, 'validator'))
             (dit, code) = _parse_escape(dit, '{{', '}}', '@@')
-            tree.set_validator(code, lang)
+            class_.set_validator(code, lang)
         elif token == '//':
             dit = _parse_comment(dit)
         elif token == 'list':
             # 'list some_class some_object_name;'
-            _regex_helper(line, r'^list \s*name \s*name;$', 'list')
-            (type_name, var_name) = _parse_declaration(_rep_strip(line, 'list'))
-            tree.add_contain(type_name, var_name, list_=True)
+            _regex_helper(line, r'^list \s*expr \s*name;$', 'list')
+            (type_expr, var_name) = _parse_declaration(_rep_strip(line, 'list'))
+            class_.add_attribute(type_expr, var_name, list_=True)
 
         if end == ';' and token != '//':
             dit = _rep_strip(dit, line)
@@ -100,14 +111,14 @@ def _parse_class(dit: str, tree: Tree) -> str:
     return _rep_strip(dit, '}')
 
 
-def _parse_assigner(dit: str, tree: Tree, assigners: Assigners) -> str:
+def _parse_assigner(dit: str, namespace: Namespace) -> str:
     # Some_Class some_assigner(param1, param2) {
     #   some_field_of_Class = param1;
     #   other_field_of_Class = param2;
     # }
     line = dit[:dit.index('{') + 1]
     _regex_helper(
-        line, r'^name \s*name\(name(,\s*name)*\)\s*{$', 'assigner')
+        line, r'^expr \s*name\(name(,\s*name)*\)\s*{$', 'assigner')
     dit = _rep_strip(dit, line)
 
     # Get Type and Function names 'type_name assigner_name()'
@@ -115,17 +126,22 @@ def _parse_assigner(dit: str, tree: Tree, assigners: Assigners) -> str:
     line = _rep_strip(line, type_name)
     assigner_name = find_name(line)
     line = _rep_strip(line, assigner_name)
-    assigners.new(type_name, assigner_name, tree)
+    type_expr = parse_expr(type_name)
+    assigner = Assigner(namespace, assigner_name, type_expr)
 
-    # Get Paramenters '(each, para, meter, here)'
+    # Get args '(each, arg, here)'
     line = ''.join(line.split())
     line = line.replace('(', '').replace(')', '').replace('{', '')
-    parameters = line.split(',')
+    args = line.split(',')
 
-    # Get Assignments
-    dit = re.sub(r'\s\/\/[^\n]*\n', '', dit)  # replace comments with nothing
+    # Get Assignments 'some_left_assign = some_arg'
+    # Since everything is in order, we just get everything until the }
+    # and split up the assignments on ;
+
+    # replace comments with nothing
+    dit = re.sub(r'\s*\/\/[^\n]*\n', '', dit).lstrip()
     line = dit[:dit.index('}') + 1]
-    _regex_helper(line, r'^(variable\s*=\s*name;\s*)+\s*}$', 'arg assign')
+    _regex_helper(line, r'^(expr\s*=\s*name;\s*)+\s*}$', 'arg assign')
     dit = _rep_strip(dit, line)
     line = ''.join(line.split())  # clear white space
     line = line.replace('}', '')
@@ -134,33 +150,32 @@ def _parse_assigner(dit: str, tree: Tree, assigners: Assigners) -> str:
     for statement in statements:
         if statement:  # Ignore first and last blank statements
             split_state = statement.split('=')
-            variable = split_state[0].split('.')
-            assign = {'variable': variable, 'parameter': split_state[1]}
+            expr = split_state[0].split('.')
+            assign = {'expr': expr, 'arg': split_state[1]}
             assignments.append(assign)
 
-    assigners.set_assign(assignments, parameters, tree)
+    assigner.set_assign(assignments, args)
 
     return dit
 
 
-def _parse_object(dit: str, tree: Tree) -> str:
+def _parse_object(dit: str, namespace: Namespace) -> str:
     # Some_Class some_object;
     line = dit[:dit.find(';') + 1]
-    (type_name, var_name) = _parse_declaration(line)
-    if type_name == 'String':
-        raise ParseError(f'Object cannot be of type String: "{line}""')
-    tree.new(var_name, 'object')
-    tree.add_extend(type_name)
+    (type_expr, var_name) = _parse_declaration(line)
+    obj = Node(namespace, var_name, 'object')
+    namespace.nodes.append(obj)
+    obj.add_extend(type_expr)
     return _rep_strip(dit, line)
 
 
-def _parse_assign(dit: str, tree: Tree, assigners: Assigners) -> str:
+def _parse_assign(dit: str, namespace: Namespace) -> str:
     # Rather complicated, more like a typical parser.
     # Each step can be anything.
     left = dit[:dit.find('=') + 1]
-    _regex_helper(left, r'^variable\s*=$', 'assignment')
-    variable = parse_variable(left)
-    tree.is_defined(variable.copy())
+    _regex_helper(left, r'^expr\s*=$', 'assignment')
+    left_expr = parse_expr(left)
+    namespace.raise_if_undefined(left_expr)
     dit = _rep_strip(dit, left)
 
     memory = []  # For opened lists and assigners
@@ -189,19 +204,20 @@ def _parse_assign(dit: str, tree: Tree, assigners: Assigners) -> str:
             mem = memory.pop()
             if mem[0] != ')':
                 raise ParseError(f'"{mem[0]}" expected, found instead ")"')
-            parameters = _list_from_data(data)
-            assigner = mem[1]
-            data[-1] = assigner.get_object(tree, parameters)
+            args = _list_from_data(data)
+            assigner: Assigner = mem[1]
+            data[-1] = assigner.get_object(args)
             dit = _rep_strip(dit, token)
         elif re.match(r'^[A-Za-z_]$', token):
             name = find_name(dit)
             dit = _rep_strip(dit, name)
+            expr = parse_expr(name)
             if dit[0] == '(':
-                memory.append((')', assigners.is_defined(name)))
+                memory.append((')', namespace.read(expr)))
                 data.append(None)  # Used as a unique placeholder
                 dit = _rep_strip(dit, '(')
             else:
-                data.append(tree.get_data(parse_variable(name)))
+                data.append(namespace.read_data(expr))
         else:
             raise ParseError('Expected ";"')
 
@@ -214,7 +230,7 @@ def _parse_assign(dit: str, tree: Tree, assigners: Assigners) -> str:
         raise ParseError(f'Expected "{memory[0][0]}"')
 
     # After the loop, len(data) will always be 1
-    tree.assign_var(variable, data[0])
+    namespace.write(left_expr, data[0])
     return _rep_strip(dit, ';')
 
 
@@ -229,13 +245,14 @@ def _list_from_data(data):
             return list_
 
 
-def _parse_declaration(dit: str) -> (str, str):
+def _parse_declaration(dit: str) -> (List[str], str):
     """Parse a 'Some_Class some_object;' style object declaration,
     which appears in classes, assigners, and at top level."""
-    _regex_helper(dit, r'^name \s*name\s*;$', 'declaration')
+    _regex_helper(dit, r'^expr \s*name\s*;$', 'declaration')
     type_name = find_name(dit)
     var_name = find_name(_rep_strip(dit, type_name))
-    return (type_name, var_name)
+    type_expr = parse_expr(type_name)
+    return (type_expr, var_name)
 
 
 def _parse_escape(dit: str, left: str, right: str, esc: str) -> (str, str):
@@ -287,7 +304,7 @@ def _parse_escape(dit: str, left: str, right: str, esc: str) -> (str, str):
     return (dit, sequence)
 
 
-def parse_variable(dit: str) -> List[str]:
+def parse_expr(dit: str) -> List[str]:
     """Turn a string into it's components, seperated by '.'"""
     dit = ''.join(dit.split())  # Remove all whitespace
     dit = dit.replace(';', '').replace('=', '')  # Remove line endings
@@ -299,6 +316,50 @@ def _parse_comment(dit: str) -> str:
     if new_line == -1:
         raise ParseError('Comment must end with newline')
     return _rep_strip(dit, dit[:new_line])
+
+
+def _parse_import(dit: str, namespace: Namespace) -> str:
+    # import someNamespace from 'https://www.example.com/someClasses.dit';
+    # import someNamespace from '/home/isaiah/someClasses.dit'
+    # Parse the path, load this file, then recursively call parse
+    # to get the new tree. Reference this tree by it's namespace.
+    line = dit[:dit.find(_nearest_token(dit, ['"', "'"]))]
+    _regex_helper(line, r'^import \s*name \s*from \s*$', 'import')
+
+    dit = _rep_strip(dit, 'import')
+    name = find_name(dit)
+    dit = _rep_strip(dit, name)
+    dit = _rep_strip(dit, 'from')
+    token = dit[0]
+    if token not in ['"', "'"]:
+        raise ParseError(f'Import failed, expected string, not "{token}"')
+    (dit, path) = _parse_escape(dit, token, token, '\\')
+    if dit[0] != ';':
+        raise ParseError(f'Expected semicolon after import')
+    dit = _rep_strip(dit, ';')
+
+    if path.startswith('https://') or path.startswith('http://'):
+        try:
+            imported_dit = urlopen(path).read().decode()
+        except (HTTPError, URLError) as error:
+            raise ParseError(f'Import failed, {error}\nURL: "{path}"')
+    else:
+        try:
+            with open(path) as file_object:
+                imported_dit = file_object.read()
+        except FileNotFoundError:
+            raise ParseError(f'Import failed, file not found\nPath: "{path}"')
+
+    if not imported_dit:
+        raise ParseError(f'Import failed, reason unknown\nPath: "{path}"')
+
+    if imported_dit.lstrip().startswith('<!DOCTYPE html>'):
+        raise ParseError(
+            'Import failed, file is <!DOCTYPE html>.\nLoad raw text, not webpage.')
+
+    namespace.add(name, parse(imported_dit))
+
+    return dit
 
 
 def _nearest_token(dit: str, tokens: List[str]) -> str:
@@ -324,14 +385,14 @@ def find_name(dit: str) -> str:
 
 
 def _regex_helper(dit: str, base: str, statement):
-    """Changes 'name' and 'variable to predefined regexes, then
+    """Changes 'name' and 'expr' to predefined regexes, then
     tests the dit for matching."""
     # In theory, all regexes should be precompiled constants
     # But this works fine atm and its not very expensive
     name = r'[A-Za-z_][A-Za-z0-9-_]*'
     # [A-Za-z_][A-Za-z0-9-_]*\s*(\.\s*[A-Za-z_][A-Za-z0-9-_]*)*
-    variable = rf'{name}\s*(\.\s*{name})*'
-    final = base.replace('name', name).replace('variable', variable)
+    expr = rf'{name}\s*(\.\s*{name})*'
+    final = base.replace('name', name).replace('expr', expr)
     pattern = re.compile(final)
     if not pattern.match(dit):
         raise ParseError(f'Invalid {statement} syntax: "{dit}"')

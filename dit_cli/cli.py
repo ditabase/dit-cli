@@ -6,6 +6,7 @@ import click
 from dit_cli.exceptions import DitError
 from dit_cli.parser import parse
 from dit_cli.evaler import validate_object, serialize
+from dit_cli.dataclasses import EvalContext
 
 
 @click.group()
@@ -36,22 +37,30 @@ def validate_dit(dit, query_string=None):
 
     # Catch all validation errors. The entire validation is done inside this try.
     try:
-        # Discard dit and get the tree
-        tree = parse(dit)
+        # Discard dit and get the namespace
+        namespace = parse(dit)
 
         # TODO: Add class higherachy check, to restrict circular inheritance
         # I might never do this, I'm not sure.
 
-        for node in tree.nodes:
-            if node.type_ == 'object':
-                validate_object(node, tree)
+        for space in _all_namespaces(namespace):
+            for node in space.nodes:
+                if node.type_ == 'object':
+                    validate_object(node)
 
         if query_string is None:
             return 'dit is valid, no errors found'
         else:
-            return serialize(query_string, tree)
+            eva = EvalContext(None, None, namespace)
+            return serialize(eva, query_string)
     except DitError as error:
         return error
+
+
+def _all_namespaces(namespace):
+    for parent in namespace.parents:
+        yield parent['namespace']
+    yield namespace
 
 
 main.add_command(validate)
