@@ -102,7 +102,8 @@ def _parse_class(dit: str, namespace: Namespace) -> str:
         elif token == 'list':
             # 'list some_class some_object_name;'
             _regex_helper(line, r'^list \s*expr \s*name;$', 'list')
-            (type_expr, var_name) = _parse_declaration(_rep_strip(line, 'list'))
+            res = _parse_declaration(_rep_strip(line, 'list'))
+            (type_expr, var_name) = res
             class_.add_attribute(type_expr, var_name, list_=True)
 
         if end == ';' and token != '//':
@@ -294,7 +295,8 @@ def _parse_escape(dit: str, left: str, right: str, esc: str) -> (str, str):
             elif char == 'n':
                 dit = dit[:fnd_esc] + '\n' + dit[fnd_esc + 2:]
             else:
-                raise ParseError(f'Unrecognized escape character: "\\{char}"')
+                raise ParseError(
+                    f'Unrecognized escape character: "\\{char}"')
 
         fnd_esc += len(esc)
         fnd_right = fnd_esc
@@ -354,8 +356,10 @@ def _parse_import(dit: str, namespace: Namespace) -> str:
         raise ParseError(f'Import failed, reason unknown\nPath: "{path}"')
 
     if imported_dit.lstrip().startswith('<!DOCTYPE html>'):
-        raise ParseError(
-            'Import failed, file is <!DOCTYPE html>.\nLoad raw text, not webpage.')
+        raise ParseError((
+            'Import failed, file is <!DOCTYPE html>.'
+            '\nLoad raw text, not webpage.'
+        ))
 
     namespace.add(name, parse(imported_dit))
 

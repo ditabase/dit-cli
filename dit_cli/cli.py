@@ -35,12 +35,13 @@ def query(filepath, query_string):
 def validate_dit(dit, query_string=None):
     """Validates a string as a dit."""
 
-    # Catch all validation errors. The entire validation is done inside this try.
+    # Catch all validation errors.
+    # The entire validation/query is done inside this try.
     try:
         # Discard dit and get the namespace
         namespace = parse(dit)
 
-        # TODO: Add class higherachy check, to restrict circular inheritance
+        # TODO: Add higherachy check, to restrict circular inheritance
         # I might never do this, I'm not sure.
 
         for space in _all_namespaces(namespace):

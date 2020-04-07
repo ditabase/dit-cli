@@ -11,7 +11,8 @@ if TYPE_CHECKING:
 class Assigner:
     """A dataclass which represents an assigner"""
 
-    def __init__(self, namespace: 'Namespace', name: str, class_expr: List[str]):
+    def __init__(self, namespace: 'Namespace',
+                 name: str, class_expr: List[str]):
         namespace.raise_if_defined(name)
 
         self.namespace: 'Namespace' = namespace
@@ -22,7 +23,8 @@ class Assigner:
         self.arg_count: int = None
 
     def get_object(self, args) -> Node:
-        """Create and return a new anonymous object based on this assigner"""
+        """Create and return a new anonymous object
+        based on this assigner"""
         if len(args) != self.arg_count:
             raise AssignError((
                 f'Assigner "{self.name}" expected '
@@ -45,8 +47,10 @@ class Assigner:
             expr = Expression(self.name, self.class_, None, assign['expr'])
             self.namespace.raise_if_undefined(expr)
             if assign['arg'] not in args:
-                raise AssignError(
-                    f'Undefined arg "{assign["arg"]}" for Assigner {self.name}')
+                raise AssignError((
+                    f'Undefined arg "{assign["arg"]}" '
+                    f'for Assigner {self.name}'
+                ))
             for pos, arg in enumerate(args):
                 if arg == assign['arg']:
                     assignment = {'expr': assign['expr'], 'pos': pos}

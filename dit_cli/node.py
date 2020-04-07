@@ -35,15 +35,20 @@ class Node:
         new_c: Node = self.namespace.read(extend_expr)
 
         if new_c in self.extends:
-            raise NodeError(f'"{self.name}" already extends "{new_c.name}"')
+            raise NodeError((
+                f'"{self.name}" already '
+                f'extends "{new_c.name}"'
+            ))
 
         # Check if the new class (and all it's parent classes) have
-        # duplicate names to existing extended classes, and need deobfuscation.
+        # duplicate names to existing extended classes,
+        # and need deobfuscation.
         if self.type_ == 'class':
             _extend_conflicts(self, new_c, extend_expr)
         self.extends.append(new_c)
 
-    def add_attribute(self, type_expr: List[str], name: str, list_: bool = False):
+    def add_attribute(self, type_expr: List[str],
+                      name: str, list_: bool = False):
         """Make the current node contain a new attribute"""
         if _expr_is_string(type_expr):
             new_c = 'String'

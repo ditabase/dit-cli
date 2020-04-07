@@ -64,8 +64,8 @@ class Namespace:
             return result
 
     def write(self, expr: Union[List[str], Expression], data: Any):
-        """Write data to a variable. If it has already been written, overwrite,
-        and return whatever was there."""
+        """Write data to a variable. If it has already been written, 
+        overwrite and return whatever was there."""
         if isinstance(expr, list):
             expr = Expression(self, None, None, expr)
         return _process_expression(expr, data=data)
@@ -94,7 +94,8 @@ def _process_expression(expr: Expression, data: Any):
     """
     conf: NameConflict = None
 
-    # Now that we have the Expression, we can pull the data out and discard it
+    # Now that we have the Expression,
+    # we can pull the data out and discard it
     namespace = expr.namespace
     class_ = expr.class_
     obj = expr.obj
@@ -106,7 +107,7 @@ def _process_expression(expr: Expression, data: Any):
         current = namespace
 
     for index, var in enumerate(expr):
-        res = _search_for_var(var, current)
+        res = _find_var(var, current)
         if res is None:
             _raise_helper(var, expr, 'Undefined variable')
 
@@ -183,7 +184,7 @@ def _process_expression(expr: Expression, data: Any):
                         return old_data
 
 
-def _search_for_var(var: str, current: Union[Namespace, Node]) -> _SearchResult:
+def _find_var(var: str, current: Union[Namespace, Node]) -> _SearchResult:
     """Look for the var, and return a dict with results.
 
     Search in node first, if available, then progress to namespace."""
@@ -273,7 +274,8 @@ def _find_attribute(obj: Node, var: str, conf: NameConflict) -> dict:
     return None
 
 
-def _check_data_type(data, attr: Attribute, class_name: str, dat_is_list: bool):
+def _check_data_type(data, attr: Attribute, class_name: str,
+                     dat_is_list: bool):
     """Make sure given bit of data matches what it's being assigned to.
     raise if it isn't"""
     if isinstance(data, str):

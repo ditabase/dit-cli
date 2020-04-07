@@ -23,7 +23,8 @@ class Expression:
 
 @dataclass
 class NameConflict:
-    """Stores info about identical names of attributes caused by inheritance."""
+    """Stores info about identical names of attributes
+    caused by inheritance."""
     class_: 'Node'
     var: str
     # quick with dataclasses, this is how you assign a default
