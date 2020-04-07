@@ -79,14 +79,14 @@ e.list_3 = [
 ];
 
 // Assigners, might become functions at some point
-C c(a, z, a2, b) {
+C c_a(a, z, a2, b) {
     a.a = a; // Identical to print and assignments
     a.z = z; // Think 'this.a.a', the 'this' is implicit, since you can't
     b.a = a2; // assign anything besides 'this'
     b.b = b;
 }
 
-D d(a, z, a2, b) {
+D d_a(a, z, a2, b) {
     a = a;
     z = z;
     B.a = a2;
@@ -99,7 +99,7 @@ F {
     list String a_list;
 }
 
-F f(c, d, li) {
+F f_a(c, d, li) {
     c = c;
     d = d;
     a_list = li;
@@ -107,8 +107,8 @@ F f(c, d, li) {
 
 F f;
 
-f = f(
-        c('the a', c.a.a, 'the other a', 'the b'), 
-        d('the a but d', 'the z but d', d.z, 'the b but d')
+f = f_a(
+        c_a('the a', c.a.a, 'the other a', 'the b'), 
+        d_a('the a but d', 'the z but d', d.z, 'the b but d')
         ['these', 'are' 'those' 'strings']
     );
