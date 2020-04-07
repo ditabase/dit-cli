@@ -1,0 +1,81 @@
+// Local file system link (only works from dit-cli root)
+import space1 from 'tests/dits/space1.dit';
+import space2 from 'tests/dits/space2.dit';
+
+A {
+    extends space1.A, space2.A;
+    String value;
+    String custom0;
+    
+    print value;
+    print space1.A.value;
+    print space2.A.value;
+
+    print custom0;
+    print custom1;
+    print custom2;
+
+    validator Python {{
+        value = @@value;
+        value1 = @@space1.A.value;
+        value2 = @@space2.A.value;
+
+        if value != '0':
+            return f'value was {value}'
+        if value1 != '1':
+            return f'value1 was {value1}'
+        if value2 != '2':
+            return f'value2 was {value2}'
+
+        custom0 = @@custom0;
+        custom1 = @@custom1;
+        custom2 = @@custom2;
+
+        if custom0 != 'c0':
+            return f'custom0 was {custom0}'
+        if custom1 != 'c1':
+            return f'custom1 was {custom1}'
+        if custom2 != 'c2':
+            return f'custom2 was {custom2}'
+        
+        return True
+    }}
+}
+
+C {
+    A a;
+    space1.B b1;
+    space2.B b2;
+
+    print b1.a.value;
+
+    validator Python {{
+        b1 = @@b1.a.value;
+        b1c = @@b1.a.custom1;
+        b2 = @@b2.a.value;
+        b2c = @@b2.a.custom2;
+
+        if b1 != 'b1':
+            return f'b1 was {b1}'
+        if b1c != 'b1c':
+            return f'b1c was {b1c}'
+        if b2 != 'b2':
+            return f'b2 was {b2}'
+        if b2c != 'b2c':
+            return f'b2c was {b2c}'
+
+        return True
+    }}
+}
+
+C c;
+c.a.value = '0';
+c.a.space1.A.value = '1';
+c.a.space2.A.value = '2';
+
+c.a.custom0 = 'c0';
+c.a.custom1 = 'c1';
+c.a.custom2 = 'c2';
+
+c.b1 = space1.b('b1', 'b1c');
+c.b2 = space2.b('b2', 'b2c');

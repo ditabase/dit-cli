@@ -1,0 +1,17 @@
+// https based link to github raw
+import Lengths from 'https://raw.githubusercontent.com/isaiahshiner/dits/master/dits/Length.dit';
+
+// Create new object from linked class
+Lengths.Length2D paper;
+paper.width = Lengths.inch('8.5', 'inches');
+paper.length = Lengths.inch('11', 'inches');
+
+import Names from 'https://raw.githubusercontent.com/isaiahshiner/dits/master/dits/Name.dit';
+
+// New object based on linked class
+Names.Name name;
+name = Names.n('Tom');
+
+// Use the Number namespace in Lengths
+Lengths.Numbers.Number new_num;
+new_num.value = '3.14159265';

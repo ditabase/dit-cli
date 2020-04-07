@@ -1,0 +1,40 @@
+Escape {
+    String escape1;
+    String escape2;
+    String escape3;
+    String escape4;
+    String escape5;
+    String escape6;
+
+    validator Python {{
+        escape1 = @@escape1;
+        escape2 = @@escape2;
+        escape3 = @@escape3;
+        escape4 = @@escape4;
+        escape5 = @@escape5;
+        escape6 = @@escape6;
+
+        if escape1 != "Let's":
+            return f'escape1 is {escape1}'
+        if escape2 != '3" Long':
+            return f'escape2 is {escape2}'
+        if escape3 != "I'm just playin'":
+            return f'escape3 is {escape3}'
+        if escape4 != "Difference of sets A and B, or A\\B":
+            return f'escape4 is {escape4}'
+        if escape5 != 'Metric\tValue':
+            return f'escape5 is {escape5}'
+        if escape6 != 'One Fish\nTwo Fish\nRed Fish\nBlue Fish':
+            return f'escape6 is {escape6}'
+        return True
+    }}
+}
+
+Escape e;
+
+e.escape1 = 'Let\'s';
+e.escape2 = "3\" Long";
+e.escape3 = 'I\'m just playin\'';
+e.escape4 = 'Difference of sets A and B, or A\\B';
+e.escape5 = 'Metric\tValue';
+e.escape6 = 'One Fish\nTwo Fish\nRed Fish\nBlue Fish';

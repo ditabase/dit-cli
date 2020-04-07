@@ -1,0 +1,65 @@
+A {
+    list String list1D;
+    list String list2D;
+    list String list3D;
+    list String jagged;
+
+    validator Python {{
+        count = 1
+        list1D = @@list1D
+        list2D = @@list2D
+        list3D = @@list3D
+        jagged = @@jagged
+
+        for num in list1D:
+            if int(num) != count:
+                return f'List1D is wrong, num: {num}, count: {count}'
+            count += 1
+
+        for li in list2D:
+            for num in li:
+                if int(num) != count:
+                    return f'List2D is wrong, num: {num}, count: {count}'
+                count += 1
+
+        for li in list3D:
+            for lj in li:
+                for num in lj:
+                    if int(num) != count:
+                        return f'List3D is wrong, num: {num}, count: {count}'
+                    count += 1
+
+        def _traverse(item):
+            try:
+                if isinstance(item, str):
+                    yield item
+                else:
+                    for i in iter(item):
+                        for j in _traverse(i):
+                            yield j
+            except TypeError:
+                yield item
+
+        count = 100
+        for num in _traverse(jagged):
+            if int(num) != count:
+                return f'List3D is wrong, num: {num}, count: {count}'
+            count += 1
+        
+        return True
+    }}
+}
+
+A a;
+
+a.list1D = ['1', '2', '3'];
+a.list2D = [['4', '5', '6'], ['7', '8', '9'], ['10', '11', '12']];
+a.list3D = [
+    [['13', '14', '15'], ['16', '17', '18'], ['19', '20', '21']],
+    [['22', '23', '24'], ['25', '26', '27'], ['28', '29', '30']],
+    [['31', '32', '33'], ['34', '35', '36'], ['37', '38', '39']]
+];
+
+a.jagged = ['100', ['101', '102', '103'], [
+    ['104', '105', '106'], ['107', '108', '109'], ['110', '111', '112']
+]];

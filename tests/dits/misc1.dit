@@ -1,10 +1,6 @@
 A {
     String a;
     String z;
-    print Javascript {{ return `${@@a} @@}} ${@@z}`; }}
-    validator Javascript {{
-        return true;
-    }}
 }
 
 B {
@@ -61,22 +57,6 @@ d.z = 'z';
 d.B.a = 'b a';
 d.b = 'b';
 
-E {
-    list String list_1;// List depth 1
-    list String list_2;// 2D list
-    list String list_3;// 3D list, and so on.
-}
-
-E e;
-
-e.list_1 = ['1', '2', "3", '4'];
-e.list_2 = [['n', 'n'], ['n', 'n'], ['n', 'n'], ['n', 'n']];
-e.list_3 = [
-    [['n', 'n'], ['n', 'n'], ['n', 'n']],
-    [['n', 'n'], ['n', 'n'], ['n', 'n']],
-    [['n', 'n'], ['n', 'n'], ['n', 'n']],
-    [['n', 'n'], ['n', 'n'], ['n', 'n']]
-];
 
 // Assigners, might become functions at some point
 C c_a(a, z, a2, b) {

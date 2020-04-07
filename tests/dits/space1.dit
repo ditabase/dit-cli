@@ -1,0 +1,13 @@
+A {
+    String value;
+    String custom1;
+}
+
+B {
+    A a;
+}
+
+B b(value, custom1) {
+    a.value = value;
+    a.custom1 = custom1;
+}

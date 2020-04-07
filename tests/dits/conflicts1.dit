@@ -1,0 +1,110 @@
+I {
+    String value;
+}
+
+H {
+    String value;
+}
+
+G {
+    String valueB;
+}
+
+F {
+    String value;
+}
+
+E {
+    extends H, I;
+    String value;
+}
+
+D {
+    extends F, G;
+    String value;
+}
+
+C {
+    D d;
+    E e;
+    String value;
+}
+
+B {
+    D d;
+    E e;
+    String valueB;
+}
+
+A {
+    extends B, C;
+    String value;
+    validator Python {{
+        value1 = @@value
+        value2 = @@B.valueB
+        value3 = @@C.value
+        value4 = @@d.value
+        value5 = @@e.value
+        value6 = @@C.d.value
+        value7 = @@C.e.value
+        value8 = @@d.F.value
+        value9 = @@d.G.valueB
+        value10 = @@e.H.value
+        value11 = @@e.I.value
+        value12 = @@C.d.F.value
+        value13 = @@C.d.G.valueB
+        value14 = @@C.e.H.value
+        value15 = @@C.e.I.value
+
+        if value1 != '1':
+            return f'value1 was {value1}'
+        if value2 != '2':
+            return f'value2 was {value2}'
+        if value3 != '3':
+            return f'value3 was {value3}'
+        if value4 != '4':
+            return f'value4 was {value4}'
+        if value5 != '5':
+            return f'value5 was {value5}'
+        if value6 != '6':
+            return f'value6 was {value6}'
+        if value7 != '7':
+            return f'value7 was {value7}'
+        if value8 != '8':
+            return f'value8 was {value8}'
+        if value9 != '9':
+            return f'value9 was {value9}'
+        if value10 != '10':
+            return f'value10 was {value10}'
+        if value11 != '11':
+            return f'value11 was {value11}'
+        if value12 != '12':
+            return f'value12 was {value12}'
+        if value13 != '13':
+            return f'value13 was {value13}'
+        if value14 != '14':
+            return f'value14 was {value14}'
+        if value15 != '15':
+            return f'value15 was {value15}'
+
+        return True
+    }}
+}
+
+A a;
+
+a.value = '1';
+a.B.valueB = '2';
+a.C.value = '3';
+a.d.value = '4';
+a.e.value = '5';
+a.C.d.value = '6';
+a.C.e.value = '7';
+a.d.F.value = '8';
+a.d.G.valueB = '9';
+a.e.H.value = '10';
+a.e.I.value = '11';
+a.C.d.F.value = '12';
+a.C.d.G.valueB = '13';
+a.C.e.H.value = '14';
+a.C.e.I.value = '15';

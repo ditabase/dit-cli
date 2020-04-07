@@ -1,0 +1,7 @@
+import Names from 'https://raw.githubusercontent.com/isaiahshiner/dits/master/dits/Name.dit';
+
+Names.FullName name;
+
+name.givenName.value = 'Jane';
+name.middleNames = [Names.n('Emily'), Names.n('Marie')];
+name.familyName.value = 'Doe';

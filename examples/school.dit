@@ -22,14 +22,10 @@ Food {
     }}
 }
 
-Name {
-    String givenName;
-    String familyName;
-    print Javascript {{ return `${@@givenName} ${@@familyName}` }}
-}
+import Names from 'https://raw.githubusercontent.com/isaiahshiner/dits/master/dits/Name.dit';
 
 Kid {
-    Name name;
+    Names.FullName name;
     Color favoriteColor;
     list Food favoriteFoods;
 }
@@ -47,7 +43,7 @@ Email {
 }
 
 Person {
-    Name name;
+    Names.FullName name;
     String address;
     Email email;
 }
@@ -79,8 +75,8 @@ School school;
 school.name = 'Creekwater Elementary';
 
 Person p(given, family, address, email) {
-    name.givenName = given;
-    name.familyName = family;
+    name.givenName.value = given;
+    name.familyName.value = family;
     address = address;
     email = email;
 }
@@ -98,16 +94,16 @@ Classroom c(teacher,room,kids) {
 }
 
 Teacher t(given, family, address, email, subjects) {
-    name.givenName = given;
-    name.familyName = family;
+    name.givenName.value = given;
+    name.familyName.value = family;
     address = address;
     email = email;
     subjects = subjects;
 }
 
 Kid k(given, family, favColor, favFoods) {
-    name.givenName = given;
-    name.familyName = family;
+    name.givenName.value = given;
+    name.familyName.value = family;
     favoriteColor.value = favColor;
     favoriteFoods = favFoods;
 }
