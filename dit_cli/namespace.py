@@ -64,7 +64,7 @@ class Namespace:
             return result
 
     def write(self, expr: Union[List[str], Expression], data: Any):
-        """Write data to a variable. If it has already been written, 
+        """Write data to a variable. If it has already been written,
         overwrite and return whatever was there."""
         if isinstance(expr, list):
             expr = Expression(self, None, None, expr)

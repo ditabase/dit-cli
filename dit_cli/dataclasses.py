@@ -1,3 +1,6 @@
+"""Stores several dataclasses, which have no dependencies, but are
+used in various places all over the project"""
+
 from dataclasses import dataclass, field
 from typing import List, Any, TYPE_CHECKING
 

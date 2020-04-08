@@ -42,15 +42,6 @@ class ParseError(DitError):
         super().__init__('ParseError', message)
 
 
-'''
-class TreeError(DitError):
-    """Raised when anything goes wrong with tree functions"""
-
-    def __init__(self, message):
-        super().__init__('TreeError', message)
-'''
-
-
 class NodeError(DitError):
     """Raised when anything goes wrong with a node"""
 

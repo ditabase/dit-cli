@@ -261,7 +261,7 @@ def _parse_declaration(dit: str) -> (List[str], str):
 
 
 def _parse_escape(dit: str, left: str, right: str, esc: str) -> (str, str):
-    """Parse a sequence with escaped ending tokens, like "3\""
+    r"""Parse a sequence with escaped ending tokens, like "3\""
     Also processes escape sequences. \\ are converted to \, @@}} to }}, etc.
     @@variable sequences are processed during eval time, in _prep_code()
 

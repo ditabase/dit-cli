@@ -1,4 +1,5 @@
-from dataclasses import dataclass
+"""Home of the Assigner class"""
+
 from typing import List, TYPE_CHECKING
 
 from dit_cli.node import Node

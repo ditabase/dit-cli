@@ -1,4 +1,6 @@
-from typing import Any, List, TYPE_CHECKING
+"""Home of the Node class"""
+
+from typing import List, TYPE_CHECKING
 
 from dit_cli import CONFIG
 from dit_cli.exceptions import NodeError
@@ -44,7 +46,7 @@ class Node:
         # duplicate names to existing extended classes,
         # and need deobfuscation.
         if self.type_ == 'class':
-            _extend_conflicts(self, new_c, extend_expr)
+            _extend_conflicts(self, new_c)
         self.extends.append(new_c)
 
     def add_attribute(self, type_expr: List[str],
@@ -97,7 +99,7 @@ def _expr_is_string(expr: List[str]) -> bool:
     return len(expr) == 1 and expr[0] == 'String'
 
 
-def _extend_conflicts(orig: Node, new_c: Node, expr: List[str]):
+def _extend_conflicts(orig: Node, new_c: Node):
     # Look through new_c tree, and add conflicts
     def _recurse_target(orig: Node, source: Node, target: Node):
         for tar in target.extends:

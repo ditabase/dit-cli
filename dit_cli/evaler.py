@@ -2,12 +2,10 @@
 
 import os
 import subprocess
-from dataclasses import dataclass
 from typing import Any
 from copy import copy
 
 from dit_cli import CONFIG
-from dit_cli.namespace import Namespace
 from dit_cli.node import Node
 from dit_cli.parser import parse_expr, find_name
 from dit_cli.dataclasses import Expression, Attribute, EvalContext
