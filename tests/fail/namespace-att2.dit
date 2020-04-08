@@ -1,0 +1,11 @@
+A {
+    String value;
+}
+
+B {
+    A a;
+}
+
+B b;
+
+b.a = 'test';

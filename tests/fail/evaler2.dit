@@ -1,0 +1,11 @@
+A {
+    String value;
+    validator Javascript {{
+        const a = 1;
+        const a = 2;
+    }}
+}
+
+A a;
+
+a.value = 'test';

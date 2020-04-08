@@ -1,0 +1,17 @@
+A {
+    String value;
+}
+
+B {
+    A a;
+}
+
+C {
+    String value;
+}
+
+C c;
+
+B b;
+
+b.a = c;
