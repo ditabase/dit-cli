@@ -166,7 +166,7 @@ def _process_expression(expr: Expression, data: Any):
                                   f'Cannot assign to {res.context}')
                 elif res.context == 'object':
                     # Assign entire top level object
-                    # TODO: check type of assigning object.
+                    _check_obj_type(data, res.value)
                     res.value.attrs = data.attrs
                     return
                 elif res.context == 'attr':
@@ -309,6 +309,20 @@ def _check_data_type(data, attr: Attribute, class_name: str,
 
     if attr.list_ and not dat_is_list:
         raise VarError(f'"{expr}" expected a list')
+
+
+def _check_obj_type(data, obj: Node):
+    """Special check for when assigning to a top level object.
+    Has very different context from _check_data_type, but WET repeats
+    some code."""
+    class_ = obj.extends[0]
+    if isinstance(data, str):
+        raise VarError(f'Expected class "{class_.name}", got string')
+    if isinstance(data, list):
+        raise VarError(f'Expected class "{class_.name}", got list')
+    dat = data.extends[0]
+    if not _check_inheritance(class_, dat):
+        raise VarError(f'Expected "{class_.name}", got "{dat.name}"')
 
 
 def _check_inheritance(target: Node, current: Node) -> bool:
