@@ -23,7 +23,7 @@ Validate a dit file, and then return a value based on a query string. A query sh
 
 ## dit quickstart
 
-To start, you'll need a dit. You can see examples in [tests/dits](https://github.com/isaiahshiner/dit-cli/tree/master/tests/dits).
+To start, you'll need a dit. You can see examples in [examples](https://github.com/isaiahshiner/dit-cli/tree/master/examples). There is also a dedicated [repository](https://github.com/isaiahshiner/dits) for useful dit classes.
 
 Let's make a simple dit, `name.dit`:
 
