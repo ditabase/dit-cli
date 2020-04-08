@@ -38,18 +38,23 @@ def validate_dit(dit, query_string=None):
     # Catch all validation errors.
     # The entire validation/query is done inside this try.
     try:
+        if not dit:
+            return 'file is empty'
         # Discard dit and get the namespace
         namespace = parse(dit)
 
         # TODO: Add higherachy check, to restrict circular inheritance
         # I might never do this, I'm not sure.
-
+        objects = False
         for space in _all_namespaces(namespace):
             for node in space.nodes:
                 if node.type_ == 'object':
+                    objects = True
                     validate_object(node)
 
-        if query_string is None:
+        if not objects:
+            return 'dit is valid, no objects to check'
+        elif query_string is None:
             return 'dit is valid, no errors found'
         else:
             eva = EvalContext(None, None, namespace)
