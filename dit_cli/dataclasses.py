@@ -37,8 +37,12 @@ class NameConflict:
 
 @dataclass
 class Attribute:
-    """Stores info about something that a value a node contains,
+    """Stores info about a value that a node contains,
     as well as that value itself. This could be a string, list, or object.
+    This is how the recursive containment structure works.
+    All objects are either top level, contained by a namespace, or contained
+    by another object in one of these Attributes.
+
     Includes a NameConflict, in case this specific attribute's name
     conflicts with another Attribute in the same Node."""
     name: str
