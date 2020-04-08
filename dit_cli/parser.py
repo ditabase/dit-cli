@@ -196,8 +196,12 @@ def _parse_assign(dit: str, namespace: Namespace) -> str:
             mem = memory.pop()
             if mem[0] != ']':
                 raise ParseError(f'"{mem[0]}" expected, found instead "]"')
-            # Compress items into actual list and put it back into data.
-            data[-1] = _list_from_data(data)
+            # Check for empty list
+            if data[-1] is None:
+                data[-1] = []
+            else:
+                # Compress items into list and put it back into data.
+                data[-1] = _list_from_data(data)
             dit = _rep_strip(dit, token)
         elif token == ')':
             if len(memory) == 0:

@@ -182,6 +182,8 @@ def _ser_str(str_: str, lang: dict) -> str:
 
 def _ser_list(eva: EvalContext, item: Any) -> str:
     if isinstance(item, list):
+        if len(item) == 0:
+            return eva.lang['list_open'] + eva.lang['list_close']
         value = eva.lang['list_open']
         for i in item:
             # Serialize any depth of list by recursing
