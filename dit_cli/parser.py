@@ -1,5 +1,7 @@
-"""Fill the tree by parsing through the dit string.
-Runs entirely functionally from parse(), assigning to tree."""
+"""Fill a namespace by parsing through the dit string.
+Runs entirely functionally from parse(), assigning to namespace.
+
+Indirectly recursive via import, which calls parse on the new file"""
 
 
 from __future__ import annotations
@@ -16,7 +18,7 @@ from dit_cli.assigner import Assigner
 
 
 def parse(dit: str) -> Namespace:
-    """Parse the given dit file, and return a valid tree"""
+    """Parse the given dit file, and return a valid namespace"""
     namespace = Namespace()
 
     while len(dit) > 0:
@@ -327,8 +329,9 @@ def _parse_comment(dit: str) -> str:
 def _parse_import(dit: str, namespace: Namespace) -> str:
     # import someNamespace from 'https://www.example.com/someClasses.dit';
     # import someNamespace from '/home/isaiah/someClasses.dit'
-    # Parse the path, load this file, then recursively call parse
-    # to get the new tree. Reference this tree by it's namespace.
+    # Parse the path, load this file, then recursively
+    # call parse to get the new namespace.
+    # Reference this namespace by the name given in the import statement.
     line = dit[:dit.find(_nearest_token(dit, ['"', "'"]))]
     _regex_helper(line, r'^import \s*name \s*from \s*$', 'import')
 
