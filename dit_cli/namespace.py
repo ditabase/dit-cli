@@ -247,8 +247,8 @@ def _search_node(var: str, class_: Node) -> _SearchResult:
 def _get_prefix(var: str, extend: Node, class_: Node) -> str:
     """Get the explicitly extended class prefix,
     if there's a conflict and the prefix is needed. Otherwise None"""
-    for con in class_.conflicts:
-        if (con['class_'] == extend.name and con['var'] == var):
+    for conf in class_.conflicts:
+        if (conf['class_'] == extend.name and conf['var'] == var):
             return extend.name + '.' + var
     return None
 
@@ -289,23 +289,23 @@ def _check_data_type(data, attr: Attribute, class_name: str,
         dat = data.extends[0]
 
     if attr.class_ == 'String':
-        con_name = 'String'
+        attr_name = 'String'
     else:
-        con_name = attr.class_.name
+        attr_name = attr.class_.name
     expr = class_name + '.' + attr.name
 
-    con_is_str = attr.class_ == 'String'
+    att_is_str = attr.class_ == 'String'
     dat_is_str = dat == 'String'
 
-    if con_is_str and not dat_is_str:
+    if att_is_str and not dat_is_str:
         raise VarError(f'Expected string "{expr}", got "{dat.name}"')
 
-    if not con_is_str and dat_is_str:
-        raise VarError(f'Expected class "{con_name}", got string')
+    if not att_is_str and dat_is_str:
+        raise VarError(f'Expected class "{attr_name}", got string')
 
-    if not con_is_str and not dat_is_str and attr.class_ != dat:
+    if not att_is_str and not dat_is_str and attr.class_ != dat:
         if not _check_inheritance(attr.class_, dat):
-            raise VarError(f'Expected "{con_name}", got "{dat.name}"')
+            raise VarError(f'Expected "{attr_name}", got "{dat.name}"')
 
     if attr.list_ and not dat_is_list:
         raise VarError(f'"{expr}" expected a list')
