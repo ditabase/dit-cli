@@ -288,9 +288,7 @@ def _check_data_type(data, attr: Attribute, class_name: str,
         # data must be an object
         dat = data.extends[0]
 
-    if attr.class_ == 'String':
-        attr_name = 'String'
-    else:
+    if attr.class_ != 'String':
         attr_name = attr.class_.name
     expr = class_name + '.' + attr.name
 
