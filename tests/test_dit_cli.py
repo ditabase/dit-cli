@@ -89,7 +89,6 @@ def test_query(file_name, query, expected):
     ('../examples/import.dit', VALID_STR),
     ('../examples/length.dit', VALID_STR),
     ('../examples/name.dit', VALID_STR),
-    ('../examples/school.dit', VALID_STR),
 ])
 def test_examples(file_name, expected):
     result = validate_dit(get_file(file_name))
