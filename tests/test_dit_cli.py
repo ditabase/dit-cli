@@ -55,6 +55,8 @@ SyntaxError: Identifier 'a' has already been declared
     ('fail/namespace-att2.dit', 'VarError: Expected class "A", got string'),
     ('fail/namespace-att3.dit', 'VarError: Expected "A", got "C"'),
     ('fail/namespace-att4.dit', 'VarError: "A.value" expected a list'),
+    ('fail/namespace-att5.dit', 'VarError: Expected string "A.value", got list'),
+    ('fail/namespace-att6.dit', 'VarError: Expected class "A", got list'),
     ('fail/namespace-def1.dit', 'VarError: "A" is already defined (class)'),
     ('fail/namespace-def2.dit', 'VarError: "A" is already defined (object)'),
     ('fail/namespace-def3.dit', 'VarError: "A" is already defined (namespace)'),

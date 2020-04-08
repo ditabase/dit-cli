@@ -278,21 +278,25 @@ def _check_data_type(data, attr: Attribute, class_name: str,
                      dat_is_list: bool):
     """Make sure given bit of data matches what it's being assigned to.
     raise if it isn't"""
+    if attr.class_ != 'String':
+        attr_name = attr.class_.name
+    expr = class_name + '.' + attr.name
+    att_is_str = attr.class_ == 'String'
+
     if isinstance(data, str):
         dat = 'String'
     elif isinstance(data, list):
+        if not attr.list_:
+            if att_is_str:
+                raise VarError(f'Expected string "{expr}", got list')
+            else:
+                raise VarError(f'Expected class "{attr_name}", got list')
         for item in data:
             _check_data_type(item, attr, class_name, True)
         return
     else:
         # data must be an object
         dat = data.extends[0]
-
-    if attr.class_ != 'String':
-        attr_name = attr.class_.name
-    expr = class_name + '.' + attr.name
-
-    att_is_str = attr.class_ == 'String'
     dat_is_str = dat == 'String'
 
     if att_is_str and not dat_is_str:
