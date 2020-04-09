@@ -226,10 +226,10 @@ def _parse_assign(dit: str, namespace: Namespace) -> str:
             else:
                 data.append(namespace.read_data(expr))
         else:
-            raise ParseError('Expected ";"')
+            raise ParseError('Expected ";" after assignment')
 
         if len(dit) == 0:
-            raise ParseError('Expected ";"')
+            raise ParseError('Expected ";" after assignment')
         if dit[0] == ',':
             dit = _rep_strip(dit, ',')
 
@@ -344,7 +344,7 @@ def _parse_import(dit: str, namespace: Namespace) -> str:
         raise ParseError(f'Import failed, expected string, not "{token}"')
     (dit, path) = _parse_escape(dit, token, token, '\\')
     if dit[0] != ';':
-        raise ParseError(f'Expected semicolon after import')
+        raise ParseError(f'Expected ";" after import')
     dit = _rep_strip(dit, ';')
 
     if path.startswith('https://') or path.startswith('http://'):
