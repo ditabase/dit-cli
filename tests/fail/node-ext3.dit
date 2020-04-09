@@ -1,0 +1,4 @@
+A {}
+B {
+    extends A, A;
+}

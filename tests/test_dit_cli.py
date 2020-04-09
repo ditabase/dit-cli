@@ -47,6 +47,14 @@ def test_validate(file_name, expected):
     ('fail/namespace-obj2.dit', 'VarError: Expected class "A", got list'),
     ('fail/namespace-obj3.dit', 'VarError: Expected "A", got "B"'),
     ('fail/namespace-var1.dit', 'VarError: Undefined variable "does" in "does.not.exist"'),
+    ('fail/node-ext1.dit', 'NodeError: Cannot extend String'),
+    ('fail/node-ext2.dit', 'NodeError: Top level objects cannot be String'),
+    ('fail/node-ext3.dit', 'NodeError: "B" already extends "A"'),
+    ('fail/node-att1.dit', 'NodeError: "A" already has attribute "value"'),
+    ('fail/node-print1.dit',
+     'NodeError: "HopefullyThisWillNeverBeALanguage" does not exist in .dit-languages'),
+    ('fail/node-val1.dit',
+     'NodeError: "HopefullyThisWillNeverBeALanguage" does not exist in .dit-languages'),
 ])
 def test_raise(file_name, expected):
     result = validate_dit(get_file(file_name)).args[0]
