@@ -74,10 +74,14 @@ def _parse_class(dit: str, namespace: Namespace) -> str:
         raise ParseError('Unexpected EOF while parsing class.')
 
     while dit[0] != '}':
+        if dit[:2] == '//':
+            dit = _parse_comment(dit)
+            continue
+
         end = _nearest_token(dit, [';', '{{'])
         line = dit[:dit.find(end) + len(end)]
         token = _nearest_token(
-            line, ['extends', ';', 'print', 'validator', '//', 'list'])
+            line, ['extends', ';', 'print', 'validator', 'list'])
         if token == 'extends':
             raise ParseError('"extends" must come first, or not at all')
         elif token == ';':
@@ -102,8 +106,6 @@ def _parse_class(dit: str, namespace: Namespace) -> str:
             lang = find_name(_rep_strip(dit, 'validator'))
             (dit, code) = _parse_escape(dit, '{{', '}}', '@@')
             class_.set_validator(code, lang)
-        elif token == '//':
-            dit = _parse_comment(dit)
         elif token == 'list':
             # 'list some_class some_object_name;'
             _regex_helper(line, r'^list \s*expr \s*name;$', 'list')
@@ -111,7 +113,7 @@ def _parse_class(dit: str, namespace: Namespace) -> str:
             (type_expr, var_name) = res
             class_.add_attribute(type_expr, var_name, list_=True)
 
-        if end == ';' and token != '//':
+        if end == ';':
             dit = _rep_strip(dit, line)
         if len(dit) == 0:
             raise ParseError('Unexpected EOF while parsing class.')

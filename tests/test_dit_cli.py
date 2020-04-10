@@ -10,6 +10,7 @@ VALID_STR = 'dit is valid, no errors found'
 
 @pytest.mark.short
 @pytest.mark.parametrize("file_name,expected", [
+    ('dits/comments1.dit', VALID_STR),
     ('dits/conflicts1.dit', VALID_STR),
     ('dits/conflicts2.dit', VALID_STR),
     ('dits/empty.dit', 'file is empty'),
