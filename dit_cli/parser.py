@@ -356,6 +356,9 @@ def _parse_import(dit: str, namespace: Namespace) -> str:
                 imported_dit = file_object.read()
         except FileNotFoundError:
             raise ParseError(f'Import failed, file not found\nPath: "{path}"')
+        except PermissionError:
+            raise ParseError(
+                f'Import failed, permission denied\nPath: "{path}"')
 
     if not imported_dit:
         raise ParseError(f'Import failed, reason unknown\nPath: "{path}"')
