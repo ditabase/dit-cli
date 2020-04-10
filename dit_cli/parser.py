@@ -70,6 +70,9 @@ def _parse_class(dit: str, namespace: Namespace) -> str:
             class_.add_extend(expr)
         dit = _rep_strip(dit, line)
 
+    if len(dit) == 0:
+        raise ParseError('Unexpected EOF while parsing class.')
+
     while dit[0] != '}':
         end = _nearest_token(dit, [';', '{{'])
         line = dit[:dit.find(end) + len(end)]
@@ -110,6 +113,8 @@ def _parse_class(dit: str, namespace: Namespace) -> str:
 
         if end == ';' and token != '//':
             dit = _rep_strip(dit, line)
+        if len(dit) == 0:
+            raise ParseError('Unexpected EOF while parsing class.')
 
     return _rep_strip(dit, '}')
 

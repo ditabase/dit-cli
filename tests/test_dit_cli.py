@@ -56,6 +56,8 @@ def test_validate(file_name, expected):
     ('fail/node-val1.dit',
      'NodeError: "HopefullyThisWillNeverBeALanguage" does not exist in .dit-languages'),
     ('fail/parser-class1.dit', 'ParseError: "extends" must come first, or not at all'),
+    ('fail/parser-class2.dit', 'ParseError: Unexpected EOF while parsing class.'),
+    ('fail/parser-class3.dit', 'ParseError: Unexpected EOF while parsing class.'),
     ('fail/parser-assign1.dit', 'ParseError: Closing "]" but no opening "["'),
     ('fail/parser-assign2.dit', 'ParseError: ")" expected, found instead "]"'),
     ('fail/parser-assign3.dit', 'ParseError: Closing ")" but no opening "("'),
