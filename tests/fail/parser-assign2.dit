@@ -1,0 +1,11 @@
+A {
+    String value;
+}
+
+A a;
+
+A assign(val){
+    value = val;
+}
+
+a.value = assign('test']);

@@ -1,0 +1,4 @@
+A {
+    String value;
+    extends B;
+}

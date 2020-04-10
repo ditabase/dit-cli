@@ -55,6 +55,36 @@ def test_validate(file_name, expected):
      'NodeError: "HopefullyThisWillNeverBeALanguage" does not exist in .dit-languages'),
     ('fail/node-val1.dit',
      'NodeError: "HopefullyThisWillNeverBeALanguage" does not exist in .dit-languages'),
+    ('fail/parser-class1.dit', 'ParseError: "extends" must come first, or not at all'),
+    ('fail/parser-assign1.dit', 'ParseError: Closing "]" but no opening "["'),
+    ('fail/parser-assign2.dit', 'ParseError: ")" expected, found instead "]"'),
+    ('fail/parser-assign3.dit', 'ParseError: Closing ")" but no opening "("'),
+    ('fail/parser-assign4.dit', 'ParseError: "]" expected, found instead ")"'),
+    ('fail/parser-assign5.dit', 'ParseError: Expected ";" after assignment'),
+    ('fail/parser-assign6.dit', 'ParseError: Expected ";" after assignment'),
+    ('fail/parser-assign7.dit', 'ParseError: Expected "]"'),
+    ('fail/parser-assign8.dit', 'ParseError: Expected ")"'),
+    ('fail/parser-escape1.dit', 'ParseError: Missing closing sequence: }}'),
+    ('fail/parser-escape2.dit', 'ParseError: Missing closing sequence: }}'),
+    ('fail/parser-escape3.dit', 'ParseError: Missing closing sequence: \''),
+    ('fail/parser-escape4.dit', 'ParseError: Missing closing sequence: "'),
+    ('fail/parser-escape5.dit', 'ParseError: Missing closing sequence: \''),
+    ('fail/parser-escape6.dit', 'ParseError: Missing closing sequence: "'),
+    ('fail/parser-escape7.dit', 'ParseError: Unrecognized escape character: "\\q"'),
+    ('fail/parser-comment1.dit', 'ParseError: Comment must end with newline'),
+    ('fail/parser-import1.dit', 'ParseError: Expected ";" after import'),
+    ('fail/parser-import2.dit', '''ParseError: Import failed, file not found
+Path: "/not/a/real/link"'''),
+    ('fail/parser-import3.dit', '''ParseError: Import failed, permission denied
+Path: "/root/"'''),
+    ('fail/parser-import4.dit', '''ParseError: Import failed, HTTP Error 500: Domain Not Found
+URL: "https://notadomain.githubusercontent.com/"'''),
+    ('fail/parser-import5.dit', '''ParseError: Import failed, HTTP Error 404: Not Found
+URL: "https://raw.githubusercontent.com/isaiahshiner/dits/master/dits/ClearlyNotADit.dit"'''),
+    ('fail/parser-import6.dit', '''ParseError: Import failed, file is <!DOCTYPE html>.
+Load raw text, not webpage.'''),
+    ('fail/parser-tokens1.dit',
+     "ParseError: Found no tokens: ['{', '(', ';', '=', '//', 'import']"),
 ])
 def test_raise(file_name, expected):
     result = validate_dit(get_file(file_name)).args[0]

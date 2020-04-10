@@ -1,0 +1,9 @@
+A {
+    String value;
+}
+
+A a;
+
+a.value = 'test'
+
+a.value = 'else';
