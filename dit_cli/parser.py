@@ -340,8 +340,6 @@ def _parse_import(dit: str, namespace: Namespace) -> str:
     dit = _rep_strip(dit, name)
     dit = _rep_strip(dit, 'from')
     token = dit[0]
-    if token not in ['"', "'"]:
-        raise ParseError(f'Import failed, expected string, not "{token}"')
     (dit, path) = _parse_escape(dit, token, token, '\\')
     if dit[0] != ';':
         raise ParseError(f'Expected ";" after import')
