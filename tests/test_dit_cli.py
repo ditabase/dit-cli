@@ -58,6 +58,7 @@ def test_validate(file_name, expected):
     ('fail/parser-class1.dit', 'ParseError: "extends" must come first, or not at all'),
     ('fail/parser-class2.dit', 'ParseError: Unexpected EOF while parsing class.'),
     ('fail/parser-class3.dit', 'ParseError: Unexpected EOF while parsing class.'),
+    ('fail/parser-assign0.dit', 'ParseError: Unexpected EOF while parsing assignment.'),
     ('fail/parser-assign1.dit', 'ParseError: Closing "]" but no opening "["'),
     ('fail/parser-assign2.dit', 'ParseError: ")" expected, found instead "]"'),
     ('fail/parser-assign3.dit', 'ParseError: Closing ")" but no opening "("'),

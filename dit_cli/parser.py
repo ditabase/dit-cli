@@ -185,6 +185,8 @@ def _parse_assign(dit: str, namespace: Namespace) -> str:
     left_expr = parse_expr(left)
     namespace.raise_if_undefined(left_expr)
     dit = _rep_strip(dit, left)
+    if len(dit) == 0:
+        raise ParseError('Unexpected EOF while parsing assignment.')
 
     memory = []  # For opened lists and assigners
     data = []  # For all previously added values
