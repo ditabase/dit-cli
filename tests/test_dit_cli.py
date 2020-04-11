@@ -56,6 +56,8 @@ def test_validate(file_name, expected):
      'NodeError: "HopefullyThisWillNeverBeALanguage" does not exist in .dit-languages'),
     ('fail/node-val1.dit',
      'NodeError: "HopefullyThisWillNeverBeALanguage" does not exist in .dit-languages'),
+    ('fail/node-recur1.dit', 'NodeError: Illegal recursive extension in class "A"'),
+    ('fail/node-recur2.dit', 'NodeError: Illegal recursive attribution in class "A"'),
     ('fail/parser-class1.dit', 'ParseError: "extends" must come first, or not at all'),
     ('fail/parser-class2.dit', 'ParseError: Unexpected EOF while parsing class.'),
     ('fail/parser-class3.dit', 'ParseError: Unexpected EOF while parsing class.'),

@@ -36,6 +36,10 @@ class Node:
 
         new_c: Node = self.namespace.read(extend_expr)
 
+        if self == new_c:
+            raise NodeError(
+                f'Illegal recursive extension in class "{self.name}"')
+
         if new_c in self.extends:
             raise NodeError((
                 f'"{self.name}" already '
@@ -56,6 +60,10 @@ class Node:
             new_c = 'String'
         else:
             new_c = self.namespace.read(type_expr)
+
+        if self == new_c:
+            raise NodeError(
+                f'Illegal recursive attribution in class "{self.name}"')
 
         for attr in self.attrs:
             if name == attr.name:
