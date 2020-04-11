@@ -22,6 +22,7 @@ VALID_STR = 'dit is valid, no errors found'
     ('dits/misc1.dit', VALID_STR),
     ('dits/no-objects.dit', 'dit is valid, no objects to check'),
     ('dits/query1.dit', VALID_STR),
+    ('dits/scripts1.dit', VALID_STR),
     ('dits/space3.dit', VALID_STR),
 ])
 def test_validate(file_name, expected):

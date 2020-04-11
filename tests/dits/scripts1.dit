@@ -1,0 +1,32 @@
+A {
+    validator Python {{
+
+    }}
+    print Python {{}}
+}
+
+B {
+    validator Python {{}}
+    print Python {{
+
+    }}
+}
+
+C {
+    validator Javascript {{
+
+    }}
+    print Javascript {{}}
+}
+
+D {
+    validator Javascript {{}}
+    print Javascript {{
+
+    }}
+}
+
+A a;
+B b;
+C c;
+D d;

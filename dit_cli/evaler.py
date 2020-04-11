@@ -59,7 +59,11 @@ def _run_validator(eva: EvalContext):
     # Then run this validator
     if eva.class_.validator:
         eva.lang = CONFIG[eva.class_.validator['lang']]
-        code = _prep_code(eva, eva.class_.validator['code'])
+        base_code = eva.class_.validator['code']
+        # Skip validator if the is no actual code
+        if base_code.isspace() or not base_code:
+            return
+        code = _prep_code(eva, base_code)
         result = _run_code(eva.class_.name, 'Validator', code, eva.lang)
         if result.casefold() != 'true':
             raise ValidationError(result, eva.obj.name)
@@ -85,7 +89,11 @@ def _run_print(eva: EvalContext) -> str:
         # mutable changes to the old one.
         print_eva = copy(eva)
         print_eva.lang = CONFIG[eva.class_.print['lang']]
-        code = _prep_code(print_eva, eva.class_.print['code'])
+        base_code = eva.class_.print['code']
+        # Skip validator if the is no actual code
+        if base_code.isspace() or not base_code:
+            return eva.lang['null_type']
+        code = _prep_code(print_eva, base_code)
         value = _run_code(print_eva.class_.name, 'Print', code, print_eva.lang)
         return _ser_str(value, eva.lang)
 
