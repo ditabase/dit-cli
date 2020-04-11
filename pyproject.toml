@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "dit-cli"
-version = "0.4.0"
+version = "0.4.1"
 description = "The CLI for dit"
 license = "GPL-3.0-or-later"
 authors = ["Isaiah Shiner <shiner.isaiah@gmail.com>"]
