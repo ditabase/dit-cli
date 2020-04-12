@@ -30,6 +30,13 @@ def validate_object(obj: Node):
             for list_item in _traverse(attr.data):  # In case it's a list
                 validate_object(list_item)
 
+    # Skip validation if the object has already been validated.
+    # This happens any time an existing object is assigned
+    # as an attribute of another object.
+    if obj.was_validated:
+        return
+    obj.was_validated = True
+
     # Then deal with this object itself
     eva = EvalContext(obj, obj.extends[0], obj.namespace)
     _run_validator(eva)

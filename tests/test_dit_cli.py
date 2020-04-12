@@ -16,6 +16,7 @@ VALID_STR = 'dit is valid, no errors found'
     ('dits/empty.dit', 'file is empty'),
     ('dits/escape1.dit', VALID_STR),
     ('dits/eval1.dit', VALID_STR),
+    ('dits/eval2.dit', VALID_STR),
     ('dits/inheritance1.dit', VALID_STR),
     ('dits/list1.dit', VALID_STR),
     ('dits/list2.dit', VALID_STR),
