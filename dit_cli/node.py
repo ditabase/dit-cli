@@ -18,6 +18,7 @@ class Node:
         self.namespace: 'Namespace' = namespace
         self.name: str = name
         self.type_: str = type_
+        self.was_validated: bool = False
 
         self.attrs: List[Attribute] = []
         self.conflicts: List[NameConflict] = []
