@@ -1,0 +1,15 @@
+ProductCatalog query(host, user, password, db, query){
+    script Python {{
+        import MySQLdb
+        # Yes, open a database connection. Why not?
+        db = MySQLdb.connect(host=@@host,
+                             user=@@user,
+                             password=@@password,
+                             db=@@db)
+        cur = db.cursor()
+        cur.execute(query)
+
+        @@products = cur.fetchall()
+        db.close()
+    }}
+}

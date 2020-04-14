@@ -1,0 +1,27 @@
+School s(json) {
+    script Javacript {{
+        const obj = JSON.parse(@@json)
+        @@name = json.schoolName;
+        @@principal = json.principal;
+        @@rooms = json.rooms;
+    }}
+}
+
+School school;
+
+school = s(
+    '{
+        "schoolName": "Creekwater Elementary",
+        "principal": {
+            //Entire person object
+        },
+        "rooms": [
+            {
+                "teacher": {
+                    //Another person object
+                },
+                "roomNumber": "125B",
+                //etc
+            }
+        ]
+    }');
