@@ -1,0 +1,1 @@
+These are basic experiments with socket servers/clients. This folder will not remain tracked, as the code will all be moved directly into the CLI as features, but it's complicated enough that I wanted to track it temporarily.
