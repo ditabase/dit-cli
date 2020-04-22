@@ -2,7 +2,7 @@
 used in various places all over the project"""
 
 from dataclasses import dataclass, field
-from typing import List, Any, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, List
 
 if TYPE_CHECKING:
     from dit_cli.namespace import Namespace
@@ -18,9 +18,10 @@ class Expression:
     Only the expression is needed, so long as it is fully qualified.
     If a class is given, the expression will start from there.
     If an object is given, assignments will target that object."""
-    namespace: 'Namespace'
-    class_: 'Node'
-    obj: 'Node'
+
+    namespace: "Namespace"
+    class_: "Node"
+    obj: "Node"
     expression: List[str]
 
 
@@ -28,11 +29,12 @@ class Expression:
 class NameConflict:
     """Stores info about identical names of attributes
     caused by inheritance."""
-    class_: 'Node'
+
+    class_: "Node"
     var: str
     # quick with dataclasses, this is how you assign a default
     # This is just an empty list.
-    namespaces: List['Namespace'] = field(default_factory=lambda: [])
+    namespaces: List["Namespace"] = field(default_factory=lambda: [])
 
 
 @dataclass
@@ -45,8 +47,9 @@ class Attribute:
 
     Includes a NameConflict, in case this specific attribute's name
     conflicts with another Attribute in the same Node."""
+
     name: str
-    class_: 'Node'
+    class_: "Node"
     list_: bool
     data: Any
     conf: NameConflict
@@ -56,8 +59,9 @@ class Attribute:
 class EvalContext:
     """Stores info about the the current evaluation state.
     Used to generate Expressions, or create code of the correct type."""
-    obj: 'Node'
-    class_: 'Node'
-    namespace: 'Namespace'
+
+    obj: "Node"
+    class_: "Node"
+    namespace: "Namespace"
     lang: dict = None
     print_: bool = False

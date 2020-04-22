@@ -1,6 +1,7 @@
 """Handle the config file"""
 
 import os
+
 import toml
 
 
@@ -8,15 +9,15 @@ def get_config() -> dict:
     """Get the config, or generate it if not present"""
     path = get_path()
     if not os.path.isfile(path):
-        print('No config file found. Generating one at {}'.format(path))
+        print("No config file found. Generating one at {}".format(path))
         generate_config(path)
     parsed_toml = toml.load(path)
     # TODO: the toml parser has a bug which makes single quotes not parse
     # correctly, so these are absolutes. Fix this somehow
-    parsed_toml['Javascript']['str_open'] = '"'
-    parsed_toml['Javascript']['str_close'] = '"'
-    parsed_toml['Python']['str_open'] = '"'
-    parsed_toml['Python']['str_close'] = '"'
+    parsed_toml["Javascript"]["str_open"] = '"'
+    parsed_toml["Javascript"]["str_close"] = '"'
+    parsed_toml["Python"]["str_open"] = '"'
+    parsed_toml["Python"]["str_close"] = '"'
     return parsed_toml
 
 
@@ -56,7 +57,7 @@ def generate_config(path: str):
     file_extension = 'py'
     function_string = 'def run():@@CODE\\n'
     call_string = 'print("begin--{}--end".format(run()))'
-    
+
     null_type = 'None'
     str_open = '"'
     str_close = '"'
@@ -76,7 +77,7 @@ def generate_config(path: str):
 
     parsed_toml = toml.loads(toml_string)
 
-    with open(path, 'w') as config_file:
+    with open(path, "w") as config_file:
         toml.dump(parsed_toml, config_file)
 
 
@@ -84,4 +85,4 @@ def get_path() -> str:
     """Get a path to the config file in the home directory"""
     # Could have multiple sources in the future, but not important rn
     # dir_path = os.path.join(os.getcwd(), file_name)
-    return os.path.join(os.path.expanduser('~'), '.dit-languages')
+    return os.path.join(os.path.expanduser("~"), ".dit-languages")
