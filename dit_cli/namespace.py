@@ -1,13 +1,13 @@
 """Dataclasses for all dit functions.
 Includes the variable system for reading and writing values."""
-from typing import List, Union, Any
-from dataclasses import dataclass
 from copy import copy
+from dataclasses import dataclass
+from typing import Any, List, Union
 
+from dit_cli.assigner import Assigner
+from dit_cli.dataclasses import Attribute, Expression, NameConflict
 from dit_cli.exceptions import VarError
 from dit_cli.node import Node
-from dit_cli.dataclasses import Attribute, Expression, NameConflict
-from dit_cli.assigner import Assigner
 
 
 class Namespace:
@@ -19,20 +19,21 @@ class Namespace:
         self.nodes: List[Node] = []
         self.assigners: List[Assigner] = []
 
-    def add(self, name: str, namespace: 'Namespace'):
+    def add(self, name: str, namespace: "Namespace"):
         """Add an imported namespace to this namespace behind a name"""
         self.raise_if_defined(name)
-        self.parents.append({'name': name, 'namespace': namespace})
+        self.parents.append({"name": name, "namespace": namespace})
 
     def raise_if_defined(self, name: str):
         """Search for a single new name, and raise if it already exists
         as a class, object, assigner, or namespace"""
+
         def _raise(type_: str):
             raise VarError(f'"{name}" is already defined ({type_})')
 
         for parent in self.parents:
-            if name == parent['name']:
-                _raise('namespace')
+            if name == parent["name"]:
+                _raise("namespace")
 
         for node in self.nodes:
             if name == node.name:
@@ -40,7 +41,7 @@ class Namespace:
 
         for assign in self.assigners:
             if name == assign.name:
-                _raise('assigner')
+                _raise("assigner")
 
     def raise_if_undefined(self, expr: Union[List[str], Expression]):
         """Search for a variable, and raise if it does not exist"""
@@ -82,8 +83,9 @@ class _SearchResult:
     context: What type of thing was found.
 
     value: The actual result of the search."""
+
     context: str
-    value: Union[Attribute, 'Namespace', Node, Assigner]
+    value: Union[Attribute, "Namespace", Node, Assigner]
 
 
 def _process_expression(expr: Expression, data: Any):
@@ -109,39 +111,38 @@ def _process_expression(expr: Expression, data: Any):
     for index, var in enumerate(expr):
         res = _find_var(var, current)
         if res is None:
-            _raise_helper(var, expr, 'Undefined variable')
+            _raise_helper(var, expr, "Undefined variable")
 
         if index < len(expr) - 1:  # There are more elements
-            if res.context == 'namespace':
+            if res.context == "namespace":
                 namespace = res.value
                 current = namespace
-            elif res.context == 'object':
+            elif res.context == "object":
                 obj = res.value
                 class_ = obj.extends[0]
                 current = class_
-            elif res.context == 'class':
-                conf = _get_conflict(
-                    expr[index + 1], class_, res.value)
+            elif res.context == "class":
+                conf = _get_conflict(expr[index + 1], class_, res.value)
                 class_ = res.value
                 current = class_
-            elif res.context == 'assigner':
-                _raise_helper(var, expr, 'Cannot reference assigner')
-            elif res.context == 'attr':
+            elif res.context == "assigner":
+                _raise_helper(var, expr, "Cannot reference assigner")
+            elif res.context == "attr":
                 class_attr = res.value
                 class_ = class_attr.class_
                 current = class_
                 obj_attr = _find_attribute(obj, var, conf)
-                if class_attr.class_ == 'String':
-                    _raise_helper(var, expr, 'Cannot reference string')
+                if class_attr.class_ == "String":
+                    _raise_helper(var, expr, "Cannot reference string")
                 if class_attr.list_:
                     # TODO: You should be able to reference lists of objects.
                     # It would implicitly understand that you want to
                     # mess with each item in the list, rather than the list
                     # as a whole.
-                    _raise_helper(var, expr, 'Cannot reference list')
+                    _raise_helper(var, expr, "Cannot reference list")
 
                 if data is not None and obj_attr is None:
-                    new_obj = Node(namespace, var, 'object')
+                    new_obj = Node(namespace, var, "object")
                     new_obj.extends.append(class_attr.class_)
                     new_attr: Attribute = copy(class_attr)
                     new_attr.data = new_obj
@@ -153,7 +154,7 @@ def _process_expression(expr: Expression, data: Any):
 
         else:
             if data is None:
-                if res.context != 'attr':
+                if res.context != "attr":
                     # For almost everything, we can just return the data.
                     return res.value
                 else:
@@ -161,15 +162,14 @@ def _process_expression(expr: Expression, data: Any):
                     # res.value is a class_attr
                     return _find_attribute(obj, var, conf)
             else:
-                if res.context not in ['object', 'attr']:
-                    _raise_helper(var, expr,
-                                  f'Cannot assign to {res.context}')
-                elif res.context == 'object':
+                if res.context not in ["object", "attr"]:
+                    _raise_helper(var, expr, f"Cannot assign to {res.context}")
+                elif res.context == "object":
                     # Assign entire top level object
                     _check_obj_type(data, res.value)
                     res.value.attrs = data.attrs
                     return
-                elif res.context == 'attr':
+                elif res.context == "attr":
                     _check_data_type(data, res.value, class_.name, False)
                     attr: Attribute = _find_attribute(obj, var, conf)
                     if attr is None:
@@ -208,8 +208,8 @@ def _search_namespace(var: str, namespace: Namespace) -> _SearchResult:
 
     data: Namespace, Node, or Assign"""
     for parent in namespace.parents:
-        if parent['name'] == var:
-            return _SearchResult('namespace', parent['namespace'])
+        if parent["name"] == var:
+            return _SearchResult("namespace", parent["namespace"])
 
     for node in namespace.nodes:
         if node.name == var:
@@ -217,7 +217,7 @@ def _search_namespace(var: str, namespace: Namespace) -> _SearchResult:
 
     for assign in namespace.assigners:
         if assign.name == var:
-            return _SearchResult('assigner', assign)
+            return _SearchResult("assigner", assign)
 
     return None
 
@@ -229,12 +229,12 @@ def _search_node(var: str, class_: Node) -> _SearchResult:
     # Is the var an attribute here in this node?
     for attr in class_.attrs:
         if var == attr.name:
-            return _SearchResult('attr', attr)
+            return _SearchResult("attr", attr)
 
     for extend in class_.extends:
         # Maybe it's an explicitly extended class?
         if extend.name == var:
-            return _SearchResult('class', extend)
+            return _SearchResult("class", extend)
         else:
             # Or somewhere in an extended class?
             res = _search_node(var, extend)
@@ -248,8 +248,8 @@ def _get_prefix(var: str, extend: Node, class_: Node) -> str:
     """Get the explicitly extended class prefix,
     if there's a conflict and the prefix is needed. Otherwise None"""
     for conf in class_.conflicts:
-        if (conf['class_'] == extend.name and conf['var'] == var):
-            return extend.name + '.' + var
+        if conf["class_"] == extend.name and conf["var"] == var:
+            return extend.name + "." + var
     return None
 
 
@@ -274,17 +274,16 @@ def _find_attribute(obj: Node, var: str, conf: NameConflict) -> dict:
     return None
 
 
-def _check_data_type(data, attr: Attribute, class_name: str,
-                     dat_is_list: bool):
+def _check_data_type(data, attr: Attribute, class_name: str, dat_is_list: bool):
     """Make sure given bit of data matches what it's being assigned to.
     raise if it isn't"""
-    if attr.class_ != 'String':
+    if attr.class_ != "String":
         attr_name = attr.class_.name
-    expr = class_name + '.' + attr.name
-    att_is_str = attr.class_ == 'String'
+    expr = class_name + "." + attr.name
+    att_is_str = attr.class_ == "String"
 
     if isinstance(data, str):
-        dat = 'String'
+        dat = "String"
     elif isinstance(data, list):
         if not attr.list_:
             if att_is_str:
@@ -297,7 +296,7 @@ def _check_data_type(data, attr: Attribute, class_name: str,
     else:
         # data must be an object
         dat = data.extends[0]
-    dat_is_str = dat == 'String'
+    dat_is_str = dat == "String"
 
     if att_is_str and not dat_is_str:
         raise VarError(f'Expected string "{expr}", got "{dat.name}"')
@@ -341,5 +340,5 @@ def _check_inheritance(target: Node, current: Node) -> bool:
 
 
 def _raise_helper(var: str, expr: List[str], message: str):
-    err = message + ' "' + var + '" in "' + '.'.join(expr) + '"'
+    err = message + ' "' + var + '" in "' + ".".join(expr) + '"'
     raise VarError(err)

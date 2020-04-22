@@ -2,14 +2,14 @@
 
 import os
 import subprocess
-from typing import Any
 from copy import copy
+from typing import Any
 
 from dit_cli import CONFIG
+from dit_cli.dataclasses import Attribute, EvalContext, Expression
+from dit_cli.exceptions import CodeError, ValidationError
 from dit_cli.node import Node
-from dit_cli.parser import parse_expr, find_name
-from dit_cli.dataclasses import Expression, Attribute, EvalContext
-from dit_cli.exceptions import ValidationError, CodeError
+from dit_cli.parser import find_name, parse_expr
 
 
 def validate_object(obj: Node):
@@ -26,7 +26,7 @@ def validate_object(obj: Node):
 
     # Recurse anything this object's attributes first
     for attr in obj.attrs:
-        if attr.class_ != 'String':
+        if attr.class_ != "String":
             for list_item in _traverse(attr.data):  # In case it's a list
                 validate_object(list_item)
 
@@ -65,14 +65,14 @@ def _run_validator(eva: EvalContext):
 
     # Then run this validator
     if eva.class_.validator:
-        eva.lang = CONFIG[eva.class_.validator['lang']]
-        base_code = eva.class_.validator['code']
+        eva.lang = CONFIG[eva.class_.validator["lang"]]
+        base_code = eva.class_.validator["code"]
         # Skip validator if the is no actual code
         if base_code.isspace() or not base_code:
             return
         code = _prep_code(eva, base_code)
-        result = _run_code(eva.class_.name, 'Validator', code, eva.lang)
-        if result.casefold() != 'true':
+        result = _run_code(eva.class_.name, "Validator", code, eva.lang)
+        if result.casefold() != "true":
             raise ValidationError(result, eva.obj.name)
 
 
@@ -81,12 +81,11 @@ def _run_print(eva: EvalContext) -> str:
 
     if eva.class_.print is None:
         return _ser_obj(eva)
-    elif eva.class_.print['class_']:
-        eva.class_ = eva.class_.print['class_']
+    elif eva.class_.print["class_"]:
+        eva.class_ = eva.class_.print["class_"]
         return _run_print(eva)
-    elif eva.class_.print['expr']:
-        expr = Expression(eva.namespace, eva.class_,
-                          eva.obj, eva.class_.print['expr'])
+    elif eva.class_.print["expr"]:
+        expr = Expression(eva.namespace, eva.class_, eva.obj, eva.class_.print["expr"])
         attr = eva.class_.namespace.read(expr)
         return _ser_attribute(eva, attr)
     else:
@@ -95,13 +94,13 @@ def _run_print(eva: EvalContext) -> str:
         # We also need to make a new eva, to avoid making
         # mutable changes to the old one.
         print_eva = copy(eva)
-        print_eva.lang = CONFIG[eva.class_.print['lang']]
-        base_code = eva.class_.print['code']
+        print_eva.lang = CONFIG[eva.class_.print["lang"]]
+        base_code = eva.class_.print["code"]
         # Skip validator if the is no actual code
         if base_code.isspace() or not base_code:
-            return eva.lang['null_type']
+            return eva.lang["null_type"]
         code = _prep_code(print_eva, base_code)
-        value = _run_code(print_eva.class_.name, 'Print', code, print_eva.lang)
+        value = _run_code(print_eva.class_.name, "Print", code, print_eva.lang)
         return _ser_str(value, eva.lang)
 
 
@@ -109,26 +108,26 @@ def _prep_code(eva: EvalContext, code: str) -> str:
     # Replace all @@ dit escape sequences with variables
     start = 0
     while True:
-        escape = code.find('@@', start)
+        escape = code.find("@@", start)
         if escape == -1:
             break
-        if code[escape:escape + 4] == '@@@@':
-            code = code[:escape] + code[escape + 2:]  # Keep only one @@
+        if code[escape : escape + 4] == "@@@@":
+            code = code[:escape] + code[escape + 2 :]  # Keep only one @@
             start = escape + 2
             continue
-        if code[escape:escape + 3] == '@@@':  # Leave the first @
+        if code[escape : escape + 3] == "@@@":  # Leave the first @
             escape += 1
 
-        if code[escape + 2:escape + 8] == 'print(':
-            query = code[escape + 2:code.find(')') + 1]
+        if code[escape + 2 : escape + 8] == "print(":
+            query = code[escape + 2 : code.find(")") + 1]
         else:
-            query = find_name(code[escape + 2:])
+            query = find_name(code[escape + 2 :])
 
         # Starts the serialization recursion chain
         value = serialize(eva, query)
         start = escape + len(value)
 
-        code = code[:escape] + value + code[escape + 2 + len(query):]
+        code = code[:escape] + value + code[escape + 2 + len(query) :]
 
     return code
 
@@ -137,9 +136,9 @@ def serialize(eva: EvalContext, query: str) -> str:
     """Convert a query sequence into a
     string representation of that variable"""
     if eva.lang is None:
-        eva.lang = CONFIG[CONFIG['general']['serializer']]
+        eva.lang = CONFIG[CONFIG["general"]["serializer"]]
 
-    if query[:6] == 'print(':
+    if query[:6] == "print(":
         eva.print_ = True
         query = query[6:-1]
     else:
@@ -159,12 +158,12 @@ def serialize(eva: EvalContext, query: str) -> str:
 
 def _ser_attribute(eva: EvalContext, attr: Attribute) -> str:
     if attr is None:
-        return eva.lang['null_type']
+        return eva.lang["null_type"]
     elif attr.list_:
         new_eva = copy(eva)
         new_eva.class_ = attr.class_
         return _ser_list(new_eva, attr.data)
-    elif attr.class_ == 'String':
+    elif attr.class_ == "String":
         return _ser_str(attr.data, eva.lang)
     else:
         return _handle_new_obj(eva, attr.data)
@@ -172,41 +171,38 @@ def _ser_attribute(eva: EvalContext, attr: Attribute) -> str:
 
 def _ser_str(str_: str, lang: dict) -> str:
     # The only base case in the entire serialization system
-    if lang['str_escape'] in str_:
-        str_ = str_.replace(
-            lang['str_escape'], lang['str_escape'] + lang['str_escape'])
+    if lang["str_escape"] in str_:
+        str_ = str_.replace(lang["str_escape"], lang["str_escape"] + lang["str_escape"])
 
-    if lang['str_open'] in str_:
-        str_ = str_.replace(
-            lang['str_open'], lang['str_escape'] + lang['str_open'])
+    if lang["str_open"] in str_:
+        str_ = str_.replace(lang["str_open"], lang["str_escape"] + lang["str_open"])
 
-    if lang['str_open'] != lang['str_close'] and lang['str_close'] in str_:
-        str_ = str_.replace(
-            lang['str_close'], lang['str_escape'] + lang['str_close'])
+    if lang["str_open"] != lang["str_close"] and lang["str_close"] in str_:
+        str_ = str_.replace(lang["str_close"], lang["str_escape"] + lang["str_close"])
 
-    if '\n' in str_:
-        str_ = str_.replace('\n', lang['str_newline'])
+    if "\n" in str_:
+        str_ = str_.replace("\n", lang["str_newline"])
 
-    if '\t' in str_:
-        str_ = str_.replace('\t', lang['str_tab'])
+    if "\t" in str_:
+        str_ = str_.replace("\t", lang["str_tab"])
 
-    return lang['str_open'] + str_ + lang['str_close']
+    return lang["str_open"] + str_ + lang["str_close"]
 
 
 def _ser_list(eva: EvalContext, item: Any) -> str:
     if isinstance(item, list):
         if len(item) == 0:
-            return eva.lang['list_open'] + eva.lang['list_close']
-        value = eva.lang['list_open']
+            return eva.lang["list_open"] + eva.lang["list_close"]
+        value = eva.lang["list_open"]
         for i in item:
             # Serialize any depth of list by recursing
             value += _ser_list(eva, i)
-            value += eva.lang['list_delimiter']
+            value += eva.lang["list_delimiter"]
         # Replace last comma with ]
-        value = value[:-1] + eva.lang['list_close']
+        value = value[:-1] + eva.lang["list_close"]
         return value
     else:
-        if eva.class_ == 'String':
+        if eva.class_ == "String":
             return _ser_str(item, eva.lang)
         else:
             return _handle_new_obj(eva, item)
@@ -216,39 +212,45 @@ def _ser_obj(eva: EvalContext) -> str:
     # Basically serialize like JSON, which works in javascript and python,
     # and could be made to work anywhere, although more customization in
     # the future is likely.
-    value = eva.lang['obj_open']
+    value = eva.lang["obj_open"]
 
     def field(identifier: str, value: str) -> str:
-        return eva.lang['str_open'] + identifier + eva.lang['str_close'] + \
-            eva.lang['obj_colon'] + value + eva.lang['obj_delimiter']
+        return (
+            eva.lang["str_open"]
+            + identifier
+            + eva.lang["str_close"]
+            + eva.lang["obj_colon"]
+            + value
+            + eva.lang["obj_delimiter"]
+        )
 
     # This information is redundant.
     # It could be added back conditionally, but removed entirely for now.
     # value += field('name', _ser_str(obj.name, lang))
-    value += field('class', _ser_str(eva.class_.name, eva.lang))
+    value += field("class", _ser_str(eva.class_.name, eva.lang))
     if eva.class_.print is not None:
-        value += field('print', _run_print(eva))
+        value += field("print", _run_print(eva))
     for attr in eva.obj.attrs:
         value += field(attr.name, _ser_attribute(eva, attr))
 
     # Replace last comma with }
-    value = value[:-1] + eva.lang['obj_close']
+    value = value[:-1] + eva.lang["obj_close"]
     return value
 
 
 def _run_code(name: str, purpose: str, code: str, lang: dict) -> str:
     """Write the code to a file based on the specified language.
     Then run code and get result using the subprocess.run command."""
-    path = _get_file_path(name, purpose, lang['file_extension'])
-    file_string = lang['function_string'] + lang['call_string']
-    file_string = file_string.replace(r'\n', '\n')
-    file_string = file_string.replace(r'\t', '\t')
-    file_string = file_string.replace('@@CODE', code)
+    path = _get_file_path(name, purpose, lang["file_extension"])
+    file_string = lang["function_string"] + lang["call_string"]
+    file_string = file_string.replace(r"\n", "\n")
+    file_string = file_string.replace(r"\t", "\t")
+    file_string = file_string.replace("@@CODE", code)
 
-    with open(path, 'w') as code_file:
+    with open(path, "w") as code_file:
         code_file.write(file_string)
 
-    cmd = [lang['path'], path]
+    cmd = [lang["path"], path]
     try:
         # TODO: Subprocess is the slowest part of the project.
         # Fix this before anything else
@@ -257,9 +259,9 @@ def _run_code(name: str, purpose: str, code: str, lang: dict) -> str:
         raise CodeError(error, name, purpose, lang)
 
     raw = output.stdout.decode()
-    begin = 'begin--'
-    end = '--end'
-    return raw[raw.find(begin) + len(begin):raw.find(end)]
+    begin = "begin--"
+    end = "--end"
+    return raw[raw.find(begin) + len(begin) : raw.find(end)]
 
 
 def _handle_new_obj(eva: EvalContext, obj: Node) -> str:
@@ -276,5 +278,5 @@ def _handle_new_obj(eva: EvalContext, obj: Node) -> str:
 
 def _get_file_path(name: str, purpose: str, ext: str) -> str:
     """Generate file name and path to file"""
-    file_name = name + '-' + purpose + '.' + ext
-    return os.path.join(CONFIG['general']['tmp_dir'], file_name)
+    file_name = name + "-" + purpose + "." + ext
+    return os.path.join(CONFIG["general"]["tmp_dir"], file_name)
