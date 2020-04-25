@@ -1,0 +1,153 @@
+Number {
+    String value;
+
+    Number new(String val) {{ this.value = val; }}
+
+    String toString() {{ ret = this.value; }}
+
+    Javascript void validate() {{
+        const num = <|this.value|>;
+        if (isNaN(parseFloat(num)) || !isFinite(num)) {
+            return `"${num}" is not a number.`;
+        }
+        return true;
+    }}
+}
+
+StringSpacesOnly {
+    String value;
+
+    StringSpacesOnly new(String val) {{
+        this.value = val; 
+        ret = this;
+    }}
+
+    String toString() {{ ret = this.value; }}
+
+    Javascript void validate() {{
+        const str = <|this.value|>;
+        if (/[\t\r\n\f]/.test(str)) {
+            return `The following string contains whitespace other than spaces:
+            "${str}"`;
+        }
+        return true;
+    }}
+}
+
+Measurement {
+    Number magnitude;
+    StringSpacesOnly units;
+
+    Measurement new(String mag, String uni) {{
+        this.magnitude = Number.new(mag);
+        this.units = StringSpacesOnly.new(uni)
+        ret = this;
+    }}
+
+    Javascript String toString() {{
+        return `${<|this.magnitude.value|>} ${<|this.units.value|>}`;
+    }}
+}
+
+Length {
+    Length extends Measurement;
+
+    Length new(String mag, String uni) {{
+        this.magnitude = Number.new(mag);
+        this.units = StringSpacesOnly.new(uni);
+        ret = this;
+    }}
+    
+    String toString() {{ ret = Measurement.toString(); }}
+
+    Javascript void validate() {{
+        let num = parseFloat(<|this.magnitude.value|>)
+        if (num < 0) {
+            return `Number "${num}" is negative.`;
+        }
+        return true;
+    }}
+}
+
+LengthInch {
+    cls.extend(Length);
+
+    LengthInch new(String mag) {{
+        this.units = 'inches';
+        this.magnitude = Number.new(mag);
+        ret = this;
+    }}
+
+    String toString() {{ ret = Length.toString(); }}
+
+    Javascript void validate() {{
+        let units = @@this.units.value;
+        if (units != 'inches') {
+            return `Units "${units}" was not inches.`;
+        }
+        return true;
+    }}
+}
+
+LengthInchPunct {
+    cls.extend(Length);
+
+    LengthInchPunct new(String mag) {{
+        this.units = 'inches';
+        this.magnitude = Number.new(mag);
+        ret = this;
+    }}
+
+    Javascript String toString() {{ 
+        // Notice the " so will be 36" instead of 36 inches
+        return `${@@magnitude.value}"`; 
+    }}
+}
+
+Length2D {
+    Length length;
+    Length width;
+    print Javascript {{ return `${@@print(width)} x ${@@print(length)}`; }}
+    validator Javascript {{
+        let len = parseFloat(@@length.magnitude.value);
+        let wid = parseFloat(@@width.magnitude.value);
+        if (len < wid) {
+            return `length "${len}" < width "${wid}". Length must be greater.`;
+        }
+        return true;
+    }}
+}
+
+Length l(mag, uni) {
+    magnitude.value = mag;
+    units.value = uni;
+}
+
+LengthInchPunct inch(mag, uni) {
+    magnitude.value = mag;
+    units.value = uni;
+}
+
+Measurement temperature;
+temperature.magnitude.value = '-17.3';
+temperature.units.value = 'Degrees Celsius';
+
+Length miles;
+miles.magnitude.value = '23';
+miles.units.value = 'miles';
+
+LengthInch inches;
+inches.magnitude.value = '7';
+inches.units.value = 'inches';
+
+LengthInchPunct inchPunct;
+inchPunct.magnitude.value = '3';
+inchPunct.units.value = 'inches';
+
+Length2D metricBoard;
+metricBoard.width = l('48', 'millimeters');
+metricBoard.length = l('98', 'millimeters');
+
+Length2D inchBoard;
+inchBoard.width = inch('2', 'inches');
+inchBoard.length = inch('4', 'inches');
