@@ -1,4 +1,10 @@
-Number {
+// All braces are now doubled, just for consistency.
+// Theres no need to distinguish between them.
+Number {{
+    // I am still struggling with how dynamic classes will work.
+    // A script needs to be able to generate/modify classes piecemeal,
+    // which means they need to be able to say 'Class has Attribute'
+    // How do I do write that syntax and make it consistent in dit and scripts?
     String value;
 
     Number new(String val) {{ this.value = val; }}
@@ -6,15 +12,18 @@ Number {
     String toString() {{ ret = this.value; }}
 
     Javascript void validate() {{
+        // New <|dit statement|> syntax.
+        // I like it a lot, and like '@@', 
+        // it doesn't appear in almost any other programming language.
         const num = <|this.value|>;
         if (isNaN(parseFloat(num)) || !isFinite(num)) {
             return `"${num}" is not a number.`;
         }
         return true;
     }}
-}
+}}
 
-StringSpacesOnly {
+StringSpacesOnly {{
     String value;
 
     StringSpacesOnly new(String val) {{
@@ -32,9 +41,9 @@ StringSpacesOnly {
         }
         return true;
     }}
-}
+}}
 
-Measurement {
+Measurement {{
     Number magnitude;
     StringSpacesOnly units;
 
@@ -47,11 +56,14 @@ Measurement {
     Javascript String toString() {{
         return `${<|this.magnitude.value|>} ${<|this.units.value|>}`;
     }}
-}
+}}
 
-Length {
-    Length extends Measurement;
+Length {{
+    // Same problem described above with 'extends'
+    extends Measurement;
 
+    // And really, member functions too.
+    // How does the script specify context? This just needs more time and thinking.
     Length new(String mag, String uni) {{
         this.magnitude = Number.new(mag);
         this.units = StringSpacesOnly.new(uni);
@@ -67,10 +79,10 @@ Length {
         }
         return true;
     }}
-}
+}}
 
-LengthInch {
-    cls.extend(Length);
+LengthInch {{
+    extends Length;
 
     LengthInch new(String mag) {{
         this.units = 'inches';
@@ -87,10 +99,10 @@ LengthInch {
         }
         return true;
     }}
-}
+}}
 
-LengthInchPunct {
-    cls.extend(Length);
+LengthInchPunct {{
+    extends LengthInch;
 
     LengthInchPunct new(String mag) {{
         this.units = 'inches';
@@ -102,52 +114,50 @@ LengthInchPunct {
         // Notice the " so will be 36" instead of 36 inches
         return `${@@magnitude.value}"`; 
     }}
-}
+}}
 
-Length2D {
+Length2D {{
     Length length;
     Length width;
-    print Javascript {{ return `${@@print(width)} x ${@@print(length)}`; }}
-    validator Javascript {{
-        let len = parseFloat(@@length.magnitude.value);
-        let wid = parseFloat(@@width.magnitude.value);
+
+    Length2D new(Measurement len, Measurement wid) {{
+        this.length = len;
+        this.width = wid;
+        ret = this;
+    }}
+
+    Javascript String toString {{
+        return `${<|this.width.toString()|>} x ${<|this.length.toString()|>}`;
+    }}
+    Javascript void validate() {{
+        const len = parseFloat(<|this.length.toString()|>);
+        const wid = parseFloat(<|this.width.toString()|>);
         if (len < wid) {
             return `length "${len}" < width "${wid}". Length must be greater.`;
         }
         return true;
     }}
-}
+}}
 
-Length l(mag, uni) {
-    magnitude.value = mag;
-    units.value = uni;
-}
+// I like this stuff a lot, this is all very intuitive.
 
-LengthInchPunct inch(mag, uni) {
-    magnitude.value = mag;
-    units.value = uni;
-}
-
-Measurement temperature;
-temperature.magnitude.value = '-17.3';
-temperature.units.value = 'Degrees Celsius';
+Measurement temperature = Measurement.new('-17.3', 'Degrees Celsius');
 
 Length miles;
-miles.magnitude.value = '23';
-miles.units.value = 'miles';
+miles = Length.new('23', 'miles')
 
-LengthInch inches;
-inches.magnitude.value = '7';
-inches.units.value = 'inches';
+LengthInch inches = LengthInch.new('7');
 
-LengthInchPunct inchPunct;
-inchPunct.magnitude.value = '3';
-inchPunct.units.value = 'inches';
+LengthInchPunct inchPunct = LengthInchPunct.new('3');
 
-Length2D metricBoard;
-metricBoard.width = l('48', 'millimeters');
-metricBoard.length = l('98', 'millimeters');
+Length2D metricBoard = Length2D.new(
+    Length.new('48', 'millimeters')
+    Length.new('98', 'millimeters')
+);
 
-Length2D inchBoard;
-inchBoard.width = inch('2', 'inches');
-inchBoard.length = inch('4', 'inches');
+Length2D metricBoard = Length2D.new(
+    Length.new('48', 'millimeters')
+    Length.new('98', 'millimeters')
+);
+
+Length2D inchBoard = Length2D.new(LengthInchPunct('2'), LengthInchPunct('4'));
