@@ -1,0 +1,42 @@
+// An extremely simple dit to demonstrate dit syntax
+
+// A dit class
+Fruit {{
+    String value; // A class attribute. String is the only primitive type.
+
+    // Constructor in Dit based language.
+    Ditlang Fruit new(String val) {{ this.value = val; }}
+
+    // Language agnostic validators
+    Javascript void validate() 
+        let fruits = ['apple', 'banana', 'pear', 'strawberry', 'kiwi'];
+
+        let value = <|this.value|>;
+        if (fruits.indexOf(value) === -1) { 
+            <|throw |>
+            return `"${value}" is not a valid fruit.`; 
+        }
+        return true;
+    }}
+}}
+
+FavoriteFruits {
+    // Attributes can be instances of other classes
+    Fruit leastFavorite;
+    Fruit favorite;
+
+    // Print can use code, similar to toString
+    print Javascript {{
+        return `Favorite: ${@@favorite.value} Least Favorite: ${@@leastFavorite.value}`;
+    }}
+}
+
+// Declaration/instantiation.
+Fruit fav;
+fav.value = 'kiwi';
+
+FavoriteFruits favorites;
+favorites.favorite = fav; // Object assignment
+favorites.leastFavorite.value = 'pear';
+
+// At this point, the validators for all objects get run.

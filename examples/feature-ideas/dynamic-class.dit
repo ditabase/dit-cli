@@ -1,5 +1,5 @@
 Python void generateDit() {{
-    @@Number {
+    <|Number {{
         String value;
 
         Number new(String val) {{ this.value = val; }}
@@ -7,13 +7,13 @@ Python void generateDit() {{
         String toString() {{ ret = this.value; }}
 
         Javascript void validate() {{
-            const num = @@this.value;
+            const num = <|this.value;|>;
             if (isNaN(parseFloat(num)) || !isFinite(num)) {
                 return `"${num}" is not a number.`;
             }
             return true;
         }}
-    }
+    }}|>
 
     
     @@FibNum {{

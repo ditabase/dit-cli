@@ -1,3 +1,5 @@
+import Test from 'https://raw.githubusercontent.com/isaiahshiner/dits/master/dits/Test.dit';
+
 // All braces are now doubled, just for consistency.
 // Theres no need to distinguish between them.
 Number {{
@@ -7,13 +9,13 @@ Number {{
     // How do I do write that syntax and make it consistent in dit and scripts?
     String value;
 
-    Number new(String val) {{ this.value = val; }}
+    Ditlang Number new(String val) {{ this.value = val; }}
 
-    String toString() {{ ret = this.value; }}
+    Ditlang String toString() {{ return this.value; }}
 
     Javascript void validate() {{
         // New <|dit statement|> syntax.
-        // I like it a lot, and like '@@', 
+        // I like it a lot, and similar to '@@', 
         // it doesn't appear in almost any other programming language.
         const num = <|this.value|>;
         if (isNaN(parseFloat(num)) || !isFinite(num)) {
@@ -28,10 +30,10 @@ StringSpacesOnly {{
 
     StringSpacesOnly new(String val) {{
         this.value = val; 
-        ret = this;
+        return this;
     }}
 
-    String toString() {{ ret = this.value; }}
+    String toString() {{ return this.value; }}
 
     Javascript void validate() {{
         const str = <|this.value|>;
@@ -50,7 +52,7 @@ Measurement {{
     Measurement new(String mag, String uni) {{
         this.magnitude = Number.new(mag);
         this.units = StringSpacesOnly.new(uni)
-        ret = this;
+        return this;
     }}
 
     Javascript String toString() {{
@@ -67,10 +69,10 @@ Length {{
     Length new(String mag, String uni) {{
         this.magnitude = Number.new(mag);
         this.units = StringSpacesOnly.new(uni);
-        ret = this;
+        return this;
     }}
     
-    String toString() {{ ret = Measurement.toString(); }}
+    String toString() {{ return Measurement.toString(); }}
 
     Javascript void validate() {{
         let num = parseFloat(<|this.magnitude.value|>)
@@ -87,10 +89,10 @@ LengthInch {{
     LengthInch new(String mag) {{
         this.units = 'inches';
         this.magnitude = Number.new(mag);
-        ret = this;
+        return this;
     }}
 
-    String toString() {{ ret = Length.toString(); }}
+    String toString() {{ return Length.toString(); }}
 
     Javascript void validate() {{
         let units = @@this.units.value;
@@ -107,7 +109,7 @@ LengthInchPunct {{
     LengthInchPunct new(String mag) {{
         this.units = 'inches';
         this.magnitude = Number.new(mag);
-        ret = this;
+        return this;
     }}
 
     Javascript String toString() {{ 
@@ -123,7 +125,7 @@ Length2D {{
     Length2D new(Measurement len, Measurement wid) {{
         this.length = len;
         this.width = wid;
-        ret = this;
+        return this;
     }}
 
     Javascript String toString {{
@@ -155,9 +157,19 @@ Length2D metricBoard = Length2D.new(
     Length.new('98', 'millimeters')
 );
 
-Length2D metricBoard = Length2D.new(
-    Length.new('48', 'millimeters')
-    Length.new('98', 'millimeters')
-);
-
 Length2D inchBoard = Length2D.new(LengthInchPunct('2'), LengthInchPunct('4'));
+
+// Example of dit arbitrarily powerful script.
+Python void writeAllToFile() {{
+    temperature = '"temperature": <|dit.temperature.toString()|>,'
+    miles = '"miles": <|dit.miles.toString()|>,'
+    inches = '"inches": <|dit.inches.toString()|>,'
+    inchPunct = '"inchPunct": <|dit.inchPunct.toString()|>,'
+    metricBoard = '"metricBoard": <|dit.metricBoard.toString()|>,'
+    inchBoard = '"inchBoard": <|dit.inchBoard.toString()|>'
+
+    json = f"{{{temperature}{miles}{inches}{inchPunct}{metricBoard}{inchBoard}}}"
+
+    with open("/tmp/dit/new-lengths-example.json", "w+") as file_object:
+        file_object.write(json)
+}}
