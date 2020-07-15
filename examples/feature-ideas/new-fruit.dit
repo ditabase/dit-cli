@@ -2,41 +2,101 @@
 
 // A dit class
 Fruit {{
-    String value; // A class attribute. String is the only primitive type.
+    String myFruit; // A class attribute. String is the only primitive type.
 
-    // Constructor in Dit based language.
-    Ditlang Fruit new(String val) {{ this.value = val; }}
+    // Basic constructor. For now, this mostly copies Java, but can change.
+    // Possibly something more Pythonic/Rust-like/both. Java is not the be all/end all.
+    Ditlang Fruit(String val) {{
+        this.myFruit = val;
+        // Ditlang has no ifs, loops, or complex concepts of any kind.
+        // It can assign values and call functions and nothing else.
+        // All the real work is done by other languages.
+    }}
 
-    // Language agnostic validators
-    Javascript void validate() 
-        let fruits = ['apple', 'banana', 'pear', 'strawberry', 'kiwi'];
+    // Language agnostic functions.
+    Python void validate() {{
+        fruits = ['apple', 'banana', 'pear', 'strawberry', 'kiwi']
 
-        let value = <|this.value|>;
+        # A "Triangle Expression"
+        value = <|this.myFruit|>
+
+        # This is for communicating with dit inside of other languages.
+        # In this case, it will write the literal value of "myFruit"
+        # into the Python source code as a string (value = 'kiwi')
+
+        if value not in fruits:
+            <|throw (|f'"{value}" is not a valid fruit.'|)|>
+
+            # Another triangle expression, executing a 'throw' command.
+            # Inside is a circle expression, you can use the language again.
+            # Dit will execute the code and use it as an argument to the command.
+            
+        # Review:
+        # Triangle Expression: Pull info from dit, execute dit commands.
+        # Circle Expression: Send info back to dit, arguments to dit commands.
+    }}
+
+    // Language overloading, this could be run in a browser or other non-python context.
+    // If multiple languages would work, there will be options to choose
+    // a specific one, a hierarchy, or just the fastest available one.
+
+    // If no implementation is compatible (browser, but no Javascript version),
+    // then dit can request a server to execute the code and return the result.
+    Javascript void validate() {{
+        const fruits = ['apple', 'banana', 'pear', 'strawberry', 'kiwi'];
+        const value = <|this.myFruit|>; // Notice the Shape Expressions look the same.
+
         if (fruits.indexOf(value) === -1) { 
-            <|throw |>
-            return `"${value}" is not a valid fruit.`; 
+            <|throw (|`"${value}" is not a valid fruit.`;|)|>
         }
-        return true;
+    }}
+
+    // Compiled languages are not implemented yet, but will work fine in the future.
+    Java void validate() {{
+        // pre will blindly place whatever you want at the top of the file.
+        <|pre (|import java.util.Arrays;|)|>
+
+        String[] fruits = { "apple", "banana", "pear", "strawberry", "kiwi" };
+        String value = <|this.myFruit|>;
+
+        if (!Arrays.asList(fruits).contains(value)) {
+            <|throw (|"\"" + value + "\" is not a valid fruit.";|)|>
+        }
     }}
 }}
 
-FavoriteFruits {
-    // Attributes can be instances of other classes
+FruitPreference {{
+    // Classes can be attributes of other classes
     Fruit leastFavorite;
-    Fruit favorite;
+    Fruit mostFavorite;
 
-    // Print can use code, similar to toString
-    print Javascript {{
-        return `Favorite: ${@@favorite.value} Least Favorite: ${@@leastFavorite.value}`;
+    Ditlang FruitPreference(Fruit least, Fruit most) {{
+        this.leastFavorite = least;
+        this.mostFavorite = most;
     }}
-}
+
+    Javascript void validate() {{
+        if (<|this.mostFavorite.myFruit|> === <|this.leastFavorite.myFruit|>) {
+            <|throw (|"Your most and least favorite fruits cannot be the same."|)|>
+        }
+    }}
+
+    Javascript String toString() {{
+        const val = `I like ${<|favorite.value|>}, but hate ${<|leastFavorite.value|>}.`
+        <|return (|val|);|>
+    }}
+}}
 
 // Declaration/instantiation.
-Fruit fav;
-fav.value = 'kiwi';
+Fruit someFruit = new Fruit('kiwi');
+Fruit anotherFruit = new Fruit();
+anotherFruit.myFruit = 'Clearly not a fruit'; // Will throw an error when validated.
 
-FavoriteFruits favorites;
-favorites.favorite = fav; // Object assignment
-favorites.leastFavorite.value = 'pear';
+FruitPreference favorites = new FruitPreference(someFruit, new Fruit('strawberry'));
 
-// At this point, the validators for all objects get run.
+dit.validate();
+// 'dit' is a global variable which refers to the entire current dit file.
+// It will likely have a few baked in functions, one of which is validate.
+// This just looks for and runs any function called 'validate' in every object.
+// Like all functions, you can access validate from the command line, 
+// or just call it whenever you feel like. Here, it will run anytime you load the dit.

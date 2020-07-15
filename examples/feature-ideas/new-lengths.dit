@@ -1,47 +1,31 @@
 import Test from 'https://raw.githubusercontent.com/isaiahshiner/dits/master/dits/Test.dit';
 
-// All braces are now doubled, just for consistency.
-// Theres no need to distinguish between them.
 Number {{
-    // I am still struggling with how dynamic classes will work.
-    // A script needs to be able to generate/modify classes piecemeal,
-    // which means they need to be able to say 'Class has Attribute'
-    // How do I do write that syntax and make it consistent in dit and scripts?
     String value;
 
-    Ditlang Number new(String val) {{ this.value = val; }}
-
+    Ditlang Number(String val) {{ this.value = val; }}
     Ditlang String toString() {{ return this.value; }}
 
     Javascript void validate() {{
-        // New <|dit statement|> syntax.
-        // I like it a lot, and similar to '@@', 
-        // it doesn't appear in almost any other programming language.
         const num = <|this.value|>;
         if (isNaN(parseFloat(num)) || !isFinite(num)) {
-            return `"${num}" is not a number.`;
+            <|throw (|`"${num}" is not a number.`;|)|>
         }
-        return true;
     }}
 }}
 
 StringSpacesOnly {{
     String value;
 
-    StringSpacesOnly new(String val) {{
-        this.value = val; 
-        return this;
-    }}
-
-    String toString() {{ return this.value; }}
+    Ditlang StringSpacesOnly(String val) {{ this.value = val; }}
+    Ditlang String toString() {{ return this.value; }}
 
     Javascript void validate() {{
         const str = <|this.value|>;
         if (/[\t\r\n\f]/.test(str)) {
-            return `The following string contains whitespace other than spaces:
-            "${str}"`;
+            <|throw (|`The following string contains whitespace other than spaces:
+            "${str}"`;|)|>
         }
-        return true;
     }}
 }}
 
@@ -49,72 +33,63 @@ Measurement {{
     Number magnitude;
     StringSpacesOnly units;
 
-    Measurement new(String mag, String uni) {{
-        this.magnitude = Number.new(mag);
-        this.units = StringSpacesOnly.new(uni)
-        return this;
+    Ditlang Measurement(String mag, String uni) {{
+        this.magnitude = new Number(mag);
+        this.units = new StringSpacesOnly(uni)
     }}
 
     Javascript String toString() {{
-        return `${<|this.magnitude.value|>} ${<|this.units.value|>}`;
+        <|return (|<|this.magnitude.value|> + " " + <|this.units.value|>;|)|>
     }}
 }}
 
 Length {{
-    // Same problem described above with 'extends'
     extends Measurement;
 
-    // And really, member functions too.
-    // How does the script specify context? This just needs more time and thinking.
-    Length new(String mag, String uni) {{
-        this.magnitude = Number.new(mag);
-        this.units = StringSpacesOnly.new(uni);
-        return this;
+    Ditlang Length(String mag, String uni) {{
+        this.magnitude = new Number(mag);
+        this.units = new StringSpacesOnly(uni);
     }}
     
-    String toString() {{ return Measurement.toString(); }}
+    // Explicitly calling the extended parent, 'Measurement'
+    Ditlang String toString() {{ return Measurement.toString(); }}
 
     Javascript void validate() {{
         let num = parseFloat(<|this.magnitude.value|>)
         if (num < 0) {
-            return `Number "${num}" is negative.`;
+            <|throw (|`Number "${num}" is negative.`;|)|>
         }
-        return true;
     }}
 }}
 
 LengthInch {{
     extends Length;
 
-    LengthInch new(String mag) {{
-        this.units = 'inches';
-        this.magnitude = Number.new(mag);
-        return this;
+    Ditlang LengthInch new(String mag) {{
+        this.units = new StringSpacesOnly('inches');
+        this.magnitude = new Number(mag);
     }}
 
-    String toString() {{ return Length.toString(); }}
+    Ditlang String toString() {{ return Length.toString(); }}
 
     Javascript void validate() {{
-        let units = @@this.units.value;
+        let units = <|this.units.value|>;
         if (units != 'inches') {
-            return `Units "${units}" was not inches.`;
+            <|throw (|`Units "${units}" was not inches.`;|)|>
         }
-        return true;
     }}
 }}
 
 LengthInchPunct {{
     extends LengthInch;
 
-    LengthInchPunct new(String mag) {{
-        this.units = 'inches';
-        this.magnitude = Number.new(mag);
-        return this;
+    Ditlang LengthInchPunct(String mag) {{
+        LengthInch(mag);
     }}
 
     Javascript String toString() {{ 
         // Notice the " so will be 36" instead of 36 inches
-        return `${@@magnitude.value}"`; 
+        <|return (|<|magnitude.value|> + '"';|)|>
     }}
 }}
 
@@ -122,42 +97,41 @@ Length2D {{
     Length length;
     Length width;
 
-    Length2D new(Measurement len, Measurement wid) {{
+    Ditlang Length2D(Measurement len, Measurement wid) {{
         this.length = len;
         this.width = wid;
-        return this;
     }}
 
-    Javascript String toString {{
-        return `${<|this.width.toString()|>} x ${<|this.length.toString()|>}`;
+    Javascript String toString() {{
+        <|return (|<|this.width.toString()|> + " x " + <|this.length.toString()|>;|)|>
     }}
+
     Javascript void validate() {{
-        const len = parseFloat(<|this.length.toString()|>);
-        const wid = parseFloat(<|this.width.toString()|>);
+        const len = parseFloat(<|this.length.magnitude|>);
+        const wid = parseFloat(<|this.width.magnitude|>);
         if (len < wid) {
-            return `length "${len}" < width "${wid}". Length must be greater.`;
+            <|throw (|`length "${len}" < width "${wid}". Length must be greater.`;|)|>
         }
-        return true;
     }}
 }}
 
 // I like this stuff a lot, this is all very intuitive.
 
-Measurement temperature = Measurement.new('-17.3', 'Degrees Celsius');
+Measurement temperature = new Measurement('-17.3', 'Degrees Celsius');
 
 Length miles;
-miles = Length.new('23', 'miles')
+miles = new Length('23', 'miles')
 
-LengthInch inches = LengthInch.new('7');
+LengthInch inches = new LengthInch('7');
 
-LengthInchPunct inchPunct = LengthInchPunct.new('3');
+LengthInchPunct inchPunct = new LengthInchPunct('3');
 
-Length2D metricBoard = Length2D.new(
-    Length.new('48', 'millimeters')
-    Length.new('98', 'millimeters')
+Length2D metricBoard = new Length2D(
+    new Length('48', 'millimeters')
+    new Length('98', 'millimeters')
 );
 
-Length2D inchBoard = Length2D.new(LengthInchPunct('2'), LengthInchPunct('4'));
+Length2D inchBoard = new Length2D(new LengthInchPunct('2'), new LengthInchPunct('4'));
 
 // Example of dit arbitrarily powerful script.
 Python void writeAllToFile() {{
