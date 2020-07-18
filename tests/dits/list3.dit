@@ -1,0 +1,17 @@
+A {
+    String value;
+    print value;
+}
+
+B {
+    list A values;
+}
+
+A a1;
+a1.value = 'test';
+
+A a2;
+a2.value = 'test2';
+
+B b1;
+b1.values = [a1, a2];

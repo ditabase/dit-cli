@@ -24,6 +24,7 @@ VALID_STR = "dit is valid, no errors found"
         ("dits/inheritance1.dit", VALID_STR),
         ("dits/list1.dit", VALID_STR),
         ("dits/list2.dit", VALID_STR),
+        ("dits/list3.dit", VALID_STR),
         ("dits/misc1.dit", VALID_STR),
         ("dits/no-objects.dit", "dit is valid, no objects to check"),
         ("dits/query1.dit", VALID_STR),

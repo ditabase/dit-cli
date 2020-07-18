@@ -396,7 +396,7 @@ def _nearest_token(dit: str, tokens: List[str]) -> str:
 def find_name(dit: str) -> str:
     """Returns everything up to the nearest token, any token except periods.
     Useful when a name ends in white space, or some other limiter."""
-    tokens = [" ", "\t", "\n", "{", ";", "=", "(", ",", ")", "}"]
+    tokens = [" ", "\t", "\n", "{", ";", "=", "(", ",", ")", "}", "[", "]"]
     return dit[: dit.find(_nearest_token(dit, tokens))]
 
 
@@ -417,4 +417,3 @@ def _regex_helper(dit: str, base: str, statement):
 def _rep_strip(dit: str, replace_str: str) -> str:
     """Replace first instance of replace_str and left strip"""
     return dit.replace(replace_str, "", 1).lstrip()
-
