@@ -1,102 +1,158 @@
-// An extremely simple dit to demonstrate dit syntax
+// A series of cartoonish dits to demonstrate dit syntax.
 
 // A dit class
 Fruit {{
-    String myFruit; // A class attribute. String is the only primitive type.
+    // A class attribute. Unsurprisingly, its a list of strings.
+    listOf String knownFruits = ['apple', 'banana', 'pear', 'strawberry', 'kiwi'];
+    // String is the only primitive type. If you want something more complicated,
+    // you need to implement it yourself, since primitives have so much variation.
+    // Lists are not checked for shape (1D, 2D, jagged), just that they are lists.
 
-    // Basic constructor. For now, this mostly copies Java, but can change.
-    // Possibly something more Pythonic/Rust-like/both. Java is not the be all/end all.
-    Ditlang Fruit(String val) {{
-        this.myFruit = val;
+    // Basic constructor. This mostly copies Python, but with runtime typing.
+    Ditlang void __init__(Fruit self, String val) {{
+        // instance attribute.
+        String self.myFruit = val;
         // Ditlang has no ifs, loops, or complex concepts of any kind.
         // It can assign values and call functions and nothing else.
         // All the real work is done by other languages.
     }}
 
-    // Language agnostic functions.
-    Python void validate() {{
-        fruits = ['apple', 'banana', 'pear', 'strawberry', 'kiwi']
-
+    // Language agnostic scripting.
+    Python void __validate__(Fruit self) {{
         # A "Triangle Expression"
-        value = <|this.myFruit|>
+        value = <|self.myFruit|>
+        fruits = <|self.knownFruits|>
 
-        # This is for communicating with dit inside of other languages.
+        # Triangle Expressions are for communicating with dit inside of other languages.
         # In this case, it will write the literal value of "myFruit"
         # into the Python source code as a string (value = 'kiwi')
+        # It understands lists and objects as well, so it will write 
+        # ['apple', 'banana'] or {"label1": "value1"} as needed.
+
+        # Adding a language only requires a configuration file
+        # to explain syntax and other meta data.
 
         if value not in fruits:
             <|throw (|f'"{value}" is not a valid fruit.'|)|>
 
-            # Another triangle expression, executing a 'throw' command.
-            # Inside is a circle expression, you can use the language again.
-            # Dit will execute the code and use it as an argument to the command.
+            # Another Triangle Expression, executing a 'throw' command.
+            # Inside is a Circle Expression where you can use the language again.
+            # Dit will execute the code and use it as an argument for the command.
             
         # Review:
         # Triangle Expression: Pull info from dit, execute dit commands.
-        # Circle Expression: Send info back to dit, arguments to dit commands.
+        # Circle Expression: Send info back to dit, arguments for dit commands.
     }}
 
     // Language overloading, this could be run in a browser or other non-python context.
-    // If multiple languages would work, there will be options to choose
-    // a specific one, a hierarchy, or just the fastest available one.
-
-    // If no implementation is compatible (browser, but no Javascript version),
-    // then dit can request a server to execute the code and return the result.
-    Javascript void validate() {{
-        const fruits = ['apple', 'banana', 'pear', 'strawberry', 'kiwi'];
-        const value = <|this.myFruit|>; // Notice the Shape Expressions look the same.
+    Javascript void __validate__(Fruit self) {{
+        const value = <|self.myFruit|>; // Notice the Shape Expressions look the same,
+        const fruits = <|self.knownFruits|>; // except for the semicolon.
 
         if (fruits.indexOf(value) === -1) { 
             <|throw (|`"${value}" is not a valid fruit.`;|)|>
+            // Triangle Expressions with commands do not need to end in a semicolon
+            // or otherwise conform to the surrounding code. Think of them as
+            // though they represent several lines of normal language code.
         }
     }}
 
     // Compiled languages are not implemented yet, but will work fine in the future.
-    Java void validate() {{
+    Java void __validate__(Fruit self) {{
         // pre will blindly place whatever you want at the top of the file.
         <|pre (|import java.util.Arrays;|)|>
 
-        String[] fruits = { "apple", "banana", "pear", "strawberry", "kiwi" };
-        String value = <|this.myFruit|>;
+        String value = <|self.myFruit|>;
+        String[] fruits = <|self.knownFruits|>;
+        // Dit knows Java is different, will write {"apple", "banana", "etc"}
 
         if (!Arrays.asList(fruits).contains(value)) {
             <|throw (|"\"" + value + "\" is not a valid fruit.";|)|>
         }
     }}
+
+    // If multiple languages are available, there will be options to choose
+    // a specific one, a preference hierarchy, or just the fastest one.
+    // If no implementation is compatible (in a browser, but no Javascript version),
+    // then dit can request a server to execute the code remotely, or fail.
+    
+    // You can "transpile" most languages to most other languages, in case you need
+    // all client side code, (no internet connection, sensitive private data).
+    // Your dit data will still be compatible with the greater DitaBase ecosystem.
+
+    Ditlang String toString(Fruit self) {{
+        return self.value;
+    }}
 }}
 
-FruitPreference {{
-    // Classes can be attributes of other classes
-    Fruit leastFavorite;
-    Fruit mostFavorite;
-
-    Ditlang FruitPreference(Fruit least, Fruit most) {{
-        this.leastFavorite = least;
-        this.mostFavorite = most;
+FruitPref {{
+    Ditlang void __init__(FruitPref self, Fruit least, Fruit most) {{
+        // Attributes of another class type. 
+        // NOTE: No use before define. That's why Fruit is above.
+        Fruit self.leastFav = least;
+        Fruit self.mostFav = most;
     }}
 
-    Javascript void validate() {{
-        if (<|this.mostFavorite.myFruit|> === <|this.leastFavorite.myFruit|>) {
+    Javascript void __validate__(FruitPref self) {{
+        if (<|self.mostFav.myFruit|> === <|self.leastFav.myFruit|>) {
             <|throw (|"Your most and least favorite fruits cannot be the same."|)|>
         }
     }}
 
-    Javascript String toString() {{
-        const val = `I like ${<|favorite.value|>}, but hate ${<|leastFavorite.value|>}.`
-        <|return (|val|);|>
+    Python String toString(FruitPref self) {{
+        ret = f"I like {<|self.mostFav.value|>}, but hate {<|self.leastFav.value|>}."
+        <|return (|ret|)|>
+    }}
+}}
+
+// Load dit classes from HTTP or local file system.
+// This is a simple implementation for Javascript style numbers.
+import ImportedNamespace from 'https://raw.githubusercontent.com/ditabase/dits/master/new-dits/Number.dit';
+
+// You can imagine lots of small utility classes like this.
+SomeDataLogger {{
+    Ditlang void __init__(SomeDataLogger self) {{
+        ImportedNamespace.Number self.operations = ImportedNamespace.Number('0');
+    }}
+
+    Ditlang void log(SomeDataLogger self) {{
+        self.operations.inc();
+    }}
+}}
+
+Orange {{
+    // Inheritance is just a list. The order of the list determines MRO precedence.
+    // It's dynamic, meaning any script can add and remove parents as needed.
+    // The intention is that a class can inherit from many unrelated
+    // and non-conflicting classes, and scripts can easily tack on extra classes.
+    __parents__ = [Fruit, SomeDataLogger];
+    myFruit = 'orange';
+    dit.Fruit.knownFruits += 'myFruit';
+    // 'dit' is a global variable which refers to the entire current dit file.
+    // dit.ImportedNamespace allows you to manipulate any dit up the stack.
+    // This will let child dits take complete control of their parents if they want to.
+
+    Ditlang void __init__(Orange self) {{
+        SomeDataLogger.__init__(self);
+    }}
+
+    //
+    Python void __validate__(Orange self) {{
+        value = <|self.myFruit|>
+        if value != 'orange':
+            <|throw (|f'The value of Orange should be "orange", not "{value}"'|)|>
     }}
 }}
 
 // Declaration/instantiation.
-Fruit someFruit = new Fruit('kiwi');
-Fruit anotherFruit = new Fruit();
+Fruit someFruit = Fruit('kiwi');
+Fruit anotherFruit = Fruit();
 anotherFruit.myFruit = 'Clearly not a fruit'; // Will throw an error when validated.
 
-FruitPreference favorites = new FruitPreference(someFruit, new Fruit('strawberry'));
+FruitPref favorites = FruitPref(someFruit, Fruit('strawberry'));
 
-dit.validate();
-// 'dit' is a global variable which refers to the entire current dit file.
-// It will likely have a few baked in functions, one of which is validate.
-// This just looks for and runs any function called 'validate' in every object.
+dit.__validate__();
+// dit will likely have a few baked in functions, one of which is validate.
+// This just looks for and runs any function called '__validate__' in every object.
 // Like all functions, you can access validate from the command line, 
 // or just call it whenever you feel like. Here, it will run anytime you load the dit.
