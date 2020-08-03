@@ -65,3 +65,14 @@ class EvalContext:
     namespace: "Namespace"
     lang: dict = None
     print_: bool = False
+
+
+@dataclass
+class ScriptEvalJob:
+    """Represents a script to be evaled. Sent from the evaler to the lang_daemon."""
+
+    lang: str
+    file_path: str
+    active: bool = False
+    crash: bool = False
+    result: str = None

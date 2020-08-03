@@ -5,7 +5,7 @@ from dataclasses import dataclass
 from typing import Any, List, Union
 
 from dit_cli.assigner import Assigner
-from dit_cli.dataclasses import Attribute, Expression, NameConflict
+from dit_cli.data_classes import Attribute, Expression, NameConflict
 from dit_cli.exceptions import VarError
 from dit_cli.node import Node
 

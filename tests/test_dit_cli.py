@@ -141,10 +141,10 @@ def test_raise(file_name, expected):
 
 
 @pytest.mark.short
-def test_code_error():
+def test_code_error_javascript():
     result = validate_dit(get_file("fail/evaler2.dit")).args[0]
     assert result.startswith(
-        """CodeError: A Javascript Validator
+        """CodeError: Crash from Javascript in file /tmp/dit/A-Validator.js
 Error message follows:
 
 /tmp/dit/A-Validator.js:3
@@ -152,6 +152,16 @@ Error message follows:
               ^
 
 SyntaxError: Identifier 'a' has already been declared"""
+    )
+
+
+@pytest.mark.short
+def test_code_error_python():
+    result = validate_dit(get_file("fail/evaler2.dit")).args[0]
+    assert result.find(
+        """File "/tmp/dit/A-Validator.py", line 2, in run
+    int(a)
+NameError: name 'a' is not defined"""
     )
 
 

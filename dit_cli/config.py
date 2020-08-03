@@ -30,10 +30,11 @@ def generate_config(path: str):
 
     [Javascript]
     name = 'Javascript'
-    path = '/usr/bin/nodejs'
+    path = '/usr/bin/node'
+    socket = 'socket-experiments/js_daemon.js'
     file_extension = 'js'
     function_string = 'function run() {@@CODE}\\n'
-    call_string = 'console.log(`begin--${run()}--end`);\\n'
+    call_string = 'module.exports = {\\nrun\\n};'
 
     null_type = 'null'
     str_open = '"'
@@ -54,9 +55,10 @@ def generate_config(path: str):
     [Python]
     name = 'Python'
     path = '/usr/bin/python'
+    socket = 'socket-experiments/py_daemon.py'
     file_extension = 'py'
     function_string = 'def run():@@CODE\\n'
-    call_string = 'print("begin--{}--end".format(run()))'
+    call_string = ''
 
     null_type = 'None'
     str_open = '"'

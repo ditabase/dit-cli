@@ -27,10 +27,9 @@ class ValidationError(DitError):
 class CodeError(DitError):
     """Raised when a code block has any kind of language specifc error"""
 
-    def __init__(self, error: CalledProcessError, name: str, purpose: str, lang: dict):
+    def __init__(self, error: str, lang: dict, file: str):
         message = (
-            f'{name} {lang["name"]} {purpose}\n'
-            f"Error message follows:\n\n{error.stderr.decode()}"
+            f"Crash from {lang} in file {file}\n" f"Error message follows:\n\n{error}"
         )
         super().__init__("CodeError", message)
 
