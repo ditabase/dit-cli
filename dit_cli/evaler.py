@@ -6,8 +6,9 @@ from copy import copy
 from typing import Any
 
 from dit_cli import CONFIG
-from dit_cli.dataclasses import Attribute, EvalContext, Expression
+from dit_cli.data_classes import Attribute, EvalContext, Expression, ScriptEvalJob
 from dit_cli.exceptions import CodeError, ValidationError
+from dit_cli.lang_daemon import run_script
 from dit_cli.node import Node
 from dit_cli.parser import find_name, parse_expr
 
@@ -240,7 +241,7 @@ def _ser_obj(eva: EvalContext) -> str:
 
 def _run_code(name: str, purpose: str, code: str, lang: dict) -> str:
     """Write the code to a file based on the specified language.
-    Then run code and get result using the subprocess.run command."""
+    Then send the code to be run by the lang daemon"""
     path = _get_file_path(name, purpose, lang["file_extension"])
     file_string = lang["function_string"] + lang["call_string"]
     file_string = file_string.replace(r"\n", "\n")
@@ -250,18 +251,10 @@ def _run_code(name: str, purpose: str, code: str, lang: dict) -> str:
     with open(path, "w") as code_file:
         code_file.write(file_string)
 
-    cmd = [lang["path"], path]
-    try:
-        # TODO: Subprocess is the slowest part of the project.
-        # Fix this before anything else
-        output = subprocess.run(cmd, check=True, capture_output=True)
-    except subprocess.CalledProcessError as error:
-        raise CodeError(error, name, purpose, lang)
-
-    raw = output.stdout.decode()
-    begin = "begin--"
-    end = "--end"
-    return raw[raw.find(begin) + len(begin) : raw.find(end)]
+    job = run_script(ScriptEvalJob(lang["name"], path))
+    if job.crash:
+        raise CodeError(job.result, lang["name"], path)
+    return job.result
 
 
 def _handle_new_obj(eva: EvalContext, obj: Node) -> str:

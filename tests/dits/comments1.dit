@@ -7,9 +7,7 @@ A { // Test comment
     String value;// Test comment
     // Test comment
     print value;// Test comment
-    print Python {{
-
-    }}// Test comment
+    print Python {{}}// Test comment
     validator Python {{ return True }}// Test comment
 }// Test comment
 // Test comment

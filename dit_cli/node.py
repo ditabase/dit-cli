@@ -3,8 +3,9 @@
 from typing import TYPE_CHECKING, List
 
 from dit_cli import CONFIG
-from dit_cli.dataclasses import Attribute, Expression, NameConflict
+from dit_cli.data_classes import Attribute, Expression, NameConflict
 from dit_cli.exceptions import NodeError
+from dit_cli.lang_daemon import start_client
 
 if TYPE_CHECKING:
     from dit_cli.namespace import Namespace
@@ -84,6 +85,8 @@ class Node:
         # WET also appears in set_validator
         if lang and lang not in CONFIG:
             raise NodeError(f'"{lang}" does not exist in .dit-languages')
+        elif lang:
+            start_client(lang)
 
         self.print = {"expr": expr, "code": code, "lang": lang, "class_": class_}
 
@@ -93,6 +96,8 @@ class Node:
         # WET also appears in set_validator
         if lang and lang not in CONFIG:
             raise NodeError(f'"{lang}" does not exist in .dit-languages')
+        elif lang:
+            start_client(lang)
         self.validator = {"code": code, "lang": lang}
 
 

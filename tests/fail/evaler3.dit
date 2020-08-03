@@ -1,0 +1,10 @@
+A {
+    String value;
+    validator Python {{
+        int(a)
+    }}
+}
+
+A a;
+
+a.value = 'test';
