@@ -38,28 +38,28 @@ class ClientInfo:
 JOB: ScriptEvalJob = None
 CLIENTS = []
 PORT = None
+CRASH = None
 
 
 def start_daemon():
-    """Starts the language daemon thread, 
+    """Starts the language daemon thread,
     which will manage all client daemons in other languages."""
     Thread(target=_daemon_loop, daemon=True).start()
 
 
 def start_client(lang: str):
-    """Start a client daemon for a specific language.
+    """Start a client process for a specific language.
     Will not start duplicate clients"""
 
-    def _thread_client(cmd: list):
-        Popen(cmd)
-
-    global CLIENTS, PORT
+    global CLIENTS, PORT, CRASH
     if lang not in CLIENTS:  # Don't start a second client for a lang
         while True:
+            if CRASH:
+                raise CRASH
             if PORT:  # Wait for port to be assigned
                 CLIENTS.append(lang)
                 cmd = [CONFIG[lang]["path"], CONFIG[lang]["socket"], str(PORT)]
-                Thread(target=_thread_client, daemon=True, args=(cmd,)).start()
+                Popen(cmd)
                 break
 
 
@@ -68,6 +68,8 @@ def run_script(job: ScriptEvalJob) -> ScriptEvalJob:
     global JOB
     JOB = job
     while True:
+        if CRASH:
+            raise CRASH
         if job.result:  # Wait for job to finish, is assigned in _service_client
             JOB = None
             return job
@@ -75,33 +77,37 @@ def run_script(job: ScriptEvalJob) -> ScriptEvalJob:
 
 def _daemon_loop():
     """Starts the socket server and runs the main event loop"""
-    global PORT
-    # Sending port 0 will get a random open port
-    with socket.create_server(("127.0.0.1", 0), family=socket.AF_INET) as daemon:
-        daemon.listen()
-        daemon.setblocking(False)
-        sel = selectors.DefaultSelector()
-        sel.register(daemon, selectors.EVENT_READ, data=None)
-        # Assign the port so it can be sent to clients
-        PORT = daemon.getsockname()[1]
+    global PORT, CRASH
+    try:
+        # Sending port 0 will get a random open port
+        with socket.create_server(("127.0.0.1", 0)) as daemon:
+            daemon.listen()
+            daemon.setblocking(False)
+            sel = selectors.DefaultSelector()
+            sel.register(daemon, selectors.EVENT_READ, data=None)
+            # Assign the port so it can be sent to clients
+            PORT = daemon.getsockname()[1]
 
-        while True:  # This while will be destroyed only when the thread exits
-            events = sel.select(timeout=None)
-            for key, mask in events:
-                if key.data is None:
-                    _accept_client(key.fileobj, sel)
-                else:
-                    _service_client(key, mask)
+            while True:  # This while will be destroyed only when the thread exits
+                events = sel.select(timeout=None)
+                for key, mask in events:
+                    if key.data is None:
+                        _accept_client(key.fileobj, sel)
+                    else:
+                        _service_client(key, mask)
+    except BaseException as err:
+        CRASH = err
 
 
 def _accept_client(daemon: socket.socket, sel: selectors.DefaultSelector):
     """Accept a connection from a client daemon"""
     client, addr = daemon.accept()
     recv_data = _decode(client.recv(1024))
-    client.setblocking(False)
-    data = ClientInfo(addr, recv_data["lang"])
-    events = selectors.EVENT_READ | selectors.EVENT_WRITE
-    sel.register(client, events, data=data)
+    if recv_data["type"] == "connect":
+        client.setblocking(False)
+        data = ClientInfo(addr, recv_data["lang"])
+        events = selectors.EVENT_READ | selectors.EVENT_WRITE
+        sel.register(client, events, data=data)
 
 
 def _service_client(key: selectors.SelectorKey, mask: int):
@@ -113,8 +119,11 @@ def _service_client(key: selectors.SelectorKey, mask: int):
         recv_data = client.recv(1024)
         if recv_data:
             data = _decode(recv_data)
-            JOB.crash = data["crash"]
-            JOB.result = data["result"]
+            if data["type"] == "job":
+                JOB.crash = data["crash"]
+                JOB.result = data["result"]
+            elif data["type"] == "heart":
+                pass  # The client is just sending data to make sure we're still here.
     elif mask & selectors.EVENT_WRITE:
         # Job is for this language, and the job has not already been assigned
         if JOB and JOB.lang == info.lang and not JOB.active:
