@@ -2,7 +2,7 @@ const net = require("net");
 const server = new net.Socket();
 const port = process.argv[2];
 server.connect(port, "127.0.0.1", () => {
-    server.write(JSON.stringify({ lang: "Javascript" }));
+    server.write(JSON.stringify({ type: "connect", lang: "Javascript" }));
 });
 
 server.on("data", (data) => {
@@ -10,9 +10,13 @@ server.on("data", (data) => {
     try {
         var script = require(data.toString());
         var result = script.run();
-        finalMessage = JSON.stringify({ crash: false, result: result.toString() });
+        finalMessage = JSON.stringify({
+            type: "job",
+            crash: false,
+            result: result.toString(),
+        });
     } catch (err) {
-        finalMessage = JSON.stringify({ crash: true, result: err.stack });
+        finalMessage = JSON.stringify({ type: "job", crash: true, result: err.stack });
     } finally {
         server.write(finalMessage);
     }
