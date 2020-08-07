@@ -1,24 +1,33 @@
 // A series of cartoonish dits to demonstrate dit syntax.
 
 // A dit class
-Fruit {{
+class Fruit {{
     // A class attribute. Unsurprisingly, its a list of strings.
-    listOf String knownFruits = ['apple', 'banana', 'pear', 'strawberry', 'kiwi'];
+    listOf String knownFruits = ['apple', 'banana', 'pear', 'clementine', 'kiwi'];
+
     // String is the only primitive type. If you want something more complicated,
     // you need to implement it yourself, since primitives have so much variation.
     // Lists are not checked for shape (1D, 2D, jagged), just that they are lists.
 
     // Basic constructor. This mostly copies Python, but with runtime typing.
+    // Copying Python is mostly a stopgap until I know how dit's syntax flavor.
+    // Just know that if it is __dunder_cased__, then it's intended to be reserved.
     Ditlang void __init__(Fruit self, String val) {{
-        // instance attribute.
+        // Instance attribute.
         String self.myFruit = val;
         // Ditlang has no ifs, loops, or complex concepts of any kind.
         // It can assign values and call functions and nothing else.
         // All the real work is done by other languages.
     }}
 
+    // Built-in method for telling this instance to do whatever it needs to do.
+    // Since fruit is just a data object, it should validate itself on run.
+    Ditlang void __run__(Fruit self) {{
+        self.validate();
+    }}
+
     // Language agnostic scripting.
-    Python void __validate__(Fruit self) {{
+    Python void validate(Fruit self) {{
         # A "Triangle Expression"
         value = <|self.myFruit|>
         fruits = <|self.knownFruits|>
@@ -32,11 +41,15 @@ Fruit {{
         # Adding a language only requires a configuration file
         # to explain syntax and other meta data.
 
+        if len(fruits) != len(set(fruits)):
+            <|throw "The list of fruits must be unique"|>
+            # Another Triangle Expression, executing a 'throw' command.
+            # For now, exceptions are just strings. 
+
         if value not in fruits:
             <|throw (|f'"{value}" is not a valid fruit.'|)|>
-
-            # Another Triangle Expression, executing a 'throw' command.
-            # Inside is a Circle Expression where you can use the language again.
+            # This Triangle expression is a little different
+            # It contains a Circle Expression where you can use the language again.
             # Dit will execute the code and use it as an argument for the command.
             
         # Review:
@@ -44,21 +57,25 @@ Fruit {{
         # Circle Expression: Send info back to dit, arguments for dit commands.
     }}
 
-    // Language overloading, this could be run in a browser or other non-python context.
-    Javascript void __validate__(Fruit self) {{
+    // Language overloading, this could be run in a browser or other non-Python context.
+    Javascript void validate(Fruit self) {{
         const value = <|self.myFruit|>; // Notice the Shape Expressions look the same,
         const fruits = <|self.knownFruits|>; // except for the semicolon.
 
-        if (fruits.indexOf(value) === -1) { 
-            <|throw (|`"${value}" is not a valid fruit.`;|)|>
+        if (fruits.length !== new Set(fruits).size) {
+            <|throw "The list of fruits must be unique"|>
             // Triangle Expressions with commands do not need to end in a semicolon
             // or otherwise conform to the surrounding code. Think of them as
             // though they represent several lines of normal language code.
         }
+
+        if (fruits.indexOf(value) === -1) { 
+            <|throw (|`"${value}" is not a valid fruit.`;|)|>
+        }
     }}
 
     // Compiled languages are not implemented yet, but will work fine in the future.
-    Java void __validate__(Fruit self) {{
+    Java void validate(Fruit self) {{
         // pre will blindly place whatever you want at the top of the file.
         <|pre (|import java.util.Arrays;|)|>
 
@@ -67,6 +84,17 @@ Fruit {{
         // Dit knows Java is different, will write {"apple", "banana", "etc"}
 
         if (!Arrays.asList(fruits).contains(value)) {
+            <|throw (|"\"" + value + "\" is not a valid fruit.";|)|>
+        }
+
+        List<String> fruits = Arrays.asList(new String[]<|self.myFruits|>);
+        String value = <|self.value|>;
+
+        if(fruits.size() != new HashSet<String>(fruits).size()) {
+            <|throw "The list of fruits must be unique"|>
+        }
+
+        if (!fruits.contains(value)) {
             <|throw (|"\"" + value + "\" is not a valid fruit.";|)|>
         }
     }}
@@ -80,79 +108,209 @@ Fruit {{
     // all client side code, (no internet connection, sensitive private data).
     // Your dit data will still be compatible with the greater DitaBase ecosystem.
 
-    Ditlang String toString(Fruit self) {{
+    Ditlang String __str__(Fruit self) {{
         return self.value;
     }}
 }}
 
-FruitPref {{
+// Declaration/instantiation.
+Fruit goodFruit = Fruit('kiwi');
+
+// Would throw an error if validated.
+Fruit badFruit = Fruit('Clearly not a fruit');
+
+// We aren't validating these objects yet, or even on init.
+// That's because of this:
+Ditlang void __run__() {{
+    // Could have some setup things here, before __run_all__()
+    __run_all__();
+    // This will activate the __run__() function of all objects in this dit
+    // They activate in parallel, so if you have a large number of similar objects
+    // which all need to do something, __run_all__() is perfect.
+    // It makes more sense to validate all objects at once, if you can wait,
+    // since __run_all__ has optimizations built in.
+    // We'll call this function at the end of the dit.
+    __print__("dit is valid, no errors found");
+}}
+
+// Let's see a bit more complexity
+class FruitPref {{
     Ditlang void __init__(FruitPref self, Fruit least, Fruit most) {{
         // Attributes of another class type. 
-        // NOTE: No use before define. That's why Fruit is above.
         Fruit self.leastFav = least;
         Fruit self.mostFav = most;
+        // Note the "no use before define." That's why Fruit is above.
+        // Also note that class names are global.
+        // So are top level functions, objects, and imported dit namespaces.
+        // Duplicating global names will throw an error
     }}
 
-    Javascript void __validate__(FruitPref self) {{
+    Ditlang void __run__(Fruit self) {{
+        self.validate();
+    }}
+
+    Javascript void validate(FruitPref self) {{
         if (<|self.mostFav.myFruit|> === <|self.leastFav.myFruit|>) {
             <|throw (|"Your most and least favorite fruits cannot be the same."|)|>
         }
     }}
 
-    Python String toString(FruitPref self) {{
+    Python String __str__(FruitPref self) {{
         ret = f"I like {<|self.mostFav.value|>}, but hate {<|self.leastFav.value|>}."
         <|return (|ret|)|>
     }}
 }}
 
+FruitPref favorites = FruitPref(goodFruit, Fruit('apple'));
+
 // Load dit classes from HTTP or local file system.
 // This is a simple implementation for Javascript style numbers.
-import ImportedNamespace from 'https://raw.githubusercontent.com/ditabase/dits/master/new-dits/Number.dit';
+import NumberNamespace from
+"https://raw.githubusercontent.com/ditabase/dits/master/new-dits/Number.dit";
 
 // You can imagine lots of small utility classes like this.
 SomeDataLogger {{
     Ditlang void __init__(SomeDataLogger self) {{
-        ImportedNamespace.Number self.operations = ImportedNamespace.Number('0');
+        ImportedNamespace.Number self.ops = ImportedNamespace.Number('0');
+        listOf String opLog = [];
+    }}
+
+    Ditlang void log(SomeDataLogger self, String message) {{
+        self.operations.inc();
+        self.opLog += message;
     }}
 
     Ditlang void log(SomeDataLogger self) {{
-        self.operations.inc();
+        self.log("anonymous");
+    }}
+
+    Python String __str__(SomeDataLogger self) {{
+        output = ""
+        for message, index in Enumerate(<|self.opLog|>):
+            output += f'Op #{index:2} - {message}\n';
+        return output[:-1] # strip trailing newline.
     }}
 }}
 
-Orange {{
+// How about inheritance?
+class FoodSatisfaction {{
+    __parents__ = [FruitPref, SomeDataLogger];
     // Inheritance is just a list. The order of the list determines MRO precedence.
     // It's dynamic, meaning any script can add and remove parents as needed.
+
     // The intention is that a class can inherit from many unrelated
     // and non-conflicting classes, and scripts can easily tack on extra classes.
-    __parents__ = [Fruit, SomeDataLogger];
-    myFruit = 'orange';
-    dit.Fruit.knownFruits += 'myFruit';
-    // 'dit' is a global variable which refers to the entire current dit file.
-    // dit.ImportedNamespace allows you to manipulate any dit up the stack.
-    // This will let child dits take complete control of their parents if they want to.
+    // I can imagine a class having 50 parent classes for utility or compliance,
+    // none of which have any name conflicts.
 
-    Ditlang void __init__(Orange self) {{
-        SomeDataLogger.__init__(self);
+    Ditlang void __init__(FoodSatisfaction self, Fruit least, Fruit most) {{
+        self.FruitPref.__init__(least, most);
+        // Explicitly reference the parent class's init method.
+        // Let's see some examples of referencing a parent
+
+        FruitPref.__init__(self, least, most);
+        // This is a synonym for the line above.
+
+        // self.__init__(self, least, most); // This is just recursion
+        // The local init hides the init of the parent
+
+        SomeDataLogger.__init__();
+        Number self.satisfaction = Number('0');
     }}
 
-    //
-    Python void __validate__(Orange self) {{
-        value = <|self.myFruit|>
-        if value != 'orange':
-            <|throw (|f'The value of Orange should be "orange", not "{value}"'|)|>
+    // No __run__ is needed. This class only responds to class functions
+
+    Python void eat(self FoodSatisfaction, String food) {{
+        least = <|self.leastFav|>
+        most = <|self.mostFav|>
+
+        # Creating another object on the fly and running it.
+        <|Fruit(food).__run__()|>
+
+        # This will call validate() for the food string,
+        # and anything else __run__() might do in the future.
+        # It's important to validate it since it might come from the command line.
+
+        food = <|food|>
+
+        if food == least:
+            <|self.satisfaction.sub('3')|>
+            <|self.log("ate least")|>
+        elif food == most:
+            <|self.satisfaction.add('3')|>
+            <|self.log("ate most")|>
+        else:
+            <|self.satisfaction.add('1')|>
+            <|self.log("ate neutral")|>
+    }}
+
+    Ditlang void __str__(FoodSatisfaction self) {{
+        // Unsure about String concatenation syntax, but this is pretty uncontroversial.
+        return "Satisfaction: " + self.satisfaction + "\nMeals: " + self.ops + "\n"; 
     }}
 }}
 
-// Declaration/instantiation.
-Fruit someFruit = Fruit('kiwi');
-Fruit anotherFruit = Fruit();
-anotherFruit.myFruit = 'Clearly not a fruit'; // Will throw an error when validated.
+FruitSatisfaction sat = FruitSatisfaction("pear", "banana");
+sat.eat("pear");
+sat.eat("apple");
+sat.eat("banana");
+sat.eat("clementine"); // Note when this occurs, it will be important in a bit.
 
-FruitPref favorites = FruitPref(someFruit, Fruit('strawberry'));
+// Also note, I'm mixing data classes that do nothing but store and validate data
+// and more functional classes that can have state mutations and perform actions.
+// They probably would normally be separated.
 
-dit.__validate__();
-// dit will likely have a few baked in functions, one of which is validate.
-// This just looks for and runs any function called '__validate__' in every object.
-// Like all functions, you can access validate from the command line, 
-// or just call it whenever you feel like. Here, it will run anytime you load the dit.
+// Top level function, demonstrating lack of privacy in dit.
+// Anything can mess with anything else, at any time.
+Python Fruit aggressiveFruitSwitch(String newFruit, String oldFruit) {{
+    fruits = <|Fruit.knownFruits|>
+    newFruit = <|newFruit|>
+    oldFruit = <|oldFruit|>
+
+    if newFruit == oldFruit:
+        <|throw "The new and old fruits should be different."|>
+
+    # Now let's add newFruit to the list and remove the old one.
+    if not newFruit in fruits:
+        fruits.append(newFruit)
+        <|Fruit.knownFruits = (|fruits|)|> # Editing class attribute! Yikes!
+
+    if oldFruit in fruits:
+        fruits.remove(oldFruit):
+        <|Fruit.knownFruits = (|fruits|)|>
+    # This could obviously lead to bugs, race conditions, and confusing code,
+    # but that is for the programmer to figure out. If someone really needs
+    # to modify other dits and code, even given the risks and costs, they can.
+
+    # Remember, however, that so far, this is all local to the current dit.
+    # You can also do this:
+    String ImportedNamespace.Number.SomeImportantValue = 'Very Aggressive Change';
+
+    # This basically let's anyone "fork" an imported dit, directly in dit syntax.
+    # This could also be used for backwards compatibility and modernizing old dits.
+    # A 15 year old dit could be kept working just by running a script ahead of it
+    # that fixes all of the bugs and converting things to modern standards.
+
+    return <|Fruit(newFruit)|>
+}}
+
+aggressiveFruitSwitch("clementine", "orange");
+sat.eat("orange"); // "Clementine" was safe above, but now would cause an error.
+
+__run__();
+// With this line in the file, the dit will run as soon as it parses to this point.
+// You could instead leave this out, and call __run__() from the command line.
+// If you have a huge dit which takes a long time to validate, but you already know
+// it is valid, there's no need to validate it again if you're just running
+// some sort of function or query.
+
+// The whole point here is that it's entirely up to you how to solve problems with
+// this, just like normal code. But because dit can be repurposed and reused for any
+// problem, with any language, people can write dits intended for sharing.
+
+// A serious data storage dit in the future might start with 50 lines of just import
+// statements, then have 10,000 lines of JSON data. Then another 20,000 lines of 
+// RDF. No source code at all, just using the imported dits to work with the data.
+
+// Of course, dit is not just for data. There's no reason you couldn't code a database,
+// a game, application, compiler, etc. directly within dit.
