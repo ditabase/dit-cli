@@ -2,7 +2,7 @@
 
 from typing import TYPE_CHECKING, List
 
-from dit_cli.dataclasses import Expression
+from dit_cli.data_classes import Expression
 from dit_cli.exceptions import AssignError
 from dit_cli.node import Node
 

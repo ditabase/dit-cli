@@ -1,9 +1,10 @@
 """The CLI for dit"""
 import click
 
-from dit_cli.dataclasses import EvalContext
+from dit_cli.data_classes import EvalContext
 from dit_cli.evaler import serialize, validate_object
 from dit_cli.exceptions import DitError
+from dit_cli.lang_daemon import start_daemon
 from dit_cli.parser import parse
 
 
@@ -38,6 +39,9 @@ def validate_dit(dit, query_string=None):
     try:
         if not dit:
             return "file is empty"
+        # Start the language daemon so that it's ready later
+        start_daemon()
+
         # Discard dit and get the namespace
         namespace = parse(dit)
 
