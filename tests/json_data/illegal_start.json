@@ -1,0 +1,28 @@
+{
+  "dits": [
+    {
+      "type": "fail",
+      "title": "Illegal statement, extra semicolon in assignment",
+      "dit": "String test; = 'cat';",
+      "expected": "Line: 1 Col: 14 (tests/fail.dit)\nString test; = 'cat';\n             ^\n\nSyntaxError: Illegal start of statement"
+    },
+    {
+      "type": "fail",
+      "title": "Illegal statement, double comma in list",
+      "dit": "listOf String test = ['cat', ,'dog'];",
+      "expected": "Line: 1 Col: 30 (tests/fail.dit)\nlistOf String test = ['cat', ,'dog'];\n                             ^\n\nSyntaxError: Illegal start of expression"
+    },
+    {
+      "type": "fail",
+      "title": "Illegal statement, String primitive in list",
+      "dit": "listOf String test = ['cat', String];",
+      "expected": "Line: 1 Col: 30 (tests/fail.dit)\nlistOf String test = ['cat', String];\n                             ^\n\nSyntaxError: Illegal start of expression"
+    },
+    {
+      "type": "fail",
+      "title": "Illegal statement, equals to new declare",
+      "dit": "String test =\nString test2 = 'dog';",
+      "expected": "Line: 2 Col: 1 (tests/fail.dit)\nString test2 = 'dog';\n^\n\nSyntaxError: Illegal start of expression"
+    }
+  ]
+}

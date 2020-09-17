@@ -1,0 +1,2 @@
+String value = "Pack my box with five dozen liquor jugs";
+Dit dit = import "/home/isaiah/general/dit-cli/examples/feature-ideas/import-functions2.dit";

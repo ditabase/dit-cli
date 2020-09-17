@@ -1,0 +1,28 @@
+{
+  "dits": [
+    {
+      "type": "fail",
+      "title": "class, bare class",
+      "dit": "class",
+      "expected": "Line: 1 Col: 5 (tests/fail.dit)\nclass\n    ^\n\nSyntaxError: Expected name or body to follow class"
+    },
+    {
+      "type": "succeed",
+      "title": "class, empty named class",
+      "dit": "class A {{}}",
+      "expected": "Finished successfully\n"
+    },
+    {
+      "type": "succeed",
+      "title": "class, empty anon class",
+      "dit": "class {{}};",
+      "expected": "Finished successfully\n"
+    },
+    {
+      "type": "succeed",
+      "title": "class, triple inner class",
+      "dit": "class 1 {{\nString test1 = 'cat';\nclass 2 {{\nString test2 = 'dog';\nclass 3 {{\nString test3 = 'bird';\n}}\n}}\n}}\n\nString out1 = 1.test1;\nString out2 = 1.2.test2;\nString out3 = 1.2.3.test3;",
+      "expected": "Finished successfully\n"
+    }
+  ]
+}

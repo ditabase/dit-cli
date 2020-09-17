@@ -1,0 +1,22 @@
+{
+  "dits": [
+    {
+      "type": "fail",
+      "title": "symbol, dollar sign",
+      "dit": "$",
+      "expected": "Line: 1 Col: 1 (tests/fail.dit)\n$\n^\n\nSyntaxError: Unrecognized token '$'"
+    },
+    {
+      "type": "succeed",
+      "title": "empty file",
+      "dit": "",
+      "expected": "Finished successfully\n"
+    },
+    {
+      "type": "succeed",
+      "title": "big complex, messy list",
+      "dit": "",
+      "expected": "Finished successfully\n"
+    }
+  ]
+}

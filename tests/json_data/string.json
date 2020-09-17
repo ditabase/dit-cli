@@ -1,0 +1,22 @@
+{
+  "dits": [
+    {
+      "type": "succeed",
+      "title": "empty string, single quote",
+      "dit": "String test = '';",
+      "expected": "Finished successfully\n"
+    },
+    {
+      "type": "succeed",
+      "title": "empty string, double quote",
+      "dit": "String test = \"\";",
+      "expected": "Finished successfully\n"
+    },
+    {
+      "type": "succeed",
+      "title": "string, string assigned to value string",
+      "dit": "String test = 'cat';\nString test2 = test;",
+      "expected": "Finished successfully\n"
+    }
+  ]
+}

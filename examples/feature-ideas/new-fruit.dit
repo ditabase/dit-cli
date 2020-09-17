@@ -4,20 +4,19 @@
 class Fruit {{
     // A class attribute. Unsurprisingly, its a list of strings.
     listOf String knownFruits = ['apple', 'banana', 'pear', 'clementine', 'kiwi'];
-
-    // String is the only primitive type. If you want something more complicated,
-    // you need to implement it yourself, since primitives have so much variation.
-    // Lists are not checked for shape (1D, 2D, jagged), just that they are lists.
-
-    // Basic constructor. This mostly copies Python, but with runtime typing.
-    // Copying Python is mostly a stopgap until I know how dit's syntax flavor.
-    // Just know that if it is __dunder_cased__, then it's intended to be reserved.
+    /*  String is the only primitive type. If you want something more complicated,
+        you need to implement it yourself, since primitives have so much variation.
+        Lists are not checked for shape (1D, 2D, jagged), just that they are lists. */
+    
+    /*  Basic constructor. This mostly copies Python, but with runtime typing.
+        Copying Python is mostly a stopgap until I know how dit's syntax flavor.
+        Just know that if it is __dunder_cased__, then it's intended to be reserved. */
     Ditlang void __init__(Fruit self, String val) {{
         // Instance attribute.
         String self.myFruit = val;
-        // Ditlang has no ifs, loops, or complex concepts of any kind.
-        // It can assign values and call functions and nothing else.
-        // All the real work is done by other languages.
+        /* Ditlang has no ifs, loops, or complex concepts of any kind.
+           It can assign values and call functions and nothing else.
+           All the real work is done by other languages. */
     }}
 
     // Built-in method for telling this instance to do whatever it needs to do.

@@ -1,0 +1,40 @@
+{
+  "dits": [
+    {
+      "type": "fail",
+      "title": "TypeMismatch, [] value assigned to String",
+      "dit": "String test = ['cat'];",
+      "expected": "Line: 1 Col: 22 (tests/fail.dit)\nString test = ['cat'];\n                     ^\n\nTypeMismatchError: Cannot assign List to String"
+    },
+    {
+      "type": "fail",
+      "title": "TypeMismatch, '' value assigned to List",
+      "dit": "listOf String test = 'cat';",
+      "expected": "Line: 1 Col: 27 (tests/fail.dit)\nlistOf String test = 'cat';\n                          ^\n\nTypeMismatchError: Cannot assign String to List"
+    },
+    {
+      "type": "fail",
+      "title": "TypeMismatch, String var assigned to List",
+      "dit": "String test = 'cat';\nlistOf String test2 = test;",
+      "expected": "Line: 2 Col: 27 (tests/fail.dit)\nlistOf String test2 = test;\n                          ^\n\nTypeMismatchError: Cannot assign String to List"
+    },
+    {
+      "type": "fail",
+      "title": "TypeMismatch, List var assigned to String",
+      "dit": "listOf String test = ['cat'];\nString test2 = test;",
+      "expected": "Line: 2 Col: 20 (tests/fail.dit)\nString test2 = test;\n                   ^\n\nTypeMismatchError: Cannot assign List to String"
+    },
+    {
+      "type": "fail",
+      "title": "TypeMismatch, listOf String had class",
+      "dit": "listOf String value = [class {{}}];",
+      "expected": "Line: 1 Col: 35 (tests/fail.dit)\nlistOf String value = [class {{}}];\n                                  ^\n\nTypeMismatchError: List of type 'String' contained 'Class'"
+    },
+    {
+      "type": "fail",
+      "title": "TypeMismatch, listOf Class had string",
+      "dit": "listOf Class value = ['dog'];",
+      "expected": "Line: 1 Col: 29 (tests/fail.dit)\nlistOf Class value = ['dog'];\n                            ^\n\nTypeMismatchError: List of type 'Class' contained 'String'"
+    }
+  ]
+}
