@@ -7,6 +7,42 @@
       "expected": "Line: 1 Col: 5 (tests/fail.dit)\nclass\n    ^\n\nSyntaxError: Expected name or body to follow class"
     },
     {
+      "type": "fail",
+      "title": "class, no body",
+      "dit": "class A;",
+      "expected": "Line: 1 Col: 8 (tests/fail.dit)\nclass A;\n       ^\n\nSyntaxError: Expected a class body"
+    },
+    {
+      "type": "fail",
+      "title": "class, bad opening brace",
+      "dit": "class {}}",
+      "expected": "Line: 1 Col: 7 (tests/fail.dit)\nclass {}}\n      ^\n\nSyntaxError: Unrecognized token '{'"
+    },
+    {
+      "type": "fail",
+      "title": "class, bad closing brace",
+      "dit": "class {{}",
+      "expected": "Line: 1 Col: 9 (tests/fail.dit)\nclass {{}\n        ^\n\nEndOfFileError: Unexpected end of file"
+    },
+    {
+      "type": "fail",
+      "title": "class, prevent anon classes used as types",
+      "dit": "class {{}} new_name = 'dog';",
+      "expected": "Line: 1 Col: 11 (tests/fail.dit)\nclass {{}} new_name = 'dog';\n          ^\n\nSyntaxError: Expected ';'"
+    },
+    {
+      "type": "fail",
+      "title": "class, missing new name in monkey patch",
+      "dit": "class A {{}}\nString A = 'dog';",
+      "expected": "Line: 2 Col: 10 (tests/fail.dit)\nString A = 'dog';\n         ^\n\nSyntaxError: 'A' has already been declared"
+    },
+    {
+      "type": "fail",
+      "title": "class, full class already declared",
+      "dit": "String test = 'dog';\nclass test {{}}",
+      "expected": "Line: 2 Col: 7 (tests/fail.dit)\nclass test {{}}\n      ^\n\nSyntaxError: 'test' has already been declared"
+    },
+    {
       "type": "succeed",
       "title": "class, empty named class",
       "dit": "class A {{}}",
@@ -22,6 +58,18 @@
       "type": "succeed",
       "title": "class, triple inner class",
       "dit": "class 1 {{\nString test1 = 'cat';\nclass 2 {{\nString test2 = 'dog';\nclass 3 {{\nString test3 = 'bird';\n}}\n}}\n}}\n\nString out1 = 1.test1;\nString out2 = 1.2.test2;\nString out3 = 1.2.3.test3;",
+      "expected": "Finished successfully\n"
+    },
+    {
+      "type": "succeed",
+      "title": "class, VALUE_CLASS monkey patched",
+      "dit": "class A {{}}\nString A.patch = 'dog';",
+      "expected": "Finished successfully\n"
+    },
+    {
+      "type": "succeed",
+      "title": "class, inner VALUE_CLASS monkey patched",
+      "dit": "class A {{class B  {{}}}}\nString A.B.patch = 'dog';",
       "expected": "Finished successfully\n"
     }
   ]

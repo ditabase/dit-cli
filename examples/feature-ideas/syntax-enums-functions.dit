@@ -70,3 +70,9 @@ listOf Any thing2 = [
     class {{String dummy = "This class only exists for this assignment";}}.dummy,
     import "/home/isaiah/general/dit-cli/examples/feature-ideas/import-functions.dit".value
 ];
+
+class D {{
+    String class_var = 'This is a class var';
+}}
+
+D d = D();

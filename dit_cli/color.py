@@ -1,8 +1,9 @@
 """Terminal coloring utility, using ANSI color codes."""
 import os
+from enum import Enum
 
 
-class Color:
+class Color(Enum):
     """ANSI color codes
     https://en.wikipedia.org/wiki/ANSI_escape_code#SGR_parameters"""
 
@@ -59,8 +60,8 @@ def color(message: str, *colors: Color) -> str:
         return message
     out = ""
     for col in colors:
-        out += col
-    return out + message + Color.END
+        out += col.value
+    return out + message + Color.END.value
 
 
 if __name__ == "__main__":

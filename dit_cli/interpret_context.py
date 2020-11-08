@@ -1,11 +1,11 @@
 import copy
 import re
-from typing import Optional, Union
+from typing import Optional
 
-from dit_cli.data_classes import CodeLocation, Token
-from dit_cli.exceptions import EndOfFileError, SyntaxError_
+from dit_cli.data_classes import CodeLocation
+from dit_cli.exceptions import CriticalError, EndOfFileError, SyntaxError_
 from dit_cli.grammar import DOUBLES, KEYWORDS, SINGLES, Grammar
-from dit_cli.object import Body, Class, Object
+from dit_cli.object import Body, Declarable, Object, Token
 
 WHITESPACE = re.compile(r"\s")
 LETTER = re.compile(r"[A-Za-z0-9_]")
@@ -16,16 +16,10 @@ class CharFeed:
         self.view: memoryview = view
         self.loc: CodeLocation = loc
 
-    def eof(self, target: int = None) -> bool:
-        if not target:
+    def eof(self, target: Optional[int] = None) -> bool:
+        if target is None:
             target = self.loc.pos + 1
         return target >= len(self.view)
-
-    def get_char(self, target: int) -> str:
-        if self.eof(target=target):
-            return None
-        else:
-            return chr(self.view[target])
 
     def current(self) -> str:
         return chr(self.view[self.loc.pos])
@@ -46,9 +40,7 @@ class CharFeed:
             self.loc.col += 1
         return char
 
-    def find_char_ahead(self, char: str, loc: CodeLocation = None) -> int:
-        if not loc:
-            loc = self.loc
+    def find_char_ahead(self, char: str, loc: CodeLocation) -> int:
         char_pos = loc.pos + 1
         while not self.eof(target=char_pos):
             if chr(self.view[char_pos]) == char:
@@ -56,9 +48,7 @@ class CharFeed:
             char_pos += 1
         return char_pos
 
-    def get_line(self, loc: CodeLocation = None) -> str:
-        if not loc:
-            loc = self.loc
+    def get_line(self, loc: CodeLocation) -> str:
         beg = loc.pos - loc.col + 1
         end = self.find_char_ahead("\n", loc=loc)
         return bytes(self.view[beg:end]).decode()
@@ -68,30 +58,34 @@ class CharFeed:
 
 
 class InterpretContext:
-    def __init__(self, body: Body, ini_col: int, ini_line: int) -> None:
-        self.char_feed = CharFeed(body.view, CodeLocation(0, ini_col, ini_line))
-        self.body: Body = body
-        self.prev_tok: Token = None
-        self.curr_tok: Token = None
-        self.next_tok: Token = None
-        self.side_tok: Token = None
-        self.list_depth: int = 0
+    def __init__(self, body: Body) -> None:
+        # We need to start from 0 pos, but maintain the line and column
+        # from the parent body.
+        new_loc = CodeLocation(0, body.start_loc.col, body.start_loc.line)
+        self.char_feed = CharFeed(body.view, new_loc)
         self.eof: bool = False
+        self.body: Body = body
 
-        self.reset()
+        self.prev_tok: Token = None  # type: ignore
+        self.curr_tok: Token = None  # type: ignore
+        self.next_tok: Token = None  # type: ignore
+        self.anon_tok: Optional[Token] = None  # anon is actually *usually* None
 
-    def reset(self) -> None:
-        self.listof: bool = False
-        self.assignee: Object = None
-        self.type_: Union[Grammar, Class] = None
-        self.new_name: str = None
-        self.dotted_body: Body = None
+        self.dec: Declarable = Declarable()
+        self.assignee: Object = None  # type: ignore
+        self.dotted_body: Body = None  # type: ignore
+        self.comma_depth: int = 0
+        self.func_sig: bool = False
+        self.terminal_loc: CodeLocation = None  # type: ignore
 
     def advance_tokens(self, find_word: bool = True) -> None:
         self._manipulate_tokens(self.get_token(find_word=find_word))
 
     def shift_tokens(self) -> None:
-        self._manipulate_tokens(None)
+        # next_tok will be manually assigned
+        # This is for use with "find_word" = False,
+        # so the interpreter can manually determine what a WORD is
+        self._manipulate_tokens(None)  # type: ignore
 
     def _manipulate_tokens(self, tok: Token) -> None:
         self.prev_tok = self.curr_tok
@@ -181,17 +175,17 @@ def _find_words(inter: InterpretContext, find_word: bool) -> Optional[Token]:
         # Keywords first
         for grammar in KEYWORDS:
             if word == grammar.value:
-                return Token(grammar, token_loc, data=word)
+                return Token(grammar, token_loc)
         # Used by var.class.attr expressions
         # They find the word themselves.
-        if not find_word:
-            return Token(Grammar.WORD, token_loc, data=word)
+        if find_word is False:
+            return Token(Grammar.WORD, token_loc, word=word)
         # Most names
         attr = inter.body.find_attr(word)
         if attr:
-            return Token(attr.grammar, token_loc, data=attr)
+            return Token(attr.grammar, token_loc, obj=attr)
         else:
-            return Token(Grammar.NEW_NAME, token_loc, data=word)
+            return Token(Grammar.NEW_NAME, token_loc, word=word)
     else:
         return None
 
@@ -201,30 +195,30 @@ def _handle_eof(inter: InterpretContext) -> Token:
     return Token(Grammar.EOF, copy.deepcopy(inter.char_feed.loc))
 
 
-def _comment(inter: InterpretContext) -> None:
-    com = inter.current() + inter.pop()
+def _comment(feed: CharFeed) -> None:
+    com = feed.current() + feed.pop()
     if com == Grammar.COMMENT_MULTI_OPEN.value:
-        _comment_multi(inter)
+        _comment_multi(feed)
     elif com == Grammar.COMMENT_SINGLE_OPEN.value:
-        _comment_single(inter)
+        _comment_single(feed)
 
 
-def _comment_multi(inter: InterpretContext) -> None:
+def _comment_multi(feed: CharFeed) -> None:
     while True:
-        # com = inter.current() + inter.peek()
-        if inter.current() + inter.peek() == Grammar.COMMENT_MULTI_CLOSE.value:
-            inter.pop()  # pop *
-            if not inter.eof():  # it's fine if */ is the last in the file
-                inter.pop()  # pop /
+        # com = feed.current() + feed.peek()
+        if feed.current() + feed.peek() == Grammar.COMMENT_MULTI_CLOSE.value:
+            feed.pop()  # pop *
+            if not feed.eof():  # it's fine if */ is the last in the file
+                feed.pop()  # pop /
             return
-        inter.pop()
+        feed.pop()
 
 
-def _comment_single(inter: InterpretContext) -> None:
-    if inter.eof():
+def _comment_single(feed: CharFeed) -> None:
+    if feed.eof():
         return
-    while inter.current() != Grammar.COMMENT_SINGLE_CLOSE.value:
-        if inter.eof():
+    while feed.current() != Grammar.COMMENT_SINGLE_CLOSE.value:
+        if feed.eof():
             return
         else:
-            inter.pop()
+            feed.pop()

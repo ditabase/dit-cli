@@ -11,9 +11,9 @@ class Fruit {{
     /*  Basic constructor. This mostly copies Python, but with runtime typing.
         Copying Python is mostly a stopgap until I know how dit's syntax flavor.
         Just know that if it is __dunder_cased__, then it's intended to be reserved. */
-    Ditlang void __init__(Fruit self, String val) {{
+    Ditlang void __init__(String val) {{
         // Instance attribute.
-        String self.myFruit = val;
+        String this.myFruit = val;
         /* Ditlang has no ifs, loops, or complex concepts of any kind.
            It can assign values and call functions and nothing else.
            All the real work is done by other languages. */

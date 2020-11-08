@@ -26,6 +26,30 @@
     },
     {
       "type": "fail",
+      "title": "TypeMismatch, '' assigned to class",
+      "dit": "class A {{}}\nA = 'dog';",
+      "expected": "Line: 2 Col: 10 (tests/fail.dit)\nA = 'dog';\n         ^\n\nTypeMismatchError: Cannot assign String to Class"
+    },
+    {
+      "type": "fail",
+      "title": "TypeMismatch, String var assigned to class",
+      "dit": "class A {{}}\nString test = 'dog';\nA = test;",
+      "expected": "Line: 3 Col: 9 (tests/fail.dit)\nA = test;\n        ^\n\nTypeMismatchError: Cannot assign String to Class"
+    },
+    {
+      "type": "fail",
+      "title": "TypeMismatch, '' assigned to dit",
+      "dit": "import dit from 'tests/import.dit';\ndit = 'dog';",
+      "expected": "Line: 2 Col: 12 (tests/fail.dit)\ndit = 'dog';\n           ^\n\nTypeMismatchError: Cannot assign String to Dit"
+    },
+    {
+      "type": "fail",
+      "title": "TypeMismatch, String var assigned to dit",
+      "dit": "import dit from 'tests/import.dit';\nString test = 'dog';\ndit = test;",
+      "expected": "Line: 3 Col: 11 (tests/fail.dit)\ndit = test;\n          ^\n\nTypeMismatchError: Cannot assign String to Dit"
+    },
+    {
+      "type": "fail",
       "title": "TypeMismatch, listOf String had class",
       "dit": "listOf String value = [class {{}}];",
       "expected": "Line: 1 Col: 35 (tests/fail.dit)\nlistOf String value = [class {{}}];\n                                  ^\n\nTypeMismatchError: List of type 'String' contained 'Class'"

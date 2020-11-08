@@ -1,7 +1,7 @@
 """All Exceptions used by dit_cli"""
 
 from dataclasses import dataclass
-from typing import List
+from typing import Any, List
 
 from dit_cli.color import Color, color
 from dit_cli.data_classes import CodeLocation
@@ -14,17 +14,17 @@ class Trace:
 
     filepath: str
     loc: CodeLocation
-    code: str = None
-    caller: str = None
+    code: str = None  # type: ignore
+    caller: str = None  # type: ignore
 
 
 class DitError(Exception):
     """Base Class for all dit exceptions"""
 
-    def __init__(self, prepend, message):
+    def __init__(self, prepend: str, message: str):
         self.warning = color(prepend + ": ", Color.RED) + message
         super().__init__(self.warning)
-        self.origin: Trace = None
+        self.origin: Trace = None  # type: ignore
         self.traces: List[Trace] = []
 
     def set_origin(self, filepath: str, loc: CodeLocation, code: str):
@@ -45,6 +45,8 @@ class DitError(Exception):
             # For some reason, the context was not filled in
             # This is correct for some errors.
             return self.warning
+        if self.origin.code is None:
+            raise CriticalError("A stack trace origin had no code")
         output = (
             "Line: "
             + str(self.origin.loc.line)
@@ -66,6 +68,8 @@ class DitError(Exception):
         )
 
         for trace in self.traces:
+            if trace.caller is None:
+                raise CriticalError("A stack trace had no caller")
             output += (
                 "\n\tat "
                 + trace.caller
@@ -92,7 +96,7 @@ class DitError(Exception):
 class CodeError(DitError):
     """Raised when a code block has any kind of language specifc error"""
 
-    def __init__(self, error: str, lang: dict, file: str):
+    def __init__(self, error: str, lang: str, file: str):
         message = (
             f"Crash from {lang} in file {file}\n" f"Error message follows:\n\n{error}"
         )
@@ -102,21 +106,14 @@ class CodeError(DitError):
 class SyntaxError_(DitError):
     """Raised when there anything goes wrong during paring the file"""
 
-    def __init__(self, message):
+    def __init__(self, message: str):
         super().__init__("SyntaxError", message)
-
-
-class VarError(DitError):
-    """Raised when anything goes wrong with variables"""
-
-    def __init__(self, message):
-        super().__init__("VarError", message)
 
 
 class TypeMismatchError(DitError):
     """Raised when something is assigned to a variable of an incompatible type"""
 
-    def __init__(self, message):
+    def __init__(self, message: str):
         super().__init__("TypeMismatchError", message)
 
 
@@ -124,7 +121,7 @@ class FileError(DitError):
     """Raised when anything goes wrong with importing a file or URL,
     but NOT from the CLI. That file is checked directly in cli.py"""
 
-    def __init__(self, message):
+    def __init__(self, message: str):
         super().__init__("FileError", message)
 
 
@@ -140,3 +137,11 @@ class EndOfClassError(DitError):
 
     def __init__(self) -> None:
         super().__init__("EndOfFileError", "Unexpected end of class")
+
+
+class CriticalError(DitError):
+    """Essentially an assertion. This exception should never be raised.
+    Will error out to the command line like other exceptions."""
+
+    def __init__(self, message: str):
+        super().__init__("CriticalError", message)

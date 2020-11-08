@@ -4,7 +4,8 @@ import argparse
 from dit_cli import __version__
 from dit_cli.color import Color, color
 from dit_cli.exceptions import DitError
-from dit_cli.interpreter import start_interpret
+from dit_cli.interpreter import interpret
+from dit_cli.object import Dit
 
 
 def main():
@@ -20,7 +21,9 @@ def main():
     args = arg_parser.parse_args()
 
     try:
-        start_interpret(args.filepath)
+        dit = Dit("__main__", args.filepath)
+        dit.finalize()
+        interpret(dit)
         print(color("Finished successfully", Color.GREEN_LIGHT))
     except DitError as err:
         final = err.get_cli_trace()

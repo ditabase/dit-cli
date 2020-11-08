@@ -4,7 +4,8 @@ import os
 from contextlib import redirect_stdout
 
 from dit_cli.exceptions import DitError
-from dit_cli.interpreter import _test_interpret
+from dit_cli.interpreter import interpret
+from dit_cli.object import Dit
 
 os.environ["NO_COLOR"] = "1"
 PATH = "tests/json_data"
@@ -29,7 +30,9 @@ def test_dits(dit_json):
     try:
         output = io.StringIO()
         with redirect_stdout(output):
-            _test_interpret(dit_json["dit"], "tests/fail.dit")
+            dit = Dit.from_str("__main__", dit_json["dit"], "tests/fail.dit")
+            interpret(dit)
+            print("Finished successfully")
         assert output.getvalue() == dit_json["expected"]
     except DitError as err:
         assert err.get_cli_trace() == dit_json["expected"]

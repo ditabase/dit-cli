@@ -1,0 +1,160 @@
+{
+  "dits": [
+    {
+      "type": "fail",
+      "title": "func, bare func",
+      "dit": "func",
+      "expected": "Line: 1 Col: 4 (tests/fail.dit)\nfunc\n   ^\n\nSyntaxError: Expected language value"
+    },
+    {
+      "type": "fail",
+      "title": "func, missing return type",
+      "dit": "func Ditlang",
+      "expected": "Line: 1 Col: 12 (tests/fail.dit)\nfunc Ditlang\n           ^\n\nSyntaxError: Expected return type"
+    },
+    {
+      "type": "fail",
+      "title": "func, no name or parameter list",
+      "dit": "func Ditlang String",
+      "expected": "Line: 1 Col: 19 (tests/fail.dit)\nfunc Ditlang String\n                  ^\n\nSyntaxError: Expected parameter list"
+    },
+    {
+      "type": "fail",
+      "title": "func, name but no parameter list",
+      "dit": "func Ditlang String test",
+      "expected": "Line: 1 Col: 24 (tests/fail.dit)\nfunc Ditlang String test\n                       ^\n\nSyntaxError: Expected parameter list"
+    },
+    {
+      "type": "fail",
+      "title": "func, anon, no body",
+      "dit": "func Ditlang String () String test = 'cat';",
+      "expected": "Line: 1 Col: 24 (tests/fail.dit)\nfunc Ditlang String () String test = 'cat';\n                       ^\n\nSyntaxError: Expected function body"
+    },
+    {
+      "type": "fail",
+      "title": "func, no body",
+      "dit": "func Ditlang String test() String test2 = 'cat';",
+      "expected": "Line: 1 Col: 28 (tests/fail.dit)\nfunc Ditlang String test() String test2 = 'cat';\n                           ^\n\nSyntaxError: Expected function body"
+    },
+    {
+      "type": "fail",
+      "title": "func, String var return type",
+      "dit": "String test = 'cat';\nfunc Ditlang test test2() {{}}",
+      "expected": "Line: 2 Col: 14 (tests/fail.dit)\nfunc Ditlang test test2() {{}}\n             ^\n\nSyntaxError: Expected return type"
+    },
+    {
+      "type": "fail",
+      "title": "func, Dit var return type",
+      "dit": "import classDit from 'tests/import2.dit';\nfunc Ditlang classDit test2() {{}}",
+      "expected": "Line: 2 Col: 14 (tests/fail.dit)\nfunc Ditlang classDit test2() {{}}\n             ^\n\nSyntaxError: Expected class for return type, 'classDit' is of type 'Dit'"
+    },
+    {
+      "type": "fail",
+      "title": "func, dotted return type, final was string",
+      "dit": "class Test {{String test1 = 'cat';}}\nfunc Ditlang Test.test1 test2() {{}}",
+      "expected": "Line: 2 Col: 19 (tests/fail.dit)\nfunc Ditlang Test.test1 test2() {{}}\n                  ^\n\nSyntaxError: Expected class for return type, 'test1' is of type 'String'"
+    },
+    {
+      "type": "fail",
+      "title": "func, dotted return type, final was list",
+      "dit": "class Test {{listOf String test1 = ['cat'];}}\nfunc Ditlang Test.test1 test2() {{}}",
+      "expected": "Line: 2 Col: 19 (tests/fail.dit)\nfunc Ditlang Test.test1 test2() {{}}\n                  ^\n\nSyntaxError: Expected class for return type, 'test1' is of type 'List'"
+    },
+    {
+      "type": "fail",
+      "title": "func, dotted parameter type, final was string",
+      "dit": "class Test {{String test1 = 'cat';}}\nfunc Ditlang void test2(Test.test1 param) {{}}",
+      "expected": "Line: 2 Col: 30 (tests/fail.dit)\nfunc Ditlang void test2(Test.test1 param) {{}}\n                             ^\n\nSyntaxError: Expected class for parameter type, 'test1' is of type 'String'"
+    },
+    {
+      "type": "fail",
+      "title": "func, missing parameter type",
+      "dit": "func Ditlang void test(param) {{}}",
+      "expected": "Line: 1 Col: 24 (tests/fail.dit)\nfunc Ditlang void test(param) {{}}\n                       ^\n\nSyntaxError: Expected parameter type"
+    },
+    {
+      "type": "fail",
+      "title": "func, missing parameter name",
+      "dit": "func Ditlang void test(String, ) {{}}",
+      "expected": "Line: 1 Col: 30 (tests/fail.dit)\nfunc Ditlang void test(String, ) {{}}\n                             ^\n\nSyntaxError: Expected parameter name"
+    },
+    {
+      "type": "fail",
+      "title": "func, duplicate function name",
+      "dit": "func Ditlang void test() {{}}\nfunc Ditlang String test() {{}}\nString test2 = 'cat';",
+      "expected": "Line: 2 Col: 21 (tests/fail.dit)\nfunc Ditlang String test() {{}}\n                    ^\n\nSyntaxError: 'test' has already been declared"
+    },
+    {
+      "type": "fail",
+      "title": "func, duplicate function name, with class return type",
+      "dit": "class Number {{class Decimal {{}}}}\nString test = 'cat';\nfunc Ditlang Number test() {{}};",
+      "expected": "Line: 3 Col: 21 (tests/fail.dit)\nfunc Ditlang Number test() {{}};\n                    ^\n\nSyntaxError: 'test' has already been declared"
+    },
+    {
+      "type": "fail",
+      "title": "func, duplicate function name, with dotted class return type",
+      "dit": "class Number {{class Decimal {{}}}}\nString test = 'cat';\nfunc Ditlang Number.Decimal test() {{}};",
+      "expected": "Line: 3 Col: 29 (tests/fail.dit)\nfunc Ditlang Number.Decimal test() {{}};\n                            ^\n\nSyntaxError: 'test' has already been declared"
+    },
+    {
+      "type": "fail",
+      "title": "func, duplicate parameter name",
+      "dit": "String test = 'cat';\nfunc Ditlang void test2(String test) {{}}",
+      "expected": "Line: 2 Col: 32 (tests/fail.dit)\nfunc Ditlang void test2(String test) {{}}\n                               ^\n\nSyntaxError: 'test' has already been declared"
+    },
+    {
+      "type": "success",
+      "title": "func, vanilla Ditlang void",
+      "dit": "func Ditlang void test() {{}}",
+      "expected": "Finished successfully\n"
+    },
+    {
+      "type": "success",
+      "title": "func, String return",
+      "dit": "func Ditlang String test() {{}}",
+      "expected": "Finished successfully\n"
+    },
+    {
+      "type": "success",
+      "title": "func, anon, vanilla Ditlang void",
+      "dit": "func Ditlang void () {{}};",
+      "expected": "Finished successfully\n"
+    },
+    {
+      "type": "success",
+      "title": "func, anon, String return",
+      "dit": "func Ditlang String () {{}};",
+      "expected": "Finished successfully\n"
+    },
+    {
+      "type": "success",
+      "title": "func, anon, vanilla Ditlang void",
+      "dit": "func Ditlang void () {{}};",
+      "expected": "Finished successfully\n"
+    },
+    {
+      "type": "success",
+      "title": "func, class return type",
+      "dit": "class A {{class B {{}}}}\nfunc Ditlang A test() {{}}",
+      "expected": "Finished successfully\n"
+    },
+    {
+      "type": "success",
+      "title": "func, class return type, inner class",
+      "dit": "class A {{class B {{}}}}\nfunc Ditlang A.B test() {{}}",
+      "expected": "Finished successfully\n"
+    },
+    {
+      "type": "success",
+      "title": "func, imported class return type",
+      "dit": "import classDit from 'tests/import2.dit';\nfunc Ditlang classDit.A test2() {{}}",
+      "expected": "Finished successfully\n"
+    },
+    {
+      "type": "success",
+      "title": "func, imported class return type, inner class",
+      "dit": "import classDit from 'tests/import2.dit';\nfunc Ditlang classDit.A.B test2() {{}}",
+      "expected": "Finished successfully\n"
+    }
+  ]
+}

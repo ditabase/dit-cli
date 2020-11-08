@@ -4,7 +4,7 @@
       "type": "fail",
       "title": "Bare primitive",
       "dit": "String",
-      "expected": "Line: 1 Col: 6 (tests/fail.dit)\nString\n     ^\n\nSyntaxError: Expected new name for declaration"
+      "expected": "Line: 1 Col: 6 (tests/fail.dit)\nString\n     ^\n\nSyntaxError: Expected a new name to follow type"
     },
     {
       "type": "fail",
