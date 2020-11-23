@@ -5,8 +5,8 @@ from typing import Optional
 from dit_cli.built_in import BUILT_INS
 from dit_cli.data_classes import CodeLocation
 from dit_cli.exceptions import CriticalError, EndOfFileError, SyntaxError_
-from dit_cli.grammar import DOUBLES, KEYWORDS, SINGLES, Grammar
-from dit_cli.object import Body, Declarable, Object, Token
+from dit_cli.grammar import DOUBLES, KEYWORDS, SINGLES, d_Grammar
+from dit_cli.oop import Declarable, Token, d_Body, d_Thing
 
 WHITESPACE = re.compile(r"\s")
 LETTER = re.compile(r"[A-Za-z0-9_]")
@@ -59,13 +59,13 @@ class CharFeed:
 
 
 class InterpretContext:
-    def __init__(self, body: Body) -> None:
+    def __init__(self, body: d_Body) -> None:
         # We need to start from 0 pos, but maintain the line and column
         # from the parent body.
         new_loc = CodeLocation(0, body.start_loc.col, body.start_loc.line)
         self.char_feed = CharFeed(body.view, new_loc)
         self.eof: bool = False
-        self.body: Body = body
+        self.body: d_Body = body
 
         self.prev_tok: Token = None  # type: ignore
         self.curr_tok: Token = None  # type: ignore
@@ -73,8 +73,8 @@ class InterpretContext:
         self.anon_tok: Optional[Token] = None  # anon is actually *usually* None
 
         self.dec: Declarable = Declarable()
-        self.assignee: Object = None  # type: ignore
-        self.dotted_body: Body = None  # type: ignore
+        self.assignee: d_Thing = None  # type: ignore
+        self.dotted_body: d_Body = None  # type: ignore
         self.comma_depth: int = 0
         self.func_sig: bool = False
         self.terminal_loc: CodeLocation = None  # type: ignore
@@ -123,7 +123,7 @@ def _clear_whitespace_and_comments(inter: InterpretContext) -> Optional[Token]:
                 return _handle_eof(inter)
             else:
                 inter.char_feed.pop()
-        elif inter.char_feed.current() == Grammar.COMMENT_START.value:
+        elif inter.char_feed.current() == d_Grammar.COMMENT_START.value:
             _comment(inter.char_feed)
             if inter.char_feed.eof():
                 return _handle_eof(inter)
@@ -137,27 +137,27 @@ def _find_double_chars(inter: InterpretContext) -> Optional[Token]:
 
     cur = inter.char_feed.current() + inter.char_feed.peek()
     lok = copy.deepcopy(inter.char_feed.loc)
-    for grammar in DOUBLES:
-        if cur == grammar.value:
+    for d_Grammar in DOUBLES:
+        if cur == d_Grammar.value:
             inter.char_feed.pop()  # pop first char in double
             if inter.char_feed.eof():
                 inter.eof = True
             else:
                 inter.char_feed.pop()  # pop the second if it's safe
-            return Token(grammar, lok)
+            return Token(d_Grammar, lok)
 
 
 def _find_single_chars(inter: InterpretContext) -> Optional[Token]:
     cur = inter.char_feed.current()
     lok = copy.deepcopy(inter.char_feed.loc)
-    for grammar in SINGLES:
-        if cur == grammar.value:
+    for d_Grammar in SINGLES:
+        if cur == d_Grammar.value:
             # WET, appears in _find_double_chars
             if inter.char_feed.eof():
                 inter.eof = True
             else:
                 inter.char_feed.pop()
-            return Token(grammar, lok)
+            return Token(d_Grammar, lok)
     return None
 
 
@@ -179,38 +179,40 @@ def _find_words(inter: InterpretContext, find_word: bool) -> Optional[Token]:
                 return Token(grammar, token_loc)
         for built_in in BUILT_INS:
             if word == built_in["name"]:
-                return Token(Grammar.VALUE_FUNC, token_loc, obj=built_in["dit_func"])
+                return Token(
+                    d_Grammar.VALUE_FUNC, token_loc, thing=built_in["dit_func"]
+                )
         # Used by var.class.attr expressions
         # They find the word themselves.
         if find_word is False:
-            return Token(Grammar.WORD, token_loc, word=word)
+            return Token(d_Grammar.WORD, token_loc, word=word)
         # Most names
         attr = inter.body.find_attr(word)
         if attr:
-            return Token(attr.grammar, token_loc, obj=attr)
+            return Token(attr.grammar, token_loc, thing=attr)
         else:
-            return Token(Grammar.NEW_NAME, token_loc, word=word)
+            return Token(d_Grammar.NEW_NAME, token_loc, word=word)
     else:
         return None
 
 
 def _handle_eof(inter: InterpretContext) -> Token:
     inter.eof = True
-    return Token(Grammar.EOF, copy.deepcopy(inter.char_feed.loc))
+    return Token(d_Grammar.EOF, copy.deepcopy(inter.char_feed.loc))
 
 
 def _comment(feed: CharFeed) -> None:
     com = feed.current() + feed.pop()
-    if com == Grammar.COMMENT_MULTI_OPEN.value:
+    if com == d_Grammar.COMMENT_MULTI_OPEN.value:
         _comment_multi(feed)
-    elif com == Grammar.COMMENT_SINGLE_OPEN.value:
+    elif com == d_Grammar.COMMENT_SINGLE_OPEN.value:
         _comment_single(feed)
 
 
 def _comment_multi(feed: CharFeed) -> None:
     while True:
         # com = feed.current() + feed.peek()
-        if feed.current() + feed.peek() == Grammar.COMMENT_MULTI_CLOSE.value:
+        if feed.current() + feed.peek() == d_Grammar.COMMENT_MULTI_CLOSE.value:
             feed.pop()  # pop *
             if not feed.eof():  # it's fine if */ is the last in the file
                 feed.pop()  # pop /
@@ -221,7 +223,7 @@ def _comment_multi(feed: CharFeed) -> None:
 def _comment_single(feed: CharFeed) -> None:
     if feed.eof():
         return
-    while feed.current() != Grammar.COMMENT_SINGLE_CLOSE.value:
+    while feed.current() != d_Grammar.COMMENT_SINGLE_CLOSE.value:
         if feed.eof():
             return
         else:

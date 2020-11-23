@@ -3,7 +3,7 @@ from enum import Enum
 
 
 # test
-class Grammar(Enum):
+class d_Grammar(Enum):
     """Enum with all dit grammatical types."""
 
     # Comments
@@ -50,7 +50,7 @@ class Grammar(Enum):
     THIS = "this"
 
     # Primitives (basically keywords)
-    PRIMITIVE_ANY = "Any"
+    PRIMITIVE_THING = "Thing"
     PRIMITIVE_STRING = "String"
     PRIMITIVE_CLASS = "Class"
     PRIMITIVE_INSTANCE = "Instance"
@@ -61,7 +61,7 @@ class Grammar(Enum):
     WORD = 0
     NEW_NAME = 1
 
-    VALUE_ANY = 2
+    VALUE_THING = 2
     VALUE_STRING = 3
     VALUE_LIST = 4
     VALUE_CLASS = 5
@@ -73,174 +73,174 @@ class Grammar(Enum):
     EOF = 9
 
 
-def prim_to_value(grammar: Grammar) -> Grammar:
+def prim_to_value(grammar: d_Grammar) -> d_Grammar:
     return PRIM_TO_VALUE_DISPATCH[grammar]
 
 
 PRIM_TO_VALUE_DISPATCH = {
-    Grammar.PRIMITIVE_ANY: Grammar.VALUE_ANY,
-    Grammar.PRIMITIVE_STRING: Grammar.VALUE_STRING,
-    Grammar.PRIMITIVE_CLASS: Grammar.VALUE_CLASS,
-    Grammar.PRIMITIVE_FUNC: Grammar.VALUE_FUNC,
-    Grammar.PRIMITIVE_DIT: Grammar.VALUE_DIT,
+    d_Grammar.PRIMITIVE_THING: d_Grammar.VALUE_THING,
+    d_Grammar.PRIMITIVE_STRING: d_Grammar.VALUE_STRING,
+    d_Grammar.PRIMITIVE_CLASS: d_Grammar.VALUE_CLASS,
+    d_Grammar.PRIMITIVE_FUNC: d_Grammar.VALUE_FUNC,
+    d_Grammar.PRIMITIVE_DIT: d_Grammar.VALUE_DIT,
 }
 
 
-def value_to_prim(grammar: Grammar) -> Grammar:
+def value_to_prim(grammar: d_Grammar) -> d_Grammar:
     return VALUE_TO_PRIM_DISPATCH[grammar]
 
 
 VALUE_TO_PRIM_DISPATCH = {
-    Grammar.VALUE_ANY: Grammar.PRIMITIVE_ANY,
-    Grammar.VALUE_STRING: Grammar.PRIMITIVE_STRING,
-    Grammar.VALUE_CLASS: Grammar.PRIMITIVE_CLASS,
-    Grammar.VALUE_FUNC: Grammar.PRIMITIVE_FUNC,
-    Grammar.VALUE_DIT: Grammar.PRIMITIVE_DIT,
+    d_Grammar.VALUE_THING: d_Grammar.PRIMITIVE_THING,
+    d_Grammar.VALUE_STRING: d_Grammar.PRIMITIVE_STRING,
+    d_Grammar.VALUE_CLASS: d_Grammar.PRIMITIVE_CLASS,
+    d_Grammar.VALUE_FUNC: d_Grammar.PRIMITIVE_FUNC,
+    d_Grammar.VALUE_DIT: d_Grammar.PRIMITIVE_DIT,
 }
 
 VALUE_CLASS_ABLES = [
-    Grammar.DOT,
-    Grammar.EQUALS,
-    Grammar.COMMA,
-    Grammar.SEMI,
-    Grammar.PAREN_LEFT,
-    Grammar.BRACKET_RIGHT,
-    Grammar.EOF,  # to trigger _missing_terminal
+    d_Grammar.DOT,
+    d_Grammar.EQUALS,
+    d_Grammar.COMMA,
+    d_Grammar.SEMI,
+    d_Grammar.PAREN_LEFT,
+    d_Grammar.BRACKET_RIGHT,
+    d_Grammar.EOF,  # to trigger _missing_terminal
 ]
 
-LANGS = [Grammar.DITLANG, Grammar.PYTHON, Grammar.JAVASCRIPT]
+LANGS = [d_Grammar.DITLANG, d_Grammar.PYTHON, d_Grammar.JAVASCRIPT]
 
 NON_VALUES_STARTERS = [
-    Grammar.DOT,
-    Grammar.EQUALS,
-    Grammar.PLUS,
-    Grammar.COMMA,
-    Grammar.SEMI,
-    Grammar.PAREN_LEFT,
-    Grammar.PAREN_RIGHT,
-    Grammar.BRACKET_RIGHT,
-    Grammar.BACKSLASH,
-    Grammar.VOID,
-    Grammar.DITLANG,
-    Grammar.PYTHON,
-    Grammar.JAVASCRIPT,
-    Grammar.LISTOF,
-    Grammar.FROM,
-    Grammar.THROW,
-    Grammar.RETURN,
-    Grammar.THIS,
-    Grammar.PRIMITIVE_ANY,
-    Grammar.PRIMITIVE_STRING,
-    Grammar.PRIMITIVE_CLASS,
-    Grammar.PRIMITIVE_INSTANCE,
-    Grammar.PRIMITIVE_FUNC,
-    Grammar.PRIMITIVE_DIT,
+    d_Grammar.DOT,
+    d_Grammar.EQUALS,
+    d_Grammar.PLUS,
+    d_Grammar.COMMA,
+    d_Grammar.SEMI,
+    d_Grammar.PAREN_LEFT,
+    d_Grammar.PAREN_RIGHT,
+    d_Grammar.BRACKET_RIGHT,
+    d_Grammar.BACKSLASH,
+    d_Grammar.VOID,
+    d_Grammar.DITLANG,
+    d_Grammar.PYTHON,
+    d_Grammar.JAVASCRIPT,
+    d_Grammar.LISTOF,
+    d_Grammar.FROM,
+    d_Grammar.THROW,
+    d_Grammar.RETURN,
+    d_Grammar.THIS,
+    d_Grammar.PRIMITIVE_THING,
+    d_Grammar.PRIMITIVE_STRING,
+    d_Grammar.PRIMITIVE_CLASS,
+    d_Grammar.PRIMITIVE_INSTANCE,
+    d_Grammar.PRIMITIVE_FUNC,
+    d_Grammar.PRIMITIVE_DIT,
 ]
 
 EXPRESSION_STARTERS = [
-    Grammar.QUOTE_DOUBLE,
-    Grammar.QUOTE_SINGLE,
-    Grammar.BRACKET_LEFT,
-    Grammar.CLASS,
-    Grammar.FUNC,
-    Grammar.IMPORT,
-    Grammar.NEW_NAME,
-    Grammar.VALUE_ANY,
-    Grammar.VALUE_STRING,
-    Grammar.VALUE_LIST,
-    Grammar.VALUE_CLASS,
-    Grammar.VALUE_INSTANCE,
-    Grammar.VALUE_FUNC,
-    Grammar.VALUE_DIT,
+    d_Grammar.QUOTE_DOUBLE,
+    d_Grammar.QUOTE_SINGLE,
+    d_Grammar.BRACKET_LEFT,
+    d_Grammar.CLASS,
+    d_Grammar.FUNC,
+    d_Grammar.IMPORT,
+    d_Grammar.NEW_NAME,
+    d_Grammar.VALUE_THING,
+    d_Grammar.VALUE_STRING,
+    d_Grammar.VALUE_LIST,
+    d_Grammar.VALUE_CLASS,
+    d_Grammar.VALUE_INSTANCE,
+    d_Grammar.VALUE_FUNC,
+    d_Grammar.VALUE_DIT,
 ]
 
 SINGLES = [
-    Grammar.QUOTE_DOUBLE,
-    Grammar.QUOTE_SINGLE,
-    Grammar.DOT,
-    Grammar.EQUALS,
-    Grammar.PLUS,
-    Grammar.COMMA,
-    Grammar.SEMI,
-    Grammar.PAREN_LEFT,
-    Grammar.PAREN_RIGHT,
-    Grammar.BRACKET_LEFT,
-    Grammar.BRACKET_RIGHT,
-    Grammar.BACKSLASH,
+    d_Grammar.QUOTE_DOUBLE,
+    d_Grammar.QUOTE_SINGLE,
+    d_Grammar.DOT,
+    d_Grammar.EQUALS,
+    d_Grammar.PLUS,
+    d_Grammar.COMMA,
+    d_Grammar.SEMI,
+    d_Grammar.PAREN_LEFT,
+    d_Grammar.PAREN_RIGHT,
+    d_Grammar.BRACKET_LEFT,
+    d_Grammar.BRACKET_RIGHT,
+    d_Grammar.BACKSLASH,
 ]
 
 DOUBLES = [
-    Grammar.BRACE_LEFT,
-    Grammar.BRACE_RIGHT,
-    Grammar.TRIANGLE_LEFT,
-    Grammar.TRIANGLE_RIGHT,
-    Grammar.CIRCLE_LEFT,
-    Grammar.CIRCLE_RIGHT,
+    d_Grammar.BRACE_LEFT,
+    d_Grammar.BRACE_RIGHT,
+    d_Grammar.TRIANGLE_LEFT,
+    d_Grammar.TRIANGLE_RIGHT,
+    d_Grammar.CIRCLE_LEFT,
+    d_Grammar.CIRCLE_RIGHT,
 ]
 
 KEYWORDS = [
-    Grammar.CLASS,
-    Grammar.FUNC,
-    Grammar.DITLANG,
-    Grammar.PYTHON,
-    Grammar.JAVASCRIPT,
-    Grammar.VOID,
-    Grammar.LISTOF,
-    Grammar.IMPORT,
-    Grammar.FROM,
-    Grammar.THROW,
-    Grammar.RETURN,
-    Grammar.PRIMITIVE_ANY,
-    Grammar.PRIMITIVE_STRING,
-    Grammar.PRIMITIVE_CLASS,
-    Grammar.PRIMITIVE_INSTANCE,
-    Grammar.PRIMITIVE_FUNC,
-    Grammar.PRIMITIVE_DIT,
+    d_Grammar.CLASS,
+    d_Grammar.FUNC,
+    d_Grammar.DITLANG,
+    d_Grammar.PYTHON,
+    d_Grammar.JAVASCRIPT,
+    d_Grammar.VOID,
+    d_Grammar.LISTOF,
+    d_Grammar.IMPORT,
+    d_Grammar.FROM,
+    d_Grammar.THROW,
+    d_Grammar.RETURN,
+    d_Grammar.PRIMITIVE_THING,
+    d_Grammar.PRIMITIVE_STRING,
+    d_Grammar.PRIMITIVE_CLASS,
+    d_Grammar.PRIMITIVE_INSTANCE,
+    d_Grammar.PRIMITIVE_FUNC,
+    d_Grammar.PRIMITIVE_DIT,
 ]
 VALUES = [
-    Grammar.VALUE_ANY,
-    Grammar.VALUE_STRING,
-    Grammar.VALUE_LIST,
-    Grammar.VALUE_CLASS,
-    Grammar.VALUE_INSTANCE,
-    Grammar.VALUE_FUNC,
-    Grammar.VALUE_DIT,
+    d_Grammar.VALUE_THING,
+    d_Grammar.VALUE_STRING,
+    d_Grammar.VALUE_LIST,
+    d_Grammar.VALUE_CLASS,
+    d_Grammar.VALUE_INSTANCE,
+    d_Grammar.VALUE_FUNC,
+    d_Grammar.VALUE_DIT,
 ]
 
 TYPES = [
-    Grammar.VOID,
-    Grammar.VALUE_CLASS,
-    Grammar.PRIMITIVE_ANY,
-    Grammar.PRIMITIVE_STRING,
-    Grammar.PRIMITIVE_CLASS,
-    Grammar.PRIMITIVE_INSTANCE,
-    Grammar.PRIMITIVE_FUNC,
-    Grammar.PRIMITIVE_DIT,
+    d_Grammar.VOID,
+    d_Grammar.VALUE_CLASS,
+    d_Grammar.PRIMITIVE_THING,
+    d_Grammar.PRIMITIVE_STRING,
+    d_Grammar.PRIMITIVE_CLASS,
+    d_Grammar.PRIMITIVE_INSTANCE,
+    d_Grammar.PRIMITIVE_FUNC,
+    d_Grammar.PRIMITIVE_DIT,
 ]
 
 PRIMITIVES = [
-    Grammar.PRIMITIVE_ANY,
-    Grammar.PRIMITIVE_STRING,
-    Grammar.PRIMITIVE_CLASS,
-    Grammar.PRIMITIVE_INSTANCE,
-    Grammar.PRIMITIVE_FUNC,
-    Grammar.PRIMITIVE_DIT,
+    d_Grammar.PRIMITIVE_THING,
+    d_Grammar.PRIMITIVE_STRING,
+    d_Grammar.PRIMITIVE_CLASS,
+    d_Grammar.PRIMITIVE_INSTANCE,
+    d_Grammar.PRIMITIVE_FUNC,
+    d_Grammar.PRIMITIVE_DIT,
 ]
 
 DOTABLES = [
-    Grammar.VALUE_CLASS,
-    Grammar.VALUE_INSTANCE,
-    Grammar.VALUE_FUNC,
-    Grammar.VALUE_DIT,
+    d_Grammar.VALUE_CLASS,
+    d_Grammar.VALUE_INSTANCE,
+    d_Grammar.VALUE_FUNC,
+    d_Grammar.VALUE_DIT,
 ]
 
 NAMEABLES = [
-    Grammar.VALUE_ANY,
-    Grammar.VALUE_STRING,
-    Grammar.VALUE_LIST,
-    Grammar.VALUE_CLASS,
-    Grammar.VALUE_INSTANCE,
-    Grammar.VALUE_FUNC,
-    Grammar.VALUE_DIT,
-    Grammar.NEW_NAME,
+    d_Grammar.VALUE_THING,
+    d_Grammar.VALUE_STRING,
+    d_Grammar.VALUE_LIST,
+    d_Grammar.VALUE_CLASS,
+    d_Grammar.VALUE_INSTANCE,
+    d_Grammar.VALUE_FUNC,
+    d_Grammar.VALUE_DIT,
+    d_Grammar.NEW_NAME,
 ]

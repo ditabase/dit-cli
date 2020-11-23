@@ -57,7 +57,7 @@ class DitError(Exception):
             # Line: 1 Col: 34 (someDirectory/someImportedDit.dit)
             + "\n"
             + self.origin.code
-            # String test = 'Missing Semicolon'
+            # d_String test = 'Missing Semicolon'
             + "\n"
             + " " * (self.origin.loc.col - 1)  # pad spaces before ^
             + "^"
@@ -83,7 +83,7 @@ class DitError(Exception):
         """Total example message follows:
 
         Line: 1 Col: 34 (someDirectory/someImportedDit.dit)
-        String test = 'Missing Semicolon'
+        d_String test = 'Missing Semicolon'
                                         ^
 
         SyntaxError: Expected ';'

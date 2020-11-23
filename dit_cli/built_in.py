@@ -1,6 +1,14 @@
 from dit_cli.exceptions import CriticalError
-from dit_cli.grammar import Grammar
-from dit_cli.object import Arg, Declarable, Dit, Function, List, Object, String
+from dit_cli.grammar import d_Grammar
+from dit_cli.oop import (
+    Declarable,
+    d_Arg,
+    d_Dit,
+    d_Function,
+    d_List,
+    d_String,
+    d_Thing,
+)
 
 JAVASCRIPT = {
     "name": "Javascript",
@@ -47,27 +55,27 @@ PRINT = {
 LANG = PRINT
 
 
-def add_built_ins(dit: Dit) -> None:
+def add_built_ins(dit: d_Dit) -> None:
     pass
 
 
-def d_str(arg: Arg) -> str:
+def d_str(arg: d_Arg) -> str:
     if isinstance(arg, str):
         return _ser_str(arg)
-    elif isinstance(arg, List):
+    elif isinstance(arg, d_List):
         return _ser_list(arg)
-    elif isinstance(arg, Object):
+    elif isinstance(arg, d_Thing):
         return _ser_obj(arg)
     else:
         raise CriticalError("Unrecognized argument for str()")
 
 
-def d_print(arg: Arg) -> None:
+def d_print(arg: d_Arg) -> None:
     print(d_str(arg))
 
 
-def _ser_list(arg: Arg) -> str:
-    if isinstance(arg, List):
+def _ser_list(arg: d_Arg) -> str:
+    if isinstance(arg, d_List):
         if len(arg.list_value) == 0:
             return LANG["list_open"] + LANG["list_close"]
         value = LANG["list_open"]
@@ -80,7 +88,7 @@ def _ser_list(arg: Arg) -> str:
         return value
     elif isinstance(arg, str):
         return _ser_str(arg)
-    elif isinstance(arg, Object):
+    elif isinstance(arg, d_Thing):
         return _ser_obj(arg)
     else:
         raise CriticalError("Unrecognized argument for _ser_list()")
@@ -112,19 +120,19 @@ def _ser_str(str_: str) -> str:
     return str_
 
 
-def _ser_obj(obj: Object) -> str:
-    if isinstance(obj, String):
+def _ser_obj(obj: d_Thing) -> str:
+    if isinstance(obj, d_String):
         return _ser_str(obj.string_value)
     else:
         raise CriticalError("Unrecognized argument for _ser_obj()")
 
 
-PRINT_DIT = Function("print", None)  # type: ignore
-PRINT_DIT.parameters = [Declarable(Grammar.PRIMITIVE_STRING, "value")]
+PRINT_DIT = d_Function("print", None)  # type: ignore
+PRINT_DIT.parameters = [Declarable(d_Grammar.PRIMITIVE_STRING, "value")]
 PRINT_DIT.is_built_in = True
 PRINT_DIT.py_func = d_print
 
 BUILT_INS = [
     {"name": "print", "return": "void", "py_func": d_print, "dit_func": PRINT_DIT},
-    {"name": "str", "return": "String", "py_func": d_str},
+    {"name": "str", "return": "d_String", "py_func": d_str},
 ]

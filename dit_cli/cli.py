@@ -6,7 +6,7 @@ from dit_cli import __version__
 from dit_cli.color import Color, color
 from dit_cli.exceptions import DitError
 from dit_cli.interpreter import interpret
-from dit_cli.object import Dit
+from dit_cli.oop import d_Dit
 
 
 class PrintLogger(object):
@@ -41,7 +41,7 @@ def main():
 
     try:
         sys.stdout = PrintLogger()
-        dit = Dit("__main__", args.filepath)
+        dit = d_Dit("__main__", args.filepath)
         dit.finalize()
         interpret(dit)
         if not sys.stdout.any_print:
