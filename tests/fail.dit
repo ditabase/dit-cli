@@ -1,1 +1,5 @@
-func Ditlang String test() {{}}
+Thing test = 'cat';
+test = ['dog', 'bird'];
+test = class {{}};
+test = import 'tests/import.dit';
+test = func Ditlang void () {{}};

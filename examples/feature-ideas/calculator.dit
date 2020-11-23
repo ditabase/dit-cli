@@ -1,0 +1,15 @@
+func Ditlang void hello() {{
+    print('hello');
+}}
+
+hello();
+
+func JavaScript String add(String a, String b) {{
+    var a = <|a|>;
+    var b = <|b|>;
+
+    var c = a + b;
+
+    <|print |>
+}}
+

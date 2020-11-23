@@ -2,6 +2,7 @@ import copy
 import re
 from typing import Optional
 
+from dit_cli.built_in import BUILT_INS
 from dit_cli.data_classes import CodeLocation
 from dit_cli.exceptions import CriticalError, EndOfFileError, SyntaxError_
 from dit_cli.grammar import DOUBLES, KEYWORDS, SINGLES, Grammar
@@ -176,6 +177,9 @@ def _find_words(inter: InterpretContext, find_word: bool) -> Optional[Token]:
         for grammar in KEYWORDS:
             if word == grammar.value:
                 return Token(grammar, token_loc)
+        for built_in in BUILT_INS:
+            if word == built_in["name"]:
+                return Token(Grammar.VALUE_FUNC, token_loc, obj=built_in["dit_func"])
         # Used by var.class.attr expressions
         # They find the word themselves.
         if find_word is False:

@@ -98,9 +98,21 @@
     },
     {
       "type": "fail",
-      "title": "func, duplicate parameter name",
+      "title": "func, duplicate parameter name/same as attribute, already declared",
       "dit": "String test = 'cat';\nfunc Ditlang void test2(String test) {{}}",
       "expected": "Line: 2 Col: 32 (tests/fail.dit)\nfunc Ditlang void test2(String test) {{}}\n                               ^\n\nSyntaxError: 'test' has already been declared"
+    },
+    {
+      "type": "fail",
+      "title": "func, duplicate parameter name/same as parameter",
+      "dit": "func Ditlang String test(String param, String param) {{}}",
+      "expected": "Line: 1 Col: 47 (tests/fail.dit)\nfunc Ditlang String test(String param, String param) {{}}\n                                              ^\n\nSyntaxError: 'param' is already a parameter name"
+    },
+    {
+      "type": "fail",
+      "title": "func, misspelled JavaScript, did you mean?",
+      "dit": "func Javascript void test() {{}}",
+      "expected": "Line: 1 Col: 6 (tests/fail.dit)\nfunc Javascript void test() {{}}\n     ^\n\nSyntaxError: Did you mean 'JavaScript'?"
     },
     {
       "type": "success",
@@ -154,6 +166,18 @@
       "type": "success",
       "title": "func, imported class return type, inner class",
       "dit": "import classDit from 'tests/import2.dit';\nfunc Ditlang classDit.A.B test2() {{}}",
+      "expected": "Finished successfully\n"
+    },
+    {
+      "type": "success",
+      "title": "func, vanilla Python",
+      "dit": "func Python void test() {{}}",
+      "expected": "Finished successfully\n"
+    },
+    {
+      "type": "success",
+      "title": "func, vanilla JavaScript",
+      "dit": "func JavaScript void test() {{}}",
       "expected": "Finished successfully\n"
     }
   ]

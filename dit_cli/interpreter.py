@@ -42,6 +42,9 @@ from dit_cli.object import (
 
 
 def interpret(body: Body) -> None:
+    if isinstance(body, Function) and body.is_built_in:
+        body.py_func(body.attrs[0])
+        return
     if not body.is_ready():
         return
     inter = InterpretContext(body)
@@ -118,6 +121,10 @@ def _primitive(inter: InterpretContext) -> None:
     # String value;
     inter.advance_tokens()
     _type(inter)
+
+def _value_any(inter: InterpretContext) -> Optional[Arg]:
+    if inter.next_tok.obj
+    _statement_dispatch()
 
 
 def _value_string(inter: InterpretContext) -> Optional[Arg]:
@@ -312,6 +319,7 @@ def _paren_left(inter: InterpretContext) -> Optional[Arg]:
     for param, arg in zip_longest(func.parameters, args):
         param: Declarable
         arg: Arg
+        # assert 0
         if arg is None:
             func_name = func.name if func.name else "anonymous func"
             missing_count = len(func.parameters) - len(args)
@@ -320,6 +328,8 @@ def _paren_left(inter: InterpretContext) -> Optional[Arg]:
             )
         elif param.type_ is None:
             raise NotImplementedError
+        elif param.type_ == Grammar.PRIMITIVE_ANY:
+            pass
         elif isinstance(param.type_, Class):
             if not isinstance(arg, Instance):
                 raise NotImplementedError
@@ -349,8 +359,8 @@ def _paren_left(inter: InterpretContext) -> Optional[Arg]:
     except ReturnController as ret:
         _check_return_type(inter, ret, func)
         return ret.value
-    finally:
-        func.parameters.clear()
+    # finally:
+    # func.parameters.clear()
 
     return None
 
@@ -515,6 +525,8 @@ def _func(inter: InterpretContext) -> Optional[Function]:
             func.lang = result  # type: ignore
         else:
             raise NotImplementedError
+    elif inter.next_tok.word == "Javascript":
+        _raise_helper("Did you mean 'JavaScript'?", inter)
     else:
         _raise_helper("Expected language value", inter)
 
@@ -582,11 +594,12 @@ def _func(inter: InterpretContext) -> Optional[Function]:
             _raise_helper("Expected parameter name", inter)
         else:
             # someName(String someParam
-            result = inter.body.find_attr(inter.next_tok.word)  # type: ignore
+            param_name = inter.next_tok.word
+            result = inter.body.find_attr(param_name)  # type: ignore
             if result:
-                _raise_helper(f"'{result.name}' has already been declared", inter)
-            else:
-                param_name = inter.next_tok.word
+                _raise_helper(f"'{param_name}' has already been declared", inter)
+            elif param_name in [p.name for p in func.parameters]:
+                _raise_helper(f"'{param_name}' is already a parameter name", inter)
         func.parameters.append(Declarable(param_type, param_name))
 
         inter.advance_tokens()
@@ -701,7 +714,7 @@ STATEMENT_DISPATCH = {
     Grammar.FROM:                   _illegal_statement,
     Grammar.THROW:                  _throw,
     Grammar.RETURN:                 _return,
-    Grammar.SELF:                   _not_implemented,
+    Grammar.THIS:                   _not_implemented,
     Grammar.PRIMITIVE_ANY:          _primitive,
     Grammar.PRIMITIVE_STRING:       _primitive,
     Grammar.PRIMITIVE_CLASS:        _primitive,
@@ -710,7 +723,7 @@ STATEMENT_DISPATCH = {
     Grammar.PRIMITIVE_DIT:          _primitive,
     Grammar.WORD:                   _illegal_statement,
     Grammar.NEW_NAME:               _new_name,
-    Grammar.VALUE_ANY:              _not_implemented,
+    Grammar.VALUE_ANY:              _value_any,
     Grammar.VALUE_STRING:           _value_string,
     Grammar.VALUE_LIST:             _value_list,
     Grammar.VALUE_CLASS:            _value_class,
@@ -752,7 +765,7 @@ EXPRESSION_DISPATCH = {
     Grammar.FROM:                   _illegal_expression,
     Grammar.THROW:                  _illegal_expression,
     Grammar.RETURN:                 _illegal_expression,
-    Grammar.SELF:                   _not_implemented,
+    Grammar.THIS:                   _not_implemented,
     Grammar.PRIMITIVE_ANY:          _illegal_expression,
     Grammar.PRIMITIVE_STRING:       _illegal_expression,
     Grammar.PRIMITIVE_CLASS:        _illegal_expression,

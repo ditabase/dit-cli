@@ -1,6 +1,7 @@
 """All fundamental grammatical concepts in dit, with their string representations"""
 from enum import Enum
 
+
 # test
 class Grammar(Enum):
     """Enum with all dit grammatical types."""
@@ -46,7 +47,7 @@ class Grammar(Enum):
     FROM = "from"
     THROW = "throw"
     RETURN = "return"
-    SELF = "self"
+    THIS = "this"
 
     # Primitives (basically keywords)
     PRIMITIVE_ANY = "Any"
@@ -127,7 +128,7 @@ NON_VALUES_STARTERS = [
     Grammar.FROM,
     Grammar.THROW,
     Grammar.RETURN,
-    Grammar.SELF,
+    Grammar.THIS,
     Grammar.PRIMITIVE_ANY,
     Grammar.PRIMITIVE_STRING,
     Grammar.PRIMITIVE_CLASS,

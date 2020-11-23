@@ -1,7 +1,8 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, Generator, Iterator
+from typing import Any as AnyHint
+from typing import Callable, Generator, Iterator
 from typing import List as ListHint
 from typing import Optional, Union
 from urllib.error import HTTPError, URLError
@@ -12,25 +13,44 @@ from dit_cli.exceptions import CriticalError, FileError, TypeMismatchError
 from dit_cli.grammar import Grammar, prim_to_value, value_to_prim
 
 
-class Object(object):
+class d_Thing(object):
     def __init__(self, grammar: Grammar, name: str) -> None:
         self.grammar = grammar
         self.name = name
         self.public_type: str = "Object"
+        self.py_func: Callable = None  # type: ignore
 
-    def set_value(self, new_value: Any) -> None:
+    def set_value(self, new_value: AnyHint) -> None:
         # Python "virtual" method
         raise CriticalError("Virtual func Object.set_value called")
 
+'''
+class Any(Object):
+    def __init__(self, name: str) -> None:
+        super().__init__(Grammar.VALUE_ANY, name)
+        self.any_value: Object = None  # type: ignore
 
-class String(Object):
+    def set_value(self, new_value: Arg) -> None:
+        if isinstance(new_value, str):
+            self.any_value = String(self.name)
+        elif isinstance(new_value, list):
+            self.any_value = List(Grammar.VALUE_ANY, self.name)
+        elif isinstance(new_value, Object):  # type: ignore
+            self.any_value = new_value
+        else:
+            raise CriticalError("Unrecognized type for Any assignment")
+'''
+
+class d_String(d_Thing):
     def __init__(self, name: str) -> None:
         super().__init__(Grammar.VALUE_STRING, name)
         self.string_value: str = None  # type: ignore
         self.public_type: str = "String"
 
     def set_value(self, new_value: Arg) -> None:
-        if isinstance(new_value, str):
+        if isinstance(new_value, Any):
+            new_value = new_value.any_value
+        elif isinstance(new_value, str):
             self.string_value = new_value
         elif isinstance(new_value, String):
             self.string_value = new_value.string_value
@@ -42,7 +62,7 @@ class String(Object):
             raise CriticalError("Unrecognized type for string assignment")
 
 
-class List(Object):
+class d_List(Object):
     def __init__(self, grammar: Grammar, name: str) -> None:
         super().__init__(Grammar.VALUE_LIST, name)
         self.contained_grammar: Grammar = grammar
@@ -50,7 +70,9 @@ class List(Object):
         self.public_type: str = "List"
 
     def set_value(self, new_value: Arg) -> None:
-        if isinstance(new_value, list):
+        if isinstance(new_value, Any):
+            new_value = new_value.any_value
+        elif isinstance(new_value, list):
             self.list_value = new_value
         elif isinstance(new_value, List):
             self.list_value = new_value.list_value
@@ -109,7 +131,9 @@ class Body(Object):
         return len(self.view) > 0
 
     def set_value(self, new_value: Arg) -> None:
-        if isinstance(new_value, Body):
+        if isinstance(new_value, Any):
+            new_value = new_value.any_value
+        elif isinstance(new_value, Body):
             self.attrs = new_value.attrs
             self.containing_scope = new_value.containing_scope
             self.view = new_value.view
@@ -165,7 +189,7 @@ def _type_to_obj(dec: Declarable, containing_scope: Body) -> Object:
     if dec.listof:
         return List(prim_to_value(dec.type_), dec.name)
     if dec.type_ == Grammar.PRIMITIVE_ANY:
-        raise NotImplementedError
+        return Any(dec.name)
     if dec.type_ == Grammar.PRIMITIVE_STRING:
         return String(dec.name)
     if dec.type_ == Grammar.PRIMITIVE_CLASS:
@@ -223,6 +247,8 @@ class Dit(Body):
                 raise FileError("Import failed, file not found")
             except PermissionError:
                 raise FileError("Import failed, permission denied")
+            except IsADirectoryError:
+                raise FileError("Import failed, not a directory")
 
         self.view = memoryview(contents.encode())
 
@@ -260,6 +286,7 @@ class Function(Body):
         self.lang: Language = None  # type: ignore
         self.return_: Type = None  # type: ignore
         self.parameters: ListHint[Declarable] = []
+        self.is_built_in: bool = False
 
 
 Arg = Union[Object, str, list]

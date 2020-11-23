@@ -50,7 +50,7 @@
     },
     {
       "type": "fail",
-      "title": "import, local file no permission",
+      "title": "import, remote file 404 error",
       "dit": "import 'https://raw.githubusercontent.com/ditabase/dits/master/new-dits/DNE.dit';",
       "expected": "Line: 1 Col: 81 (tests/fail.dit)\nimport 'https://raw.githubusercontent.com/ditabase/dits/master/new-dits/DNE.dit';\n                                                                                ^\n\nFileError: Import failed, HTTP Error 404: Not Found"
     },

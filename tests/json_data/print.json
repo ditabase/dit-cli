@@ -1,0 +1,10 @@
+{
+  "dits": [
+    {
+      "type": "success",
+      "title": "print, value string",
+      "dit": "String test = 'cat';\nprint(test);",
+      "expected": "cat\n"
+    }
+  ]
+}

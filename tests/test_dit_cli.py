@@ -32,7 +32,8 @@ def test_dits(dit_json):
         with redirect_stdout(output):
             dit = Dit.from_str("__main__", dit_json["dit"], "tests/fail.dit")
             interpret(dit)
-            print("Finished successfully")
+            if len(output.getvalue()) == 0:
+                print("Finished successfully")
         assert output.getvalue() == dit_json["expected"]
     except DitError as err:
         assert err.get_cli_trace() == dit_json["expected"]
