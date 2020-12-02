@@ -1,0 +1,11 @@
+{
+  "dits": [
+    {
+      "type": "succeed",
+      "title": "null, var assignment",
+      "dit": "String test = null;",
+      "expected": "Finished successfully\n"
+    }
+
+  ]
+}

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Callable, Generator, Iterator, List, Optional, Union
+from typing import Callable, Generator, Iterator, List, Optional, Type, Union
 from urllib.error import HTTPError, URLError
 from urllib.request import urlopen
 
@@ -10,30 +10,50 @@ from dit_cli.exceptions import CriticalError, FileError, TypeMismatchError
 from dit_cli.grammar import d_Grammar, prim_to_value, value_to_prim
 
 
+class d_Null(object):
+    pass
+
+
 class d_Thing(object):
-    def __init__(self, grammar: d_Grammar, name: str) -> None:
+    def __init__(
+        self, grammar: d_Grammar, name: str, can_be_anything: bool = False
+    ) -> None:
         self.grammar = grammar
         self.name = name
         self.public_type: str = "Thing"
         self.py_func: Callable = None  # type: ignore
-        self.is_anything: bool = False
+        self.can_be_anything: bool = can_be_anything
 
     def set_value(self, new_value: d_Arg) -> None:
-        # Python "virtual" method
-        raise CriticalError("Virtual func Thing.set_value called")
+        # alter own class to *become* the type it is assigned to.
+        if isinstance(new_value, str) or isinstance(new_value, d_String):
+            self.__class__ = d_String
+        elif isinstance(new_value, list) or isinstance(new_value, d_List):
+            self.__class__ = d_List
+            self.contained_type = d_Grammar.VALUE_THING
+        elif isinstance(new_value, d_Thing):  # type: ignore
+            self.__class__ = new_value.__class__
+        else:
+            raise CriticalError("Unrecognized type for thing assignment")
+
+        self.set_value(new_value)
 
 
 class d_String(d_Thing):
     def __init__(self, name: str) -> None:
         super().__init__(d_Grammar.VALUE_STRING, name)
-        self.string_value: str = None  # type: ignore
+        self.string_value: Union[str, d_Null] = d_Null()
         self.public_type: str = "String"
 
     def set_value(self, new_value: d_Arg) -> None:
-        if isinstance(new_value, str):
+        if isinstance(new_value, d_Null):
+            self.string_value = new_value
+        elif isinstance(new_value, str):
             self.string_value = new_value
         elif isinstance(new_value, d_String):
             self.string_value = new_value.string_value
+        elif self.can_be_anything:
+            super().set_value(new_value)
         elif isinstance(new_value, list):
             raise TypeMismatchError("Cannot assign List to String")
         elif type(new_value) == d_Thing:
@@ -45,17 +65,22 @@ class d_String(d_Thing):
 
 
 class d_List(d_Thing):
-    def __init__(self, grammar: d_Grammar, name: str) -> None:
+    def __init__(self, type_: d_Type, name: str) -> None:
         super().__init__(d_Grammar.VALUE_LIST, name)
-        self.contained_grammar: d_Grammar = grammar
-        self.list_value: List[d_Arg] = None  # type: ignore
+        self.contained_type: d_Type = type_
+        self.list_value: Union[List[d_Arg], d_Null] = d_Null()
         self.public_type: str = "List"
 
     def set_value(self, new_value: d_Arg) -> None:
-        if isinstance(new_value, list):
+        if isinstance(new_value, d_Null):
+            self.list_value = new_value
+        elif isinstance(new_value, list):
             self.list_value = new_value
         elif isinstance(new_value, d_List):
             self.list_value = new_value.list_value
+        elif self.can_be_anything:
+            super().set_value(new_value)
+            return
         elif isinstance(new_value, str):
             raise TypeMismatchError("Cannot assign String to List")
         elif type(new_value) == d_Thing:
@@ -69,22 +94,26 @@ class d_List(d_Thing):
 
 
 def _check_list_type(list_: d_List) -> None:
-    if list_.contained_grammar == d_Grammar.VALUE_THING:
+    if list_.contained_type == d_Grammar.VALUE_THING:
         return
-    prim: str = value_to_prim(list_.contained_grammar).value
+    if isinstance(list_.contained_type, d_Class):
+        raise NotImplementedError
+    prim: str = value_to_prim(list_.contained_type).value
     for ele in _traverse(list_.list_value):
-        if isinstance(ele, str):
-            if list_.contained_grammar != d_Grammar.VALUE_STRING:
+        if isinstance(ele, d_Null):
+            continue
+        elif isinstance(ele, str):
+            if list_.contained_type != d_Grammar.VALUE_STRING:
                 raise TypeMismatchError(f"List of type '{prim}' contained 'String'")
         elif isinstance(ele, d_Thing):  # type: ignore
-            if ele.grammar != list_.contained_grammar:
+            if ele.grammar != list_.contained_type:
                 e_prim = value_to_prim(ele.grammar).value
                 raise TypeMismatchError(f"List of type '{prim}' contained '{e_prim}'")
         else:
             raise CriticalError("Unrecognized type for list check")
 
 
-def _traverse(item: d_Arg) -> Iterator[Union[d_Thing, str]]:
+def _traverse(item: d_Arg) -> Iterator[Union[d_Thing, str, d_Null]]:
     """Generate every item in an arbitrary nested list,
     or just the item if it wasn't a list in the first place"""
     if isinstance(item, list):
@@ -105,6 +134,7 @@ class d_Body(d_Thing):
         self.view: memoryview = None  # type: ignore
         self.containing_scope: d_Body = None  # type: ignore
         self.attrs: List[d_Thing] = []
+        self.is_null: bool = True
         self.public_type: str = "Body"
 
     def is_ready(self) -> bool:
@@ -113,21 +143,24 @@ class d_Body(d_Thing):
         return len(self.view) > 0
 
     def set_value(self, new_value: d_Arg) -> None:
-        if type(new_value) == d_Thing:
-            pass
+        if isinstance(new_value, d_Null):
+            self.is_null = True
         elif isinstance(new_value, d_Body):
             self.attrs = new_value.attrs
             self.containing_scope = new_value.containing_scope
             self.view = new_value.view
             self.path = new_value.path
-            return
+        elif type(new_value) == d_Thing:
+            pass
+        elif self.can_be_anything:
+            super().set_value(new_value)
         elif isinstance(new_value, str):
             raise TypeMismatchError(f"Cannot assign String to {self.public_type}")
         elif isinstance(new_value, list):
             raise TypeMismatchError(f"Cannot assign List to {self.public_type}")
         else:  # isinstance(new_value, d_Thing):
             raise TypeMismatchError(
-                f"Cannot assign {new_value.public_type} to {self.public_type}"
+                f"Cannot assign {new_value.public_type} to {self.public_type}"  # type: ignore
             )
 
     def add_attr(self, dec: Declarable) -> d_Thing:
@@ -173,7 +206,7 @@ def _type_to_obj(dec: Declarable, containing_scope: d_Body) -> d_Thing:
     if dec.listof:
         return d_List(prim_to_value(dec.type_), dec.name)
     if dec.type_ == d_Grammar.PRIMITIVE_THING:
-        return d_Thing(d_Grammar.VALUE_THING, dec.name)
+        return d_Thing(d_Grammar.VALUE_THING, dec.name, can_be_anything=True)
     if dec.type_ == d_Grammar.PRIMITIVE_STRING:
         return d_String(dec.name)
     if dec.type_ == d_Grammar.PRIMITIVE_CLASS:
@@ -266,37 +299,46 @@ class d_Function(d_Body):
     def __init__(self, name: str, containing_scope: d_Body) -> None:
         super().__init__(d_Grammar.VALUE_FUNC, name)
         self.public_type: str = "Function"
+        self.orig_loc: CodeLocation = None  # type: ignore
         self.containing_scope = containing_scope
         self.lang: Language = None  # type: ignore
         self.return_: d_Type = None  # type: ignore
+        self.return_list: bool = False
         self.parameters: List[Declarable] = []
         self.is_built_in: bool = False
 
 
-d_Arg = Union[d_Thing, str, list]
+def arg_to_prim(arg: d_Arg) -> d_Grammar:
+    if isinstance(arg, str) or isinstance(arg, d_String):
+        return d_Grammar.PRIMITIVE_STRING
+    else:
+        raise CriticalError("Unrecognized arg for arg_to_prim")
+
+
+d_Arg = Union[d_Thing, str, list, d_Null]
 d_Type = Union[d_Grammar, d_Class]
 
 
 class FlowControlException(Exception):
     """Base class for all exceptions used for flow control rather than errors."""
 
-    def __init__(self, value: d_Arg, orig_loc: CodeLocation):
-        self.value: d_Arg = value
+    def __init__(self, token: Token, orig_loc: CodeLocation):
+        self.token: Token = token
         self.orig_loc: CodeLocation = orig_loc
 
 
 class ReturnController(FlowControlException):
     """Raised when a function executes a return statement"""
 
-    def __init__(self, value: d_Arg, orig_loc: CodeLocation):
-        super().__init__(value, orig_loc)
+    def __init__(self, token: Token, orig_loc: CodeLocation):
+        super().__init__(token, orig_loc)
 
 
 class ThrowController(FlowControlException):
     """Raised when a function executes a throw statement"""
 
-    def __init__(self, value: d_Arg, orig_loc: CodeLocation):
-        super().__init__(value, orig_loc)
+    def __init__(self, token: Token, orig_loc: CodeLocation):
+        super().__init__(token, orig_loc)
 
 
 @dataclass
@@ -314,6 +356,16 @@ class Token:
 
 @dataclass
 class Declarable:
+    """All the information required to declare a new variable."""
+
     type_: d_Type = None  # type: ignore
     name: str = None  # type: ignore
     listof: bool = False  # type: ignore
+
+
+@dataclass
+class ArgumentLocation:
+    """An argument and the location where it was found"""
+
+    loc: CodeLocation
+    arg: d_Arg

@@ -6,6 +6,7 @@ from dit_cli.oop import (
     d_Dit,
     d_Function,
     d_List,
+    d_Null,
     d_String,
     d_Thing,
 )
@@ -60,6 +61,8 @@ def add_built_ins(dit: d_Dit) -> None:
 
 
 def d_str(arg: d_Arg) -> str:
+    if isinstance(arg, d_Null):
+        return LANG["null_type"]
     if isinstance(arg, str):
         return _ser_str(arg)
     elif isinstance(arg, d_List):
@@ -76,7 +79,9 @@ def d_print(arg: d_Arg) -> None:
 
 def _ser_list(arg: d_Arg) -> str:
     if isinstance(arg, d_List):
-        if len(arg.list_value) == 0:
+        if isinstance(arg.list_value, d_Null):
+            return LANG["null_type"]
+        elif len(arg.list_value) == 0:
             return LANG["list_open"] + LANG["list_close"]
         value = LANG["list_open"]
         for i in arg.list_value:
@@ -122,13 +127,16 @@ def _ser_str(str_: str) -> str:
 
 def _ser_obj(obj: d_Thing) -> str:
     if isinstance(obj, d_String):
-        return _ser_str(obj.string_value)
+        if isinstance(obj.string_value, d_Null):
+            raise NotImplementedError
+        else:
+            return _ser_str(obj.string_value)
     else:
         raise CriticalError("Unrecognized argument for _ser_obj()")
 
 
 PRINT_DIT = d_Function("print", None)  # type: ignore
-PRINT_DIT.parameters = [Declarable(d_Grammar.PRIMITIVE_STRING, "value")]
+PRINT_DIT.parameters = [Declarable(d_Grammar.PRIMITIVE_THING, "value")]
 PRINT_DIT.is_built_in = True
 PRINT_DIT.py_func = d_print
 

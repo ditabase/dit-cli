@@ -1,12 +1,12 @@
 import copy
 import re
-from typing import Optional
+from typing import Optional, Union
 
 from dit_cli.built_in import BUILT_INS
 from dit_cli.data_classes import CodeLocation
 from dit_cli.exceptions import CriticalError, EndOfFileError, SyntaxError_
 from dit_cli.grammar import DOUBLES, KEYWORDS, SINGLES, d_Grammar
-from dit_cli.oop import Declarable, Token, d_Body, d_Thing
+from dit_cli.oop import Declarable, Token, d_Body, d_Null, d_Thing
 
 WHITESPACE = re.compile(r"\s")
 LETTER = re.compile(r"[A-Za-z0-9_]")
@@ -70,7 +70,8 @@ class InterpretContext:
         self.prev_tok: Token = None  # type: ignore
         self.curr_tok: Token = None  # type: ignore
         self.next_tok: Token = None  # type: ignore
-        self.anon_tok: Optional[Token] = None  # anon is actually *usually* None
+        self.anon_tok: Optional[Token] = None  # only assigned for anon import, func
+        self.call_tok: Optional[Union[Token, d_Null]] = None  # only for func call
 
         self.dec: Declarable = Declarable()
         self.assignee: d_Thing = None  # type: ignore

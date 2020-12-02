@@ -68,6 +68,12 @@
     },
     {
       "type": "fail",
+      "title": "func, listOf void",
+      "dit": "func Ditlang listOf void test(String out) {{}}",
+      "expected": "Line: 1 Col: 21 (tests/fail.dit)\nfunc Ditlang listOf void test(String out) {{}}\n                    ^\n\nSyntaxError: Cannot have listOf void"
+    },
+    {
+      "type": "fail",
       "title": "func, missing parameter type",
       "dit": "func Ditlang void test(param) {{}}",
       "expected": "Line: 1 Col: 24 (tests/fail.dit)\nfunc Ditlang void test(param) {{}}\n                       ^\n\nSyntaxError: Expected parameter type"

@@ -48,6 +48,7 @@ class d_Grammar(Enum):
     THROW = "throw"
     RETURN = "return"
     THIS = "this"
+    NULL = "null"
 
     # Primitives (basically keywords)
     PRIMITIVE_THING = "Thing"
@@ -129,6 +130,7 @@ NON_VALUES_STARTERS = [
     d_Grammar.THROW,
     d_Grammar.RETURN,
     d_Grammar.THIS,
+    d_Grammar.NULL,
     d_Grammar.PRIMITIVE_THING,
     d_Grammar.PRIMITIVE_STRING,
     d_Grammar.PRIMITIVE_CLASS,
@@ -190,6 +192,7 @@ KEYWORDS = [
     d_Grammar.FROM,
     d_Grammar.THROW,
     d_Grammar.RETURN,
+    d_Grammar.NULL,
     d_Grammar.PRIMITIVE_THING,
     d_Grammar.PRIMITIVE_STRING,
     d_Grammar.PRIMITIVE_CLASS,
@@ -208,7 +211,6 @@ VALUES = [
 ]
 
 TYPES = [
-    d_Grammar.VOID,
     d_Grammar.VALUE_CLASS,
     d_Grammar.PRIMITIVE_THING,
     d_Grammar.PRIMITIVE_STRING,

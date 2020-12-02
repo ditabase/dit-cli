@@ -1,0 +1,40 @@
+{
+  "dits": [
+    {
+      "type": "fail",
+      "title": "func call, return type, no return",
+      "dit": "func Ditlang String test() {{}}\ntest();",
+      "expected": "Line: 2 Col: 1 (tests/fail.dit)\ntest();\n^\n\nSyntaxError: test() expected a return"
+    },
+    {
+      "type": "fail",
+      "title": "func call, Ditlang, 2 parameters, 1 argument",
+      "dit": "func Ditlang void test(String a, String b) {{\nString testA = a;\nString testB = b;\n}}\ntest('cat');",
+      "expected": "Line: 5 Col: 12 (tests/fail.dit)\ntest('cat');\n           ^\n\nSyntaxError: test() missing 1 required arguments"
+    },
+    {
+      "type": "fail",
+      "title": "func call, Ditlang, 2 parameters, 3 arguments",
+      "dit": "func Ditlang void test(String a, String b) {{\nString testA = a;\nString testB = b;\n}}\ntest('cat', 'dog', 'bird');",
+      "expected": "Line: 5 Col: 27 (tests/fail.dit)\ntest('cat', 'dog', 'bird');\n                          ^\n\nSyntaxError: test() given 1 too many arguments"
+    },
+    {
+      "type": "fail",
+      "title": "func call, Ditlang, missing return statement",
+      "dit": "func Ditlang String test() {{}}\ntest();",
+      "expected": "Line: 2 Col: 1 (tests/fail.dit)\ntest();\n^\n\nSyntaxError: test() expected a return"
+    },
+    {
+      "type": "success",
+      "title": "func call, Ditlang, 2 parameters",
+      "dit": "func Ditlang void test(String a, String b) {{\nString testA = a;\nString testB = b;\n}}\ntest('cat', 'dog');",
+      "expected": "Finished successfully\n"
+    },
+    {
+      "type": "success",
+      "title": "func call, Ditlang, dotted class return",
+      "dit": "func Ditlang Class test() {{\nreturn class {{String output = 'cat';}};\n}}\nString test2 = test().output;",
+      "expected": "Finished successfully\n"
+    }
+  ]
+}
