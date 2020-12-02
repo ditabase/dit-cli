@@ -31,3 +31,6 @@ MANIFEST
 
 # workpads
 workpads/
+
+# regularly changed test file
+tests/fail.dit

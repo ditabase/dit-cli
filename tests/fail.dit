@@ -1,4 +1,0 @@
-func Ditlang String test() {{
-    return class {{String output = 'cat';}};
-}}
-Class test2 = test().output;
