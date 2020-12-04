@@ -38,6 +38,12 @@
     },
     {
       "type": "fail",
+      "title": "class, monkey patch already declared",
+      "dit": "class A {{String test = 'cat';}}\nString A.test = 'dog';",
+      "expected": "Line: 2 Col: 15 (tests/fail.dit)\nString A.test = 'dog';\n              ^\n\nSyntaxError: 'test' has already been declared"
+    },
+    {
+      "type": "fail",
       "title": "class, full class already declared",
       "dit": "String test = 'dog';\nclass test {{}}",
       "expected": "Line: 2 Col: 7 (tests/fail.dit)\nclass test {{}}\n      ^\n\nSyntaxError: 'test' has already been declared"
@@ -52,6 +58,12 @@
       "type": "succeed",
       "title": "class, empty anon class",
       "dit": "class {{}};",
+      "expected": "Finished successfully\n"
+    },
+    {
+      "type": "succeed",
+      "title": "class, var assigned",
+      "dit": "class A {{String test = 'cat';}}\nA.test = 'dog';",
       "expected": "Finished successfully\n"
     },
     {

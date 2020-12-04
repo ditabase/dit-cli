@@ -11,12 +11,6 @@
       "title": "empty file",
       "dit": "",
       "expected": "Finished successfully\n"
-    },
-    {
-      "type": "succeed",
-      "title": "big complex, messy list",
-      "dit": "",
-      "expected": "Finished successfully\n"
     }
   ]
 }

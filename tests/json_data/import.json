@@ -28,7 +28,7 @@
       "type": "fail",
       "title": "import, filepath is a list",
       "dit": "import dit from ['troll'];",
-      "expected": "Line: 1 Col: 26 (tests/fail.dit)\nimport dit from ['troll'];\n                         ^\n\nSyntaxError: Expected string value, not list"
+      "expected": "Line: 1 Col: 26 (tests/fail.dit)\nimport dit from ['troll'];\n                         ^\n\nSyntaxError: Expected string value, not List"
     },
     {
       "type": "fail",

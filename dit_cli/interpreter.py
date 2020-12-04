@@ -29,15 +29,12 @@ from dit_cli.oop import (
     Declarable,
     ReturnController,
     Token,
-    arg_to_prim,
-    d_Arg,
     d_Body,
     d_Class,
     d_Dit,
     d_Function,
     d_Instance,
     d_List,
-    d_Null,
     d_String,
     d_Thing,
     d_Type,
@@ -45,7 +42,16 @@ from dit_cli.oop import (
 
 
 def interpret(body: d_Body) -> None:
+    """Read text from a body and interpret it as ditlang code.
+    Creates a new InterpretContext and executes statements on tokens,
+    one after another, until EOF.
+
+    Used recursively. Classes, functions, and imported dits are all interpreted
+    recursively as new bodies with new InterpretContexts.
+    Classes and dits are only interpreted once. Functions are re-interpreted
+    every time they are called."""
     if isinstance(body, d_Function) and body.is_built_in:
+        # WIP, used for internal 'str()' implementation
         body.py_func(body.attrs[0])
         return
     if not body.is_ready():
@@ -92,15 +98,21 @@ def _raise_helper(
 
 
 def _statement_dispatch(inter: InterpretContext) -> None:
+    """Execute the interpretation function that goes with the next_tok.
+    Uses the large grammer -> function dictionary at the end of this file.
+    Every grammer is paired with one function."""
     func = STATEMENT_DISPATCH[inter.next_tok.grammar]
     func(inter)
 
 
-def _expression_dispatch(inter: InterpretContext) -> Optional[d_Arg]:
+def _expression_dispatch(inter: InterpretContext) -> Optional[d_Thing]:
+    """Interpret the next expression and return a value if applicable.
+    Also processes anon_tok, which results from anonymous classes, imports and functions
+    Also processes call_tok, which results from all function calls."""
     if inter.anon_tok:
         func = EXPRESSION_DISPATCH[inter.anon_tok.grammar]
     elif inter.call_tok:
-        func = EXPRESSION_DISPATCH[inter.call_tok.grammar]  # type: ignore
+        func = EXPRESSION_DISPATCH[inter.call_tok.grammar]
     else:
         func = EXPRESSION_DISPATCH[inter.next_tok.grammar]
     return func(inter)
@@ -128,23 +140,31 @@ def _primitive(inter: InterpretContext) -> None:
     _type(inter)
 
 
-def _value_thing(inter: InterpretContext) -> Optional[d_Arg]:
+def _value_thing(inter: InterpretContext) -> Optional[d_Thing]:
+    # Thing test;
+    # test = 'cat';
+    # or, in an expression...
+    # Thing test = 'cat';
+    # someFunc(test);
+    # These code examples are generally applicable to most _value_X functions
     inter.advance_tokens()
     return _equalable(inter)
 
 
-def _value_string(inter: InterpretContext) -> Optional[d_Arg]:
+def _value_string(inter: InterpretContext) -> Optional[d_Thing]:
     inter.advance_tokens()
     return _equalable(inter)
 
 
-def _value_list(inter: InterpretContext) -> Optional[d_Arg]:
+def _value_list(inter: InterpretContext) -> Optional[d_Thing]:
     inter.advance_tokens()
     return _equalable(inter)
 
 
-def _value_class(inter: InterpretContext) -> Optional[d_Arg]:
+def _value_class(inter: InterpretContext) -> Optional[d_Thing]:
     if inter.func_sig:
+        # func Ditlang someClass...
+        # This class is being used as a type in a function signature
         inter.advance_tokens(False)
         if inter.next_tok.grammar == d_Grammar.DOT:
             return _dotable(inter)
@@ -153,25 +173,31 @@ def _value_class(inter: InterpretContext) -> Optional[d_Arg]:
 
     inter.advance_tokens(True)
     if inter.next_tok.grammar in VALUE_CLASS_ABLES:
+        # someClass = someOtherClass;
+        # someClass anInstance = someClass();
+        # This class is being dotted, equaled, parened, etc.
         return _parenable(inter)
     elif inter.anon_tok:
+        # class {{}} someInstance = ?... this makes no sense.
         # This prevents using an anonymous class as a type
         # Triggering terminal will call missing ';'
         _terminal(inter)
     else:
-        # This value class is being used as var type
+        # someClass someInstance...
+        # This class is being used as var type
         _type(inter)
 
 
 def _type(inter: InterpretContext) -> None:
-
+    # String test;
+    # someClass test;
+    # This function is reused by _primitive and _value_class
     inter.dec.type_ = _token_to_type(inter.curr_tok)
     if inter.next_tok.grammar in NAMEABLES:
-        res = _expression_dispatch(inter)
-        if res is None:
+        _expression_dispatch(inter)
+        if inter.dec.name is None:
+            # not sure this is possible
             raise NotImplementedError
-        elif isinstance(res, str):
-            inter.dec.name = res
     else:
         _raise_helper("Expected a new name to follow type", inter)
     inter.advance_tokens()
@@ -186,37 +212,40 @@ def _token_to_type(token: Token) -> d_Type:
         return token.grammar
 
 
-def _value_instance(inter: InterpretContext) -> Optional[d_Arg]:
+def _value_instance(inter: InterpretContext) -> Optional[d_Thing]:
     inter.advance_tokens()
     return _dotable(inter)
 
 
-def _value_function(inter: InterpretContext) -> Optional[d_Arg]:
+def _value_function(inter: InterpretContext) -> Optional[d_Thing]:
     inter.advance_tokens()
     return _parenable(inter)
 
 
-def _value_dit(inter: InterpretContext) -> Optional[d_Arg]:
+def _value_dit(inter: InterpretContext) -> Optional[d_Thing]:
     if inter.anon_tok is None:
         inter.advance_tokens()
     return _dotable(inter)
 
 
-def _null(inter: InterpretContext) -> d_Null:
+def _null(inter: InterpretContext) -> d_Thing:
+    # someThing = null;
     inter.advance_tokens()
-    return d_Null()
+    return d_Thing.get_null_thing()
 
 
-def _parenable(inter: InterpretContext) -> Optional[d_Arg]:
+def _parenable(inter: InterpretContext) -> Optional[d_Thing]:
     if inter.next_tok.grammar == d_Grammar.PAREN_LEFT:
+        # someFunc(...
+        # someClass(...
         return _paren_left(inter)
     else:
         return _dotable(inter)
 
 
-def _dotable(inter: InterpretContext) -> Optional[d_Arg]:
+def _dotable(inter: InterpretContext) -> Optional[d_Thing]:
     if inter.next_tok.grammar == d_Grammar.DOT:
-        # ... ThisDit.Ele ...
+        # ... someBody.Ele ...
         dot = _dot(inter)
         inter.next_tok = dot
         inter.anon_tok = None
@@ -248,7 +277,7 @@ def _dot(inter: InterpretContext) -> Token:
         return inter.next_tok
 
 
-def _equalable(inter: InterpretContext) -> Optional[d_Arg]:
+def _equalable(inter: InterpretContext) -> Optional[d_Thing]:
     if inter.dec.type_:
         # type_ should have been cleared by a _declare call
         _raise_helper(f"'{inter.curr_tok.thing.name}' has already been declared", inter)
@@ -263,7 +292,11 @@ def _equalable(inter: InterpretContext) -> Optional[d_Arg]:
         return _terminal(inter)
 
 
-def _terminal(inter: InterpretContext) -> d_Arg:
+def _terminal(inter: InterpretContext) -> d_Thing:
+    # someValue;
+    # someListArg,
+    # someListArg]
+    # someFuncArg)
     if inter.next_tok.grammar not in [
         d_Grammar.SEMI,
         d_Grammar.COMMA,
@@ -282,21 +315,18 @@ def _terminal(inter: InterpretContext) -> d_Arg:
         inter.anon_tok = None
         return ret
     elif inter.call_tok is not None:
-        if isinstance(inter.call_tok, d_Null):
-            return inter.call_tok
-        else:
-            ret = inter.call_tok.thing
-            inter.call_tok = None
-            return ret
+        ret = inter.call_tok.thing
+        inter.call_tok = None
+        return ret
     else:
         inter.terminal_loc = copy.deepcopy(inter.curr_tok.loc)
         return inter.curr_tok.thing
 
 
-def _new_name(inter: InterpretContext) -> str:
+def _new_name(inter: InterpretContext) -> None:
     if inter.dec.type_ is None:
         _raise_helper(f"Undeclared variable '{inter.next_tok.word}'", inter)
-    return inter.next_tok.word
+    inter.dec.name = inter.next_tok.word
 
 
 def _equals(inter: InterpretContext) -> None:
@@ -320,7 +350,7 @@ def _declare(inter: InterpretContext) -> None:
     inter.dec.listof = False
 
 
-def _string(inter: InterpretContext) -> str:
+def _string(inter: InterpretContext) -> d_String:
     left = inter.next_tok.grammar.value
     data = ""
     while inter.char_feed.current() != left:
@@ -328,14 +358,22 @@ def _string(inter: InterpretContext) -> str:
         inter.char_feed.pop()
     inter.advance_tokens()  # next_tok is now ' "
     inter.advance_tokens()  # next_tok is now ; , ] )
-    return data
+    thing = d_String(None)  # type: ignore
+    thing.string_value = data
+    thing.is_null = False
+    return thing
 
 
-def _bracket_left(inter: InterpretContext) -> List[d_Arg]:
-    return [item.arg for item in _arg_list(inter, d_Grammar.BRACKET_RIGHT)]  # type: ignore
+def _bracket_left(inter: InterpretContext) -> d_List:
+    list_ = d_List(None, None)  # type: ignore
+    list_.list_value = [
+        item.thing for item in _arg_list(inter, d_Grammar.BRACKET_RIGHT)
+    ]
+    list_.is_null = False
+    return list_
 
 
-def _paren_left(inter: InterpretContext) -> Optional[d_Arg]:
+def _paren_left(inter: InterpretContext) -> Optional[d_Thing]:
     if inter.anon_tok is not None:
         func: d_Function = inter.anon_tok.thing  #  type: ignore
     elif inter.call_tok is not None:
@@ -358,20 +396,20 @@ def _paren_left(inter: InterpretContext) -> Optional[d_Arg]:
         elif param.type_ == d_Grammar.PRIMITIVE_THING:
             pass  # No need to check this
         elif param.type_ in PRIMITIVES:
-            prim = arg_to_prim(arg_loc.arg)
+            prim = value_to_prim(arg_loc.thing.grammar)
             if param.type_ != prim:
                 _raise_helper(
                     f"{func_name} expected '{prim.value}'", inter, arg_loc.loc
                 )
         elif isinstance(param.type_, d_Class):
-            if not isinstance(arg_loc.arg, d_Instance):
+            if not isinstance(arg_loc.thing, d_Instance):
                 raise NotImplementedError
-            elif arg_loc.arg.parent is not param.type_:
+            elif arg_loc.thing.parent is not param.type_:
                 raise NotImplementedError
         else:
             raise CriticalError("Unrecognized type for function argument")
         attr = func.add_attr(param)
-        attr.set_value(arg_loc.arg)
+        attr.set_value(arg_loc.thing)
 
     try:
         interpret(func)
@@ -379,16 +417,18 @@ def _paren_left(inter: InterpretContext) -> Optional[d_Arg]:
         err.add_trace(func.path, func.orig_loc, func.name)
         raise err
     except ReturnController as ret:
-        inter.call_tok = _get_return_thing(inter, ret, func)
+        inter.call_tok = ret.token
+    except TypeMismatchError as mis:
+        raise NotImplementedError
     else:
         if func.return_ is not None and func.return_ != d_Grammar.VOID:
             _raise_helper(f"{func_name} expected a return", inter, func.orig_loc)
         else:
             # func ended without 'return' keyword
-            inter.call_tok = d_Null()
+            inter.call_tok = Token(d_Grammar.NULL, func.orig_loc)
 
     func.attrs.clear()
-    if isinstance(inter.call_tok, d_Null):
+    if inter.call_tok.grammar == d_Grammar.NULL:
         return _terminal(inter)
     else:
         return _parenable(inter)
@@ -402,71 +442,15 @@ def _return(inter: InterpretContext) -> NoReturn:
     value = _expression_dispatch(inter)
     if value is None:
         raise NotImplementedError
-    return_thing = _get_return_thing(inter, value, inter.body)
-    raise ReturnController(return_thing, orig_loc)
-
-
-def _get_return_thing(
-    inter: InterpretContext, value: d_Arg, func: d_Function
-) -> Union[Token, d_Null]:
-    if isinstance(value, d_Null):
-        return value
-    elif isinstance(value, str):
-        if func.return_ == d_Grammar.VALUE_STRING:
-            return Token(func.return_, orig_loc, thing=d_String(None))  # type: ignore
-        else:
-            _fail_return_type(inter, value, func, "String")
-    elif isinstance(value, list) or isinstance(value, d_List):
-        if func.return_list:
-            if isinstance(value, list):
-                thing = d_List(func.return_, None)  # type: ignore
-                thing.set_value(value)
-                return Token(d_Grammar.VALUE_LIST, func.orig_loc, thing=thing)
-            else:
-                if func.return_ == value.contained_type:
-                    return Token(d_Grammar.VALUE_LIST, func.orig_loc, thing=value)
-                else:
-                    if isinstance(func.return_, d_Class):
-                        actual = f"listOf {func.return_.name}"
-                    else:
-                        actual = f"listOf {func.return_.value}"
-                    _fail_return_type(inter, value, func, actual)
-        else:
-            _fail_return_type(inter, value, func, "List")
-    elif isinstance(func.return_, d_Class):
-        raise NotImplementedError
-    elif isinstance(value, d_Thing):  # type: ignore
-        if func.return_ == value.grammar:
-            return Token(func.return_, func.orig_loc, thing=value)
-        else:
-            _fail_return_type(inter, value, func, value.public_type)
-    else:
-        raise CriticalError("Unrecognized return value")
-
-
-def _fail_return_type(
-    inter: InterpretContext,
-    value: d_Arg,
-    func: d_Function,
-    actual_return: str,
-) -> NoReturn:
-    if isinstance(func.return_, d_Grammar):
-        expected_return = value_to_prim(func.return_).value
-    elif isinstance(func.return_, d_Class):  # type: ignore
-        if func.return_.name is None:
-            expected_return = "<anonymous class>"
-        else:
-            expected_return = func.return_.name
-    else:
-        raise CriticalError("Unrecognized return type")
-    mes = f"Expected '{expected_return}' for return, got '{actual_return}'"
-    err = TypeMismatchError(mes)
-    err.set_origin(func.path, func.orig_loc, inter.char_feed.get_line(func.orig_loc))
-    raise err
+    try:
+        raise ReturnController(value, inter.body, orig_loc)
+    except TypeMismatchError as mis:
+        mis.set_origin(inter.body.path, orig_loc, inter.char_feed.get_line(orig_loc))
+        raise mis
 
 
 def _throw(inter: InterpretContext) -> None:
-    pass
+    raise NotImplementedError
 
 
 def _trailing_comma(inter: InterpretContext, right: d_Grammar) -> Optional[NoReturn]:
@@ -497,6 +481,7 @@ def _arg_list(inter: InterpretContext, right: d_Grammar) -> List[ArgumentLocatio
 def _import(inter: InterpretContext) -> Optional[d_Dit]:
     orig_loc = copy.deepcopy(inter.next_tok.loc)
     dit = d_Dit(name=None, path=None)  # type: ignore
+    dit.is_null = False
 
     inter.advance_tokens(False)
     gra = inter.next_tok.grammar
@@ -519,17 +504,15 @@ def _import(inter: InterpretContext) -> Optional[d_Dit]:
 
     string_loc = copy.deepcopy(inter.next_tok.loc)
     value = _expression_dispatch(inter)
-    if value is None:
+    if inter.dec.name is not None:
+        dit.path = inter.dec.name
+        inter.dec.name = None  # type: ignore
+    elif value is None:
         raise NotImplementedError
-    if isinstance(value, str):
-        dit.path = value
+    elif value.is_null:
+        _raise_helper("Cannot import from null", inter, string_loc)
     elif isinstance(value, d_String):
-        if isinstance(value.string_value, d_Null):
-            _raise_helper("Cannot import from null", inter, string_loc)
-        else:
-            dit.path = value.string_value
-    elif isinstance(value, list):
-        _raise_helper("Expected string value, not list", inter)
+        dit.path = value.string_value
     elif isinstance(value, d_Thing):  # type: ignore
         _raise_helper(f"Expected string value, not {value.public_type}", inter)
     else:
@@ -555,6 +538,7 @@ def _import(inter: InterpretContext) -> Optional[d_Dit]:
 def _class(inter: InterpretContext) -> Optional[d_Class]:
     orig_loc = copy.deepcopy(inter.next_tok.loc)
     class_ = d_Class(name=None, containing_scope=inter.body)  # type: ignore
+    class_.is_null = False
 
     inter.advance_tokens(False)
     if inter.next_tok.grammar not in [d_Grammar.WORD, d_Grammar.BRACE_LEFT]:
@@ -582,6 +566,7 @@ def _func(inter: InterpretContext) -> Optional[d_Function]:
     # func Ditlang d_String test(d_String right, d_String left) {{}}
     orig_loc = copy.deepcopy(inter.next_tok.loc)
     func = d_Function(name=None, containing_scope=inter.body)  # type: ignore
+    func.is_null = False
     inter.func_sig = True
 
     inter.advance_tokens()

@@ -59,6 +59,18 @@
       "title": "TypeMismatch, listOf Class had string",
       "dit": "listOf Class value = ['dog'];",
       "expected": "Line: 1 Col: 29 (tests/fail.dit)\nlistOf Class value = ['dog'];\n                            ^\n\nTypeMismatchError: List of type 'Class' contained 'String'"
+    },
+    {
+      "type": "fail",
+      "title": "TypeMismatch, func call, List instead of String",
+      "dit": "func Ditlang String test1() {{\n    return ['cat'];\n}}\nString test2 = test1();",
+      "expected": "Line: 2 Col: 5 (tests/fail.dit)\n    return ['cat'];\n    ^\n\nTypeMismatchError: Expected 'String' for return, got 'List'\n\tat test1 (tests/fail.dit):4:16"
+    },
+    {
+      "type": "fail",
+      "title": "TypeMismatch, func call, Class instead of String",
+      "dit": "func Ditlang String test1() {{\n    return class {{}};\n}}\nString test2 = test1();",
+      "expected": "Line: 2 Col: 5 (tests/fail.dit)\n    return class {{}};\n    ^\n\nTypeMismatchError: Expected 'String' for return, got 'Class'\n\tat test1 (tests/fail.dit):4:16"
     }
   ]
 }

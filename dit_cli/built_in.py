@@ -2,11 +2,9 @@ from dit_cli.exceptions import CriticalError
 from dit_cli.grammar import d_Grammar
 from dit_cli.oop import (
     Declarable,
-    d_Arg,
     d_Dit,
     d_Function,
     d_List,
-    d_Null,
     d_String,
     d_Thing,
 )
@@ -60,41 +58,41 @@ def add_built_ins(dit: d_Dit) -> None:
     pass
 
 
-def d_str(arg: d_Arg) -> str:
-    if isinstance(arg, d_Null):
+def d_str(thing: d_Thing) -> str:
+    if thing.is_null:
         return LANG["null_type"]
-    if isinstance(arg, str):
-        return _ser_str(arg)
-    elif isinstance(arg, d_List):
-        return _ser_list(arg)
-    elif isinstance(arg, d_Thing):
-        return _ser_obj(arg)
+    elif isinstance(thing, d_String):
+        return _ser_str(thing.string_value)
+    elif isinstance(thing, d_List):
+        return _ser_list(thing)
+    elif isinstance(thing, d_Thing):  # type: ignore
+        return _ser_obj(thing)
     else:
         raise CriticalError("Unrecognized argument for str()")
 
 
-def d_print(arg: d_Arg) -> None:
-    print(d_str(arg))
+def d_print(thing: d_Thing) -> None:
+    print(d_str(thing))
 
 
-def _ser_list(arg: d_Arg) -> str:
-    if isinstance(arg, d_List):
-        if isinstance(arg.list_value, d_Null):
-            return LANG["null_type"]
-        elif len(arg.list_value) == 0:
+def _ser_list(thing: d_Thing) -> str:
+    if thing.is_null:
+        return LANG["null_type"]
+    elif isinstance(thing, d_List):
+        if len(thing.list_value) == 0:
             return LANG["list_open"] + LANG["list_close"]
         value = LANG["list_open"]
-        for i in arg.list_value:
+        for i in thing.list_value:
             # Serialize any depth of list by recursing
             value += _ser_list(i)
             value += LANG["list_delimiter"]
         # Replace last comma with ]
         value = value[:-1] + LANG["list_close"]
         return value
-    elif isinstance(arg, str):
-        return _ser_str(arg)
-    elif isinstance(arg, d_Thing):
-        return _ser_obj(arg)
+    elif isinstance(thing, d_String):
+        return _ser_str(thing.string_value)
+    elif isinstance(thing, d_Thing):  # type: ignore
+        return _ser_obj(thing)
     else:
         raise CriticalError("Unrecognized argument for _ser_list()")
 
@@ -126,13 +124,7 @@ def _ser_str(str_: str) -> str:
 
 
 def _ser_obj(obj: d_Thing) -> str:
-    if isinstance(obj, d_String):
-        if isinstance(obj.string_value, d_Null):
-            raise NotImplementedError
-        else:
-            return _ser_str(obj.string_value)
-    else:
-        raise CriticalError("Unrecognized argument for _ser_obj()")
+    raise NotImplementedError
 
 
 PRINT_DIT = d_Function("print", None)  # type: ignore

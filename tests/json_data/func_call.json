@@ -32,6 +32,12 @@
     },
     {
       "type": "success",
+      "title": "func call, simple string return",
+      "dit": "func Ditlang String test1() {{\n    return 'cat';/n}}\nString test2 = test1();",
+      "expected": "Finished successfully\n"
+    },
+    {
+      "type": "success",
       "title": "func call, Ditlang, dotted class return",
       "dit": "func Ditlang Class test() {{\nreturn class {{String output = 'cat';}};\n}}\nString test2 = test().output;",
       "expected": "Finished successfully\n"
