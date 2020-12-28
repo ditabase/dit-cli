@@ -22,26 +22,23 @@ from dit_cli.grammar import d_Grammar, prim_to_value, value_to_prim
 class d_Thing(object):
     null_singleton: Optional[d_Thing] = None
 
-    def __init__(
-        self, grammar: d_Grammar, name: str, can_be_anything: bool = False
-    ) -> None:
-        self.grammar = grammar
-        self.name = name
+    def __init__(self) -> None:
         self.public_type: str = "Thing"
+        self.grammar: d_Grammar = d_Grammar.VALUE_THING
+
+        self.name: str = None  # type: ignore
         self.py_func: Callable = None  # type: ignore
-        self.can_be_anything: bool = can_be_anything
+        self.can_be_anything: bool = False
         self.is_null: bool = True
 
     def set_value(self, new_value: d_Thing) -> None:
         # alter own class to *become* the type it is assigned to.
         # note that 'can_be_anything' is still True
-        if isinstance(new_value, d_String):
-            self.__class__ = d_String
-        elif isinstance(new_value, d_List):
-            self.__class__ = d_List
-            self.contained_type = d_Grammar.VALUE_THING
-        elif isinstance(new_value, d_Thing):  # type: ignore
+        # and public_type is still "Thing"
+        if isinstance(new_value, d_Thing):  # type: ignore
             self.__class__ = new_value.__class__
+            self.grammar = new_value.grammar
+            self.public_type = new_value.public_type
         else:
             raise CriticalError("Unrecognized type for thing assignment")
 
@@ -51,15 +48,19 @@ class d_Thing(object):
     @classmethod
     def get_null_thing(cls) -> d_Thing:
         if cls.null_singleton is None:
-            cls.null_singleton = d_Thing(d_Grammar.NULL, None, True)  # type: ignore
+            cls.null_singleton = d_Thing()
+            cls.null_singleton.grammar = d_Grammar.NULL
+            cls.null_singleton.public_type = "null"
         return cls.null_singleton
 
 
 class d_String(d_Thing):
-    def __init__(self, name: str) -> None:
-        super().__init__(d_Grammar.VALUE_STRING, name)
+    def __init__(self) -> None:
+        super().__init__()
+        self.public_type = "String"
+        self.grammar = d_Grammar.VALUE_STRING
+
         self.string_value: str = None  # type: ignore
-        self.public_type: str = "String"
 
     def set_value(self, new_value: d_Thing) -> None:
         self.is_null = new_value.is_null
@@ -82,11 +83,13 @@ class d_String(d_Thing):
 
 
 class d_List(d_Thing):
-    def __init__(self, type_: d_Type, name: str) -> None:
-        super().__init__(d_Grammar.VALUE_LIST, name)
-        self.contained_type: d_Type = type_
+    def __init__(self) -> None:
+        super().__init__()
+        self.public_type = "List"
+        self.grammar = d_Grammar.VALUE_LIST
+
+        self.contained_type: d_Type = None  # type: ignore
         self.list_value: List[d_Thing] = None  # type: ignore
-        self.public_type: str = "List"
 
     def set_value(self, new_value: d_Thing) -> None:
         self.is_null = new_value.is_null
@@ -107,10 +110,14 @@ class d_List(d_Thing):
 
 
 def _check_list_type(list_: d_List) -> None:
-    if list_.contained_type == d_Grammar.VALUE_THING:
+    if list_.can_be_anything:
+        list_.contained_type = d_Grammar.VALUE_THING
         return
-    if isinstance(list_.contained_type, d_Class):
+    elif list_.contained_type == d_Grammar.VALUE_THING:
+        return
+    elif isinstance(list_.contained_type, d_Class):
         raise NotImplementedError
+
     actual: str = value_to_prim(list_.contained_type).value
     for ele in _traverse(list_.list_value):
         ele: d_Thing
@@ -133,8 +140,8 @@ def _traverse(item: Union[list, d_Thing]) -> Iterator[d_Thing]:
 
 
 class d_Body(d_Thing):
-    def __init__(self, d_Grammar: d_Grammar, name: str) -> None:
-        super().__init__(d_Grammar, name)
+    def __init__(self) -> None:
+        super().__init__()
         self.path: str = None  # type: ignore
         self.primitive_loc: CodeLocation = None  # type: ignore
         self.start_loc: CodeLocation = None  # type: ignore
@@ -142,7 +149,6 @@ class d_Body(d_Thing):
         self.view: memoryview = None  # type: ignore
         self.containing_scope: d_Body = None  # type: ignore
         self.attrs: List[d_Thing] = []
-        self.public_type: str = "Body"
 
     def is_ready(self) -> bool:
         if self.view is None:
@@ -167,14 +173,21 @@ class d_Body(d_Thing):
                 f"Cannot assign {new_value.public_type} to {self.public_type}"  # type: ignore
             )
 
-    def add_attr(self, dec: Declarable) -> d_Thing:
+    def add_attr(self, dec: Declarable, value: Optional[d_Thing] = None) -> d_Thing:
         if dec.name is None:
-            raise CriticalError("An declarable had no name")
+            raise CriticalError("A declarable had no name")
         if self.find_attr(dec.name):
             raise CriticalError(f"A duplicate attribute was found: '{dec.name}'")
-        obj = _type_to_obj(dec, self)
-        self.attrs.append(obj)
-        return obj
+        if value is not None:
+            _check_value(value, dec)
+            value.name = dec.name
+            if dec.type_ == d_Grammar.PRIMITIVE_THING:
+                value.can_be_anything = True
+        else:
+            value = _type_to_obj(dec, self)
+
+        self.attrs.append(value)
+        return value
 
     def find_attr(
         self, name: str, previous: Optional[d_Body] = None
@@ -202,27 +215,63 @@ class d_Body(d_Thing):
 
 
 def _type_to_obj(dec: Declarable, containing_scope: d_Body) -> d_Thing:
+    thing: d_Thing = None  # type: ignore
     if dec.type_ is None:
         raise CriticalError("A declarable had no type")
     elif isinstance(dec.type_, d_Class):
-        return d_Instance(dec.name, dec.type_)
+        thing = d_Instance()
+        thing.parent = dec.type_
 
     if dec.listof:
-        return d_List(prim_to_value(dec.type_), dec.name)
-    if dec.type_ == d_Grammar.PRIMITIVE_THING:
-        return d_Thing(d_Grammar.VALUE_THING, dec.name, can_be_anything=True)
-    if dec.type_ == d_Grammar.PRIMITIVE_STRING:
-        return d_String(dec.name)
-    if dec.type_ == d_Grammar.PRIMITIVE_CLASS:
-        return d_Class(dec.name, containing_scope)
-    if dec.type_ == d_Grammar.PRIMITIVE_INSTANCE:
-        return d_Instance(dec.name, parent=None)  # type: ignore
-    if dec.type_ == d_Grammar.PRIMITIVE_FUNC:
-        return d_Function(dec.name, containing_scope)
-    if dec.type_ == d_Grammar.PRIMITIVE_DIT:
-        return d_Dit(dec.name, path=None)  # type: ignore
+        thing = d_List()
+        # this prim_to_value might fail with classes
+        thing.contained_type = prim_to_value(dec.type_)  # type: ignore
+    elif dec.type_ == d_Grammar.PRIMITIVE_THING:
+        thing = d_Thing()
+        thing.can_be_anything = True
+    elif dec.type_ == d_Grammar.PRIMITIVE_STRING:
+        thing = d_String()
+    elif dec.type_ == d_Grammar.PRIMITIVE_CLASS:
+        thing = d_Class()
+        thing.containing_scope = containing_scope
+    elif dec.type_ == d_Grammar.PRIMITIVE_INSTANCE:
+        thing = d_Instance()
+    elif dec.type_ == d_Grammar.PRIMITIVE_FUNC:
+        thing = d_Function()
+        thing.containing_scope = containing_scope
+    elif dec.type_ == d_Grammar.PRIMITIVE_DIT:
+        thing = d_Dit()
 
-    raise CriticalError("Unrecognized type for declaration")
+    if thing is None:
+        raise CriticalError("Unrecognized type for declaration")
+    else:
+        thing.name = dec.name
+        return thing
+
+
+def _check_value(thing: d_Thing, dec: Declarable) -> None:
+    """Check if a declarable could be thing. The declarable has
+    not yet been created into an object, and we want thing to be that object."""
+    if isinstance(dec.type_, d_Class):
+        raise NotImplementedError
+
+    listof_act = "listof " if dec.listof else ""
+    actual = f"{listof_act}{dec.type_.value}"
+    if isinstance(thing, d_List):
+        if dec.listof:
+            thing.contained_type = prim_to_value(dec.type_)
+            _check_list_type(thing)
+            return
+        else:
+            raise TypeMismatchError(f"Cannot assign List to {actual}")
+    elif dec.listof:
+        raise TypeMismatchError(f"Cannot assign {thing.public_type} to List")
+    elif dec.type_ == d_Grammar.PRIMITIVE_THING:
+        return
+    elif thing.is_null:
+        return
+    elif dec.type_ != value_to_prim(thing.grammar):
+        raise TypeMismatchError(f"Cannot assign {thing.public_type} to {actual}")
 
 
 def _all_scopes(body: d_Body) -> Generator[d_Body, None, None]:
@@ -233,16 +282,19 @@ def _all_scopes(body: d_Body) -> Generator[d_Body, None, None]:
 
 
 class d_Dit(d_Body):
-    def __init__(self, name: str, path: str) -> None:
-        super().__init__(d_Grammar.VALUE_DIT, name)
-        self.path = path
+    def __init__(self) -> None:
+        super().__init__()
+        self.public_type = "Dit"
+        self.grammar = d_Grammar.VALUE_DIT
+
         self.start_loc = CodeLocation(0, 1, 1)
-        self.public_type: str = "Dit"
 
     @staticmethod
-    def from_str(name: str, code: str, mock_path: str) -> "d_Dit":
+    def from_str(name: str, code: str, mock_path: str) -> d_Dit:
         # Currently used by integration tests, which have dits stored in json files
-        dit = d_Dit(name=name, path=mock_path)
+        dit = d_Dit()
+        dit.name = name
+        dit.path = mock_path
         dit.view = memoryview(code.encode())
         return dit
 
@@ -275,18 +327,19 @@ class d_Dit(d_Body):
 
 
 class d_Class(d_Body):
-    def __init__(self, name: str, containing_scope: d_Body) -> None:
-        super().__init__(d_Grammar.VALUE_CLASS, name=name)
-        self.containing_scope = containing_scope
-        self.public_type: str = "Class"
+    def __init__(self) -> None:
+        super().__init__()
+        self.public_type = "Class"
+        self.grammar = d_Grammar.VALUE_CLASS
 
 
 class d_Instance(d_Thing):
-    def __init__(self, name: str, parent: d_Class) -> None:
-        super().__init__(d_Grammar.VALUE_INSTANCE, name)
-        self.parent = parent
+    def __init__(self) -> None:
+        super().__init__()
+        self.public_type = "Instance"
+        self.grammar = d_Grammar.VALUE_INSTANCE
+        self.parent: d_Class = None  # type: ignore
         self.attrs: List[d_Thing] = []
-        self.public_type: str = "Instance"
 
     def find_attr(self, name: str) -> Optional[d_Thing]:
         for attr in self.attrs:
@@ -300,25 +353,18 @@ class d_Language(d_Thing):
 
 
 class d_Function(d_Body):
-    def __init__(self, name: str, containing_scope: d_Body) -> None:
-        super().__init__(d_Grammar.VALUE_FUNC, name)
-        self.public_type: str = "Function"
+    def __init__(self) -> None:
+        super().__init__()
+        self.public_type = "Function"
+        self.grammar = d_Grammar.VALUE_FUNC
+
         self.orig_loc: CodeLocation = None  # type: ignore
-        self.containing_scope = containing_scope
         self.lang: Language = None  # type: ignore
         self.return_: d_Type = None  # type: ignore
         self.return_list: bool = False
         self.parameters: List[Declarable] = []
         self.is_built_in: bool = False
 
-
-"""
-def arg_to_prim(arg: d_Arg) -> d_Grammar:
-    if isinstance(arg, str) or isinstance(arg, d_String):
-        return d_Grammar.PRIMITIVE_STRING
-    else:
-        raise CriticalError("Unrecognized arg for arg_to_prim")
-"""
 
 d_Type = Union[d_Grammar, d_Class]
 
@@ -408,6 +454,11 @@ class Declarable:
     type_: d_Type = None  # type: ignore
     name: str = None  # type: ignore
     listof: bool = False  # type: ignore
+
+    def reset(self):
+        self.type_ = None  # type: ignore
+        self.name = None  # type: ignore
+        self.listof = False  # type: ignore
 
 
 @dataclass

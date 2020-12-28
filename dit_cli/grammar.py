@@ -84,6 +84,7 @@ PRIM_TO_VALUE_DISPATCH = {
     d_Grammar.PRIMITIVE_CLASS: d_Grammar.VALUE_CLASS,
     d_Grammar.PRIMITIVE_FUNC: d_Grammar.VALUE_FUNC,
     d_Grammar.PRIMITIVE_DIT: d_Grammar.VALUE_DIT,
+    d_Grammar.NULL: d_Grammar.NULL,
 }
 
 
@@ -97,6 +98,7 @@ VALUE_TO_PRIM_DISPATCH = {
     d_Grammar.VALUE_CLASS: d_Grammar.PRIMITIVE_CLASS,
     d_Grammar.VALUE_FUNC: d_Grammar.PRIMITIVE_FUNC,
     d_Grammar.VALUE_DIT: d_Grammar.PRIMITIVE_DIT,
+    d_Grammar.NULL: d_Grammar.NULL,
 }
 
 VALUE_CLASS_ABLES = [

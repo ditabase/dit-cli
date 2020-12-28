@@ -127,7 +127,8 @@ def _ser_obj(obj: d_Thing) -> str:
     raise NotImplementedError
 
 
-PRINT_DIT = d_Function("print", None)  # type: ignore
+PRINT_DIT = d_Function()
+PRINT_DIT.name = "print"
 PRINT_DIT.parameters = [Declarable(d_Grammar.PRIMITIVE_THING, "value")]
 PRINT_DIT.is_built_in = True
 PRINT_DIT.py_func = d_print

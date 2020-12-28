@@ -195,13 +195,9 @@ def _type(inter: InterpretContext) -> None:
     inter.dec.type_ = _token_to_type(inter.curr_tok)
     if inter.next_tok.grammar in NAMEABLES:
         _expression_dispatch(inter)
-        if inter.dec.name is None:
-            # not sure this is possible
-            raise NotImplementedError
     else:
         _raise_helper("Expected a new name to follow type", inter)
     inter.advance_tokens()
-    _declare(inter)
     _equalable(inter)
 
 
@@ -278,18 +274,37 @@ def _dot(inter: InterpretContext) -> Token:
 
 
 def _equalable(inter: InterpretContext) -> Optional[d_Thing]:
-    if inter.dec.type_:
-        # type_ should have been cleared by a _declare call
+    if inter.dec.type_ is not None and inter.dec.name is None:
+        # _new_name should have been found, not an existing variable.
         _raise_helper(f"'{inter.curr_tok.thing.name}' has already been declared", inter)
-    elif inter.next_tok.grammar == d_Grammar.EQUALS:
-        if inter.anon_tok is not None or inter.call_tok is not None:
-            # prevent assignment to anonymous tokens.
-            raise NotImplementedError
-        if inter.assignee is None:
-            inter.assignee = inter.curr_tok.thing
+    if inter.next_tok.grammar == d_Grammar.EQUALS:
+        inter.equaling = True
         _equals(inter)
+        inter.equaling = False
+    elif inter.dec.type_ is not None and not inter.equaling:
+        # create variable without assignment
+        inter.body.add_attr(inter.dec)
+
+    inter.dec.reset()
+    return _terminal(inter)
+
+
+def _equals(inter: InterpretContext) -> None:
+    if inter.anon_tok is not None or inter.call_tok is not None:
+        # prevent assignment to anonymous tokens.
+        raise NotImplementedError
+    if inter.dec.type_ is None:
+        assignee = inter.curr_tok.thing
     else:
-        return _terminal(inter)
+        assignee = None
+    inter.advance_tokens()
+    value = _expression_dispatch(inter)
+    if value is None:
+        raise NotImplementedError
+    if assignee is not None:
+        assignee.set_value(value)
+    else:
+        inter.body.add_attr(inter.dec, value=value)
 
 
 def _terminal(inter: InterpretContext) -> d_Thing:
@@ -329,27 +344,6 @@ def _new_name(inter: InterpretContext) -> None:
     inter.dec.name = inter.next_tok.word
 
 
-def _equals(inter: InterpretContext) -> None:
-    inter.advance_tokens()
-    value = _expression_dispatch(inter)
-    if value is None:
-        raise NotImplementedError
-    inter.assignee.set_value(value)
-    inter.assignee = None  # type: ignore
-    _terminal(inter)
-
-
-def _declare(inter: InterpretContext) -> None:
-    if None in [inter.dec.type_, inter.dec.name]:
-        raise NotImplementedError
-    body = inter.dotted_body if inter.dotted_body else inter.body
-    inter.assignee = body.add_attr(inter.dec)
-    inter.dotted_body = None  # type: ignore
-    inter.dec.type_ = None  # type: ignore
-    inter.dec.name = None  # type: ignore
-    inter.dec.listof = False
-
-
 def _string(inter: InterpretContext) -> d_String:
     left = inter.next_tok.grammar.value
     data = ""
@@ -358,14 +352,14 @@ def _string(inter: InterpretContext) -> d_String:
         inter.char_feed.pop()
     inter.advance_tokens()  # next_tok is now ' "
     inter.advance_tokens()  # next_tok is now ; , ] )
-    thing = d_String(None)  # type: ignore
+    thing = d_String()
     thing.string_value = data
     thing.is_null = False
     return thing
 
 
 def _bracket_left(inter: InterpretContext) -> d_List:
-    list_ = d_List(None, None)  # type: ignore
+    list_ = d_List()
     list_.list_value = [
         item.thing for item in _arg_list(inter, d_Grammar.BRACKET_RIGHT)
     ]
@@ -480,7 +474,7 @@ def _arg_list(inter: InterpretContext, right: d_Grammar) -> List[ArgumentLocatio
 
 def _import(inter: InterpretContext) -> Optional[d_Dit]:
     orig_loc = copy.deepcopy(inter.next_tok.loc)
-    dit = d_Dit(name=None, path=None)  # type: ignore
+    dit = d_Dit()
     dit.is_null = False
 
     inter.advance_tokens(False)
@@ -504,7 +498,7 @@ def _import(inter: InterpretContext) -> Optional[d_Dit]:
 
     string_loc = copy.deepcopy(inter.next_tok.loc)
     value = _expression_dispatch(inter)
-    if inter.dec.name is not None:
+    if inter.dec.name is not None and not inter.equaling:
         dit.path = inter.dec.name
         inter.dec.name = None  # type: ignore
     elif value is None:
@@ -537,7 +531,8 @@ def _import(inter: InterpretContext) -> Optional[d_Dit]:
 
 def _class(inter: InterpretContext) -> Optional[d_Class]:
     orig_loc = copy.deepcopy(inter.next_tok.loc)
-    class_ = d_Class(name=None, containing_scope=inter.body)  # type: ignore
+    class_ = d_Class()
+    class_.containing_scope = inter.body
     class_.is_null = False
 
     inter.advance_tokens(False)
@@ -565,7 +560,8 @@ def _class(inter: InterpretContext) -> Optional[d_Class]:
 def _func(inter: InterpretContext) -> Optional[d_Function]:
     # func Ditlang d_String test(d_String right, d_String left) {{}}
     orig_loc = copy.deepcopy(inter.next_tok.loc)
-    func = d_Function(name=None, containing_scope=inter.body)  # type: ignore
+    func = d_Function()
+    func.containing_scope = inter.body
     func.is_null = False
     inter.func_sig = True
 
@@ -578,7 +574,7 @@ def _func(inter: InterpretContext) -> Optional[d_Function]:
         func.lang = inter.next_tok.thing  # type: ignore
     elif inter.next_tok.grammar in DOTABLES:
         # func commonLangs.5Lua
-        result = _expression_dispatch(inter)  # type: ignore
+        result: d_Thing = _expression_dispatch(inter)  # type: ignore
         if result.grammar != d_Grammar.VALUE_LANG:
             func.lang = result  # type: ignore
         else:
@@ -620,7 +616,7 @@ def _func(inter: InterpretContext) -> Optional[d_Function]:
 
     if inter.next_tok.grammar == d_Grammar.WORD:
         # func Ditlang void someName
-        result = inter.body.find_attr(inter.next_tok.word)  # type: ignore
+        result: d_Thing = inter.body.find_attr(inter.next_tok.word)  # type: ignore
         if result:
             _raise_helper(f"'{result.name}' has already been declared", inter)
         else:
@@ -641,7 +637,7 @@ def _func(inter: InterpretContext) -> Optional[d_Function]:
 
         if inter.next_tok.grammar in DOTABLES:
             # someName(numLib.Number
-            result = _expression_dispatch(inter)  # type: ignore
+            result: d_Thing = _expression_dispatch(inter)  # type: ignore
             if result.grammar == d_Grammar.VALUE_CLASS:
                 param_type = _token_to_type(inter.next_tok)
             else:
@@ -662,7 +658,7 @@ def _func(inter: InterpretContext) -> Optional[d_Function]:
         else:
             # someName(d_String someParam
             param_name = inter.next_tok.word
-            result = inter.body.find_attr(param_name)  # type: ignore
+            result: d_Thing = inter.body.find_attr(param_name)  # type: ignore
             if result:
                 _raise_helper(f"'{param_name}' has already been declared", inter)
             elif param_name in [p.name for p in func.parameters]:

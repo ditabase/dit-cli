@@ -41,7 +41,9 @@ def main():
 
     try:
         sys.stdout = PrintLogger()
-        dit = d_Dit("__main__", args.filepath)
+        dit = d_Dit()
+        dit.name = "__main__"
+        dit.path = args.filepath
         dit.finalize()
         interpret(dit)
         if not sys.stdout.any_print:

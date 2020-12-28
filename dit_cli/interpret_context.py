@@ -74,7 +74,7 @@ class InterpretContext:
         self.call_tok: Optional[Token] = None  # only for func call
 
         self.dec: Declarable = Declarable()
-        self.assignee: d_Thing = None  # type: ignore
+        self.equaling: bool = False
         self.dotted_body: d_Body = None  # type: ignore
         self.comma_depth: int = 0
         self.func_sig: bool = False
