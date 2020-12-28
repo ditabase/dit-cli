@@ -281,11 +281,12 @@ def _equalable(inter: InterpretContext) -> Optional[d_Thing]:
         inter.equaling = True
         _equals(inter)
         inter.equaling = False
+        inter.dec.reset()
     elif inter.dec.type_ is not None and not inter.equaling:
         # create variable without assignment
         inter.body.add_attr(inter.dec)
+        inter.dec.reset()
 
-    inter.dec.reset()
     return _terminal(inter)
 
 
