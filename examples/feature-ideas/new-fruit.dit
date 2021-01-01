@@ -4,29 +4,42 @@
 class Fruit {{
     // A class attribute. Unsurprisingly, its a list of strings.
     listOf String knownFruits = ['apple', 'banana', 'pear', 'clementine', 'kiwi'];
-    /*  String is the only primitive type. If you want something more complicated,
+
+    /*  
+        String is the only primitive type. If you want something more complicated,
         you need to implement it yourself, since primitives have so much variation.
-        Lists are not checked for shape (1D, 2D, jagged), just that they are lists. */
+        Lists are not checked for shape (1D, 2D, jagged), just that they are lists.
+    */
     
-    /*  Basic constructor. This mostly copies Python, but with runtime typing.
-        Copying Python is mostly a stopgap until I know how dit's syntax flavor.
-        Just know that if it is __dunder_cased__, then it's intended to be reserved. */
-    func Ditlang void __init__(String val) {{
+    /*  
+        Short function signature. 'func', then name, then params.
+        Also -dashCase- for all reserved functions.
+        I don't think -dashCase- looks very good, but it works, and I can change it.
+        The important thing is that -dashFunctions- are special.
+        '-make-' is the current reserved name for constructors, subject to change
+    */
+    func -make-(String val) {{
         // Instance attribute.
         String this.myFruit = val;
-        /* Ditlang has no ifs, loops, or complex concepts of any kind.
-           It can assign values and call functions and nothing else.
-           All the real work is done by other languages. */
+        /* 
+            Ditlang has no ifs, loops, or complex concepts of any kind.
+            It can assign values and call functions and nothing else.
+            All the real work is done by other languages.
+        */
     }}
 
     // Built-in method for telling this instance to do whatever it needs to do.
     // Since fruit is just a data object, it should validate itself on run.
-    func Ditlang void __run__() {{
+    func -run-() {{
         this.validate();
     }}
 
     // Language agnostic scripting.
-    func Python void validate() {{
+    // sig defines switches, which can be very long.
+    // "sig LANG RETURN_TYPE STATIC/INSTANCE ...""
+    // by default, lang is DitLang, return is void, and function is Instance
+    sig Python
+    func validate() {{
         # A "Triangle Expression"
         value = <|this.myFruit|>
         fruits = <|this.knownFruits|>
@@ -57,7 +70,8 @@ class Fruit {{
     }}
 
     // Language overloading, this could be run in a browser or other non-Python context.
-    func JavaScript void validate() {{
+    sig JavaScript
+    func validate() {{
         const value = <|this.myFruit|>; // Notice the Shape Expressions look the same,
         const fruits = <|this.knownFruits|>; // except for the semicolon.
 
@@ -74,7 +88,8 @@ class Fruit {{
     }}
 
     // Compiled languages are not implemented yet, but will work fine in the future.
-    func Java void validate() {{
+    sig Java
+    func validate() {{
         // pre will blindly place whatever you want at the top of the file.
         <|pre (|import java.util.Arrays;|)|>
 
@@ -100,14 +115,14 @@ class Fruit {{
 
     // If multiple languages are available, there will be options to choose
     // a specific one, a preference hierarchy, or just the fastest one.
-    // If no implementation is compatible (in a browser, but no Javascript version),
+    // If no implementation is compatible (in a browser, but no JavaScript version),
     // then dit can request a server to execute the code remotely, or fail.
     
     // You can "transpile" most languages to most other languages, in case you need
     // all client side code, (no internet connection, sensitive private data).
     // Your dit data will still be compatible with the greater DitaBase ecosystem.
 
-    func Ditlang String __str__() {{
+    func Ditlang String -str-() {{
         return this.value;
     }}
 }}
@@ -118,43 +133,48 @@ Fruit goodFruit = Fruit('kiwi');
 // Would throw an error if validated.
 Fruit badFruit = Fruit('Clearly not a fruit');
 
-// We aren't validating these objects yet, or even on init.
+// We aren't validating these objects yet, or even in -make-
 // That's because of this:
-func Ditlang void __run__() {{
-    // Could have some setup things here, before __run_all__()
-    __run_all__();
-    // This will activate the __run__() function of all objects in this dit
-    // They activate in parallel, so if you have a large number of similar objects
-    // which all need to do something, __run_all__() is perfect.
-    // It makes more sense to validate all objects at once, if you can wait,
-    // since __run_all__ has optimizations built in.
-    // We'll call this function at the end of the dit.
-    __print__("dit is valid, no errors found");
+func -run-() {{
+    dit.runAll();
+    /*
+        We are assigning the -run- function for this entire dit,
+        which can be referenced explicitly with -dit-.-run-()
+        It calls -runA
+    	This will activate the -run-() function of all objects in this dit
+    	They activate in parallel, so if you have a large number of similar objects
+    	which all need to do something, -runAll-() is perfect.
+    	It makes more sense to validate all objects at once, if you can wait,
+    	since -runAll- has optimizations built in.
+        We'll call this function at the end of the dit.
+    */
+    print("dit is valid, no errors found");
 }}
 
 // Let's see a bit more complexity
 class FruitPref {{
-    Ditlang void __init__(Fruit least, Fruit most) {{
+    func -make-(Fruit least, Fruit most) {{
         // Attributes of another class type. 
         Fruit this.leastFav = least;
         Fruit this.mostFav = most;
         // Note the "no use before define." That's why Fruit is above.
-        // Also note that class names are global.
-        // So are top level functions, objects, and imported dit namespaces.
-        // Duplicating global names will throw an error
+        // Also note that the class name is available in this scope.
+        // All variables in the outer scope will be available, recursively.
     }}
 
-    func Ditlang void __run__() {{
+    func -run-() {{
         this.validate();
     }}
 
-    func Javascript void validate() {{
+    sig JavaScript
+    func validate() {{
         if (<|this.mostFav.myFruit|> === <|this.leastFav.myFruit|>) {
             <|throw (|"Your most and least favorite fruits cannot be the same."|)|>
         }
     }}
 
-    func Python String __str__() {{
+    sig Python String
+    func -str-() {{
         ret = f"I like {<|this.mostFav.value|>}, but hate {<|this.leastFav.value|>}."
         <|return (|ret|)|>
     }}
@@ -163,27 +183,28 @@ class FruitPref {{
 FruitPref favorites = FruitPref(goodFruit, Fruit('apple'));
 
 // Load dit classes from HTTP or local file system.
-// This is a simple implementation for Javascript style numbers.
+// This is a simple implementation for JavaScript style numbers.
 import NumberNamespace from
 "https://raw.githubusercontent.com/ditabase/dits/master/new-dits/Number.dit";
 
 // You can imagine lots of small utility classes like this.
 SomeDataLogger {{
-    func Ditlang void __init__() {{
+    func -make-() {{
         ImportedNamespace.Number this.ops = ImportedNamespace.Number('0');
         listOf String opLog = [];
     }}
 
-    func Ditlang void log(String message) {{
+    func log(String message) {{
         this.operations.inc();
         this.opLog += message;
     }}
 
-    func Ditlang void log() {{
+    func log() {{
         this.log("anonymous");
     }}
 
-    func Python String __str__() {{
+    sig Python String
+    func -str-() {{
         output = ""
         for message, index in Enumerate(<|this.opLog|>):
             output += f'Op #{index:2} - {message}\n';
@@ -193,7 +214,7 @@ SomeDataLogger {{
 
 // How about inheritance?
 class FoodSatisfaction {{
-    __parents__ = [FruitPref, SomeDataLogger];
+    -parents- = [FruitPref, SomeDataLogger];
     // Inheritance is just a list. The order of the list determines MRO precedence.
     // It's dynamic, meaning any script can add and remove parents as needed.
 
@@ -202,29 +223,30 @@ class FoodSatisfaction {{
     // I can imagine a class having 50 parent classes for utility or compliance,
     // none of which have any name conflicts.
 
-    func Ditlang void __init__(Fruit least, Fruit most) {{
-        this.FruitPref.__init__(least, most);
-        // Explicitly reference the parent class's init method.
+    func -make-(Fruit least, Fruit most) {{
+        this.FruitPref.-make-(least, most);
+        // Explicitly reference the parent class's constructor method.
 
-        // this.__init__(least, most); // This is just recursion
-        // The local init hides the init of the parent
+        // this.-make-(least, most); // This is just recursion
+        // The local constructor hides the constructor of the parent
         / /TODO: Explain this bit in more detail
 
-        SomeDataLogger.__init__();
+        SomeDataLogger.-make-();
         Number this.satisfaction = Number('0');
     }}
 
-    // No __run__ is needed. This class only responds to class functions
+    // No -run- is needed. This class only responds to class functions
 
-    func Python void eat(String food) {{
+    sig Python
+    func eat(String food) {{
         least = <|this.leastFav|>
         most = <|this.mostFav|>
 
         # Creating another object on the fly and running it.
-        <|Fruit(food).__run__()|>
+        <|Fruit(food).-run-()|>
 
         # This will call validate() for the food string,
-        # and anything else __run__() might do in the future.
+        # and anything else -run-() might do in the future.
         # It's important to validate it since it might come from the command line.
 
         food = <|food|>
@@ -240,7 +262,7 @@ class FoodSatisfaction {{
             <|this.log("ate neutral")|>
     }}
 
-    func Ditlang void __str__() {{
+    func -str-() {{
         // Unsure about String concatenation syntax, but this is pretty uncontroversial.
         return "Satisfaction: " + this.satisfaction + "\nMeals: " + this.ops + "\n"; 
     }}
@@ -258,7 +280,8 @@ sat.eat("clementine"); // Note when this occurs, it will be important in a bit.
 
 // Top level function, demonstrating lack of privacy in dit.
 // Anything can mess with anything else, at any time.
-func Python Fruit aggressiveFruitSwitch(String newFruit, String oldFruit) {{
+sig Python Fruit
+func aggressiveFruitSwitch(String newFruit, String oldFruit) {{
     fruits = <|Fruit.knownFruits|>
     newFruit = <|newFruit|>
     oldFruit = <|oldFruit|>
@@ -291,11 +314,11 @@ func Python Fruit aggressiveFruitSwitch(String newFruit, String oldFruit) {{
 }}
 
 aggressiveFruitSwitch("clementine", "orange");
-sat.eat("orange"); // "Clementine" was safe above, but now would cause an error.
+sat.eat("orange"); // "clementine" was safe above, but now would cause an error.
 
-__run__();
+dit.-run-();
 // With this line in the file, the dit will run as soon as it parses to this point.
-// You could instead leave this out, and call __run__() from the command line.
+// You could instead leave this out, and call -run-() from the command line.
 // If you have a huge dit which takes a long time to validate, but you already know
 // it is valid, there's no need to validate it again if you're just running
 // some sort of function or query.

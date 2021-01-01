@@ -1,16 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import (
-    Callable,
-    Generator,
-    Iterator,
-    List,
-    NoReturn,
-    Optional,
-    Type,
-    Union,
-)
+from typing import Callable, Generator, Iterator, List, Optional, Union
 from urllib.error import HTTPError, URLError
 from urllib.request import urlopen
 
@@ -179,7 +170,9 @@ class d_Body(d_Thing):
         if self.find_attr(dec.name):
             raise CriticalError(f"A duplicate attribute was found: '{dec.name}'")
         if value is not None:
-            _check_value(value, dec)
+            res = _check_value(value, dec)
+            if res is not None:
+                raise TypeMismatchError(f"Cannot assign {res.actual} to {res.expected}")
             value.name = dec.name
             if dec.type_ == d_Grammar.PRIMITIVE_THING:
                 value.can_be_anything = True
@@ -247,38 +240,6 @@ def _type_to_obj(dec: Declarable, containing_scope: d_Body) -> d_Thing:
     else:
         thing.name = dec.name
         return thing
-
-
-def _check_value(thing: d_Thing, dec: Declarable) -> None:
-    """Check if a declarable could be thing. The declarable has
-    not yet been created into an object, and we want thing to be that object."""
-    if isinstance(dec.type_, d_Class):
-        raise NotImplementedError
-
-    listof_act = "listof " if dec.listof else ""
-    actual = f"{listof_act}{dec.type_.value}"
-    if isinstance(thing, d_List):
-        if dec.listof:
-            thing.contained_type = prim_to_value(dec.type_)
-            _check_list_type(thing)
-            return
-        else:
-            raise TypeMismatchError(f"Cannot assign List to {actual}")
-    elif dec.listof:
-        raise TypeMismatchError(f"Cannot assign {thing.public_type} to List")
-    elif dec.type_ == d_Grammar.PRIMITIVE_THING:
-        return
-    elif thing.is_null:
-        return
-    elif dec.type_ != value_to_prim(thing.grammar):
-        raise TypeMismatchError(f"Cannot assign {thing.public_type} to {actual}")
-
-
-def _all_scopes(body: d_Body) -> Generator[d_Body, None, None]:
-    yield body
-    if body.containing_scope:
-        for scope in _all_scopes(body.containing_scope):
-            yield scope
 
 
 class d_Dit(d_Body):
@@ -359,9 +320,9 @@ class d_Function(d_Body):
         self.grammar = d_Grammar.VALUE_FUNC
 
         self.orig_loc: CodeLocation = None  # type: ignore
-        self.lang: Language = None  # type: ignore
+        self.lang: d_Grammar = None  # type: ignore
         self.return_: d_Type = None  # type: ignore
-        self.return_list: bool = False
+        self.return_list: bool = None  # type: ignore
         self.parameters: List[Declarable] = []
         self.is_built_in: bool = False
 
@@ -382,48 +343,62 @@ class ReturnController(FlowControlException):
     def __init__(
         self, value: d_Thing, func: d_Function, orig_loc: CodeLocation
     ) -> None:
+
         if value.grammar == d_Grammar.NULL:
             super().__init__(Token(d_Grammar.NULL, orig_loc))
-        elif isinstance(value, d_List):
-            if func.return_list:
-                if func.return_ == value.contained_type:
-                    super().__init__(Token(d_Grammar.VALUE_LIST, orig_loc, thing=value))
-                else:
-                    if isinstance(func.return_, d_Class):
-                        actual = f"listOf {func.return_.name}"
-                    else:
-                        actual = f"listOf {value_to_prim(func.return_).value}"
-                    _fail_return_type(value, func, actual)
-            else:
-                _fail_return_type(value, func, "List")
+        return_declarable = Declarable(type_=func.return_, listof=func.return_list)
+        res = _check_value(value, return_declarable)
+        if res is not None:
+            raise TypeMismatchError(
+                f"Expected '{res.expected}' for return, got '{res.actual}'"
+            )
+        if isinstance(value, d_List):
+            super().__init__(Token(d_Grammar.VALUE_LIST, orig_loc, thing=value))
         elif isinstance(func.return_, d_Class):
             raise NotImplementedError
         elif isinstance(value, d_Thing):  # type: ignore
-            if func.return_ == value.grammar:
-                super().__init__(Token(func.return_, func.orig_loc, thing=value))
-                return
-            else:
-                _fail_return_type(value, func, value.public_type)
-        else:
-            raise CriticalError("Unrecognized return value")
+            super().__init__(Token(func.return_, func.orig_loc, thing=value))
 
 
-def _fail_return_type(
-    value: d_Thing,
-    func: d_Function,
-    actual_return: str,
-) -> NoReturn:
-    if isinstance(func.return_, d_Grammar):
-        expected_return = value_to_prim(func.return_).value
-    elif isinstance(func.return_, d_Class):  # type: ignore
-        if func.return_.name is None:
-            expected_return = "<anonymous class>"
+@dataclass
+class CheckResult:
+    expected: str
+    actual: str
+
+
+def _check_value(thing: d_Thing, dec: Declarable) -> Optional[CheckResult]:
+    """Check if a declarable could be a thing. The declarable represents
+    what we want this thing to be."""
+    if isinstance(dec.type_, d_Class):
+        raise NotImplementedError
+
+    listof_act = "listof " if dec.listof else ""
+    expected = f"{listof_act}{value_to_prim(dec.type_).value}"
+    if isinstance(thing, d_List):
+        if dec.listof:
+            thing.contained_type = prim_to_value(dec.type_)
+            _check_list_type(thing)
+            return
         else:
-            expected_return = func.return_.name
-    else:
-        raise CriticalError("Unrecognized return type")
-    mes = f"Expected '{expected_return}' for return, got '{actual_return}'"
-    raise TypeMismatchError(mes)
+            return CheckResult(expected=expected, actual="List")
+            # raise TypeMismatchError(f"Cannot assign List to {actual}")
+    elif dec.listof:
+        return CheckResult(expected="List", actual=thing.public_type)
+        # raise TypeMismatchError(f"Cannot assign {thing.public_type} to List")
+    elif dec.type_ == d_Grammar.PRIMITIVE_THING:
+        return
+    elif thing.is_null:
+        return
+    elif value_to_prim(dec.type_) != value_to_prim(thing.grammar):
+        return CheckResult(expected=expected, actual=thing.public_type)
+        # raise TypeMismatchError(f"Cannot assign {thing.public_type} to {actual}")
+
+
+def _all_scopes(body: d_Body) -> Generator[d_Body, None, None]:
+    yield body
+    if body.containing_scope:
+        for scope in _all_scopes(body.containing_scope):
+            yield scope
 
 
 class ThrowController(FlowControlException):

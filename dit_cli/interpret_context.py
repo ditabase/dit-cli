@@ -1,15 +1,15 @@
 import copy
 import re
-from typing import Optional, Union
+from typing import Optional
 
 from dit_cli.built_in import BUILT_INS
 from dit_cli.data_classes import CodeLocation
-from dit_cli.exceptions import CriticalError, EndOfFileError, SyntaxError_
+from dit_cli.exceptions import EndOfFileError, SyntaxError_
 from dit_cli.grammar import DOUBLES, KEYWORDS, SINGLES, d_Grammar
-from dit_cli.oop import Declarable, Token, d_Body, d_Thing
+from dit_cli.oop import Declarable, Token, d_Body, d_Function
 
 WHITESPACE = re.compile(r"\s")
-LETTER = re.compile(r"[A-Za-z0-9_]")
+LETTER = re.compile(r"[A-Za-z0-9_-]")
 
 
 class CharFeed:
@@ -77,8 +77,9 @@ class InterpretContext:
         self.equaling: bool = False
         self.dotted_body: d_Body = None  # type: ignore
         self.comma_depth: int = 0
-        self.func_sig: bool = False
+        self.declaring_func: d_Function = None  # type: ignore
         self.terminal_loc: CodeLocation = None  # type: ignore
+        self.named_statement: bool = False
 
     def advance_tokens(self, find_word: bool = True) -> None:
         self._manipulate_tokens(self.get_token(find_word=find_word))

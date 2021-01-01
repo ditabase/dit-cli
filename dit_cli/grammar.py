@@ -2,7 +2,6 @@
 from enum import Enum
 
 
-# test
 class d_Grammar(Enum):
     """Enum with all dit grammatical types."""
 
@@ -37,6 +36,7 @@ class d_Grammar(Enum):
 
     # Keywords
     CLASS = "class"
+    SIG = "sig"
     FUNC = "func"
     DITLANG = "Ditlang"
     PYTHON = "Python"
@@ -84,7 +84,13 @@ PRIM_TO_VALUE_DISPATCH = {
     d_Grammar.PRIMITIVE_CLASS: d_Grammar.VALUE_CLASS,
     d_Grammar.PRIMITIVE_FUNC: d_Grammar.VALUE_FUNC,
     d_Grammar.PRIMITIVE_DIT: d_Grammar.VALUE_DIT,
+    d_Grammar.VALUE_THING: d_Grammar.VALUE_THING,
+    d_Grammar.VALUE_STRING: d_Grammar.VALUE_STRING,
+    d_Grammar.VALUE_CLASS: d_Grammar.VALUE_CLASS,
+    d_Grammar.VALUE_FUNC: d_Grammar.VALUE_FUNC,
+    d_Grammar.VALUE_DIT: d_Grammar.VALUE_DIT,
     d_Grammar.NULL: d_Grammar.NULL,
+    d_Grammar.VOID: d_Grammar.VOID,
 }
 
 
@@ -98,6 +104,11 @@ VALUE_TO_PRIM_DISPATCH = {
     d_Grammar.VALUE_CLASS: d_Grammar.PRIMITIVE_CLASS,
     d_Grammar.VALUE_FUNC: d_Grammar.PRIMITIVE_FUNC,
     d_Grammar.VALUE_DIT: d_Grammar.PRIMITIVE_DIT,
+    d_Grammar.PRIMITIVE_THING: d_Grammar.PRIMITIVE_THING,
+    d_Grammar.PRIMITIVE_STRING: d_Grammar.PRIMITIVE_STRING,
+    d_Grammar.PRIMITIVE_CLASS: d_Grammar.PRIMITIVE_CLASS,
+    d_Grammar.PRIMITIVE_FUNC: d_Grammar.PRIMITIVE_FUNC,
+    d_Grammar.PRIMITIVE_DIT: d_Grammar.PRIMITIVE_DIT,
     d_Grammar.NULL: d_Grammar.NULL,
 }
 
@@ -146,6 +157,7 @@ EXPRESSION_STARTERS = [
     d_Grammar.QUOTE_SINGLE,
     d_Grammar.BRACKET_LEFT,
     d_Grammar.CLASS,
+    d_Grammar.SIG,
     d_Grammar.FUNC,
     d_Grammar.IMPORT,
     d_Grammar.NEW_NAME,
@@ -184,6 +196,7 @@ DOUBLES = [
 
 KEYWORDS = [
     d_Grammar.CLASS,
+    d_Grammar.SIG,
     d_Grammar.FUNC,
     d_Grammar.DITLANG,
     d_Grammar.PYTHON,
@@ -202,6 +215,7 @@ KEYWORDS = [
     d_Grammar.PRIMITIVE_FUNC,
     d_Grammar.PRIMITIVE_DIT,
 ]
+
 VALUES = [
     d_Grammar.VALUE_THING,
     d_Grammar.VALUE_STRING,

@@ -1,6 +1,6 @@
 import copy
 from itertools import zip_longest
-from typing import List, NoReturn, Optional, Union
+from typing import List, NoReturn, Optional
 
 from dit_cli.data_classes import CodeLocation
 from dit_cli.exceptions import (
@@ -34,6 +34,7 @@ from dit_cli.oop import (
     d_Dit,
     d_Function,
     d_Instance,
+    d_Language,
     d_List,
     d_String,
     d_Thing,
@@ -67,6 +68,7 @@ def interpret(body: d_Body) -> None:
                 return  # Only at EOF whitespace or comment
             else:
                 _statement_dispatch(inter)
+                inter.named_statement = False
     except DitError as err:
         _generate_origin(err, inter)
         raise
@@ -119,7 +121,7 @@ def _expression_dispatch(inter: InterpretContext) -> Optional[d_Thing]:
 
 
 def _listof(inter: InterpretContext) -> None:
-    # listOf d_String values;
+    # listOf String values;
     inter.advance_tokens()
     inter.dec.listof = True
     if inter.next_tok.grammar in PRIMITIVES:
@@ -162,7 +164,7 @@ def _value_list(inter: InterpretContext) -> Optional[d_Thing]:
 
 
 def _value_class(inter: InterpretContext) -> Optional[d_Thing]:
-    if inter.func_sig:
+    if inter.declaring_func is not None:
         # func Ditlang someClass...
         # This class is being used as a type in a function signature
         inter.advance_tokens(False)
@@ -291,6 +293,7 @@ def _equalable(inter: InterpretContext) -> Optional[d_Thing]:
 
 
 def _equals(inter: InterpretContext) -> None:
+    orig_loc = copy.deepcopy(inter.next_tok.loc)
     if inter.anon_tok is not None or inter.call_tok is not None:
         # prevent assignment to anonymous tokens.
         raise NotImplementedError
@@ -301,7 +304,12 @@ def _equals(inter: InterpretContext) -> None:
     inter.advance_tokens()
     value = _expression_dispatch(inter)
     if value is None:
-        raise NotImplementedError
+        if inter.named_statement:
+            _raise_helper(
+                "A named declaration cannot be used for assignment", inter, orig_loc
+            )
+        else:
+            raise CriticalError("No value for _expression_dispatch in _equals")
     if assignee is not None:
         assignee.set_value(value)
     else:
@@ -319,7 +327,7 @@ def _terminal(inter: InterpretContext) -> d_Thing:
         d_Grammar.BRACKET_RIGHT,
         d_Grammar.PAREN_RIGHT,
     ]:
-        if inter.func_sig:
+        if inter.declaring_func is not None:
             pass
         elif inter.comma_depth == 0:
             _missing_terminal(inter, "Expected ';'")
@@ -558,65 +566,90 @@ def _class(inter: InterpretContext) -> Optional[d_Class]:
     return _handle_anon(inter, class_, orig_loc)  # type: ignore
 
 
-def _func(inter: InterpretContext) -> Optional[d_Function]:
-    # func Ditlang d_String test(d_String right, d_String left) {{}}
+def _sig(inter: InterpretContext) -> Optional[d_Function]:
+    # sig JavaScript String ... \n func
     orig_loc = copy.deepcopy(inter.next_tok.loc)
-    func = d_Function()
-    func.containing_scope = inter.body
-    func.is_null = False
-    inter.func_sig = True
+    func = _sig_or_func(inter)
+    did_dispatch = False
 
-    inter.advance_tokens()
-    if inter.next_tok.grammar in LANGS:
-        # func Python
-        func.lang = inter.next_tok.grammar  # type: ignore
-    elif inter.next_tok.grammar == d_Grammar.VALUE_LANG:
-        # func JavaCustom
-        func.lang = inter.next_tok.thing  # type: ignore
-    elif inter.next_tok.grammar in DOTABLES:
-        # func commonLangs.5Lua
-        result: d_Thing = _expression_dispatch(inter)  # type: ignore
-        if result.grammar != d_Grammar.VALUE_LANG:
-            func.lang = result  # type: ignore
+    while True:
+        if not did_dispatch:
+            inter.advance_tokens()
+        did_dispatch = False
+        gra = inter.next_tok.grammar
+        thing = inter.next_tok.thing
+        switches = [func.lang, func.return_, func.return_list]
+
+        # listOf needs additional checking
+        # There must be a type after it, and not before it.
+        if func.return_list and func.return_ is None:
+            # sig ... listOf ...
+            if gra == d_Grammar.VOID:
+                _raise_helper("Cannot have listOf void", inter)
+            elif gra not in TYPES and gra not in DOTABLES:
+                _raise_helper("Expected type to follow listOf", inter)
+
+        if gra == d_Grammar.FUNC:
+            return _func(inter)
+        elif gra == d_Grammar.EOF or None not in switches:
+            _raise_helper("Expected 'func' to follow sig", inter)
+        elif thing is not None:
+            # handles dotables and explicit Lang/Class objects
+            did_dispatch = _sig_thing_handler(inter, func)
+        elif gra in LANGS:
+            # sig ... Ditlang ...
+            if func.lang is not None:
+                _raise_helper("Language was already assigned", inter)
+            func.lang = gra
+        elif gra in TYPES or gra == d_Grammar.VOID:
+            # sig ... String ...
+            # sig ... void ...
+            _sig_assign_return(inter, func)
+            func.return_ = prim_to_value(gra)
+        elif gra == d_Grammar.LISTOF:
+            # sig ... listOf ...
+            if func.return_ is not None:
+                _raise_helper("Unexpected 'listOf' after type", inter)
+            func.return_list = True
+        elif inter.next_tok.word == "Javascript":
+            # sig ... Javascript ...
+            _raise_helper("Did you mean 'JavaScript'?", inter)
         else:
-            raise NotImplementedError
-    elif inter.next_tok.word == "Javascript":
-        _raise_helper("Did you mean 'JavaScript'?", inter)
+            _raise_helper("Unrecognized token for signature", inter)
+
+
+def _sig_thing_handler(inter: InterpretContext, func: d_Function) -> bool:
+    thing = _expression_dispatch(inter)
+    if thing is None:
+        raise NotImplementedError
+    elif isinstance(thing, d_Language):
+        raise NotImplementedError
+    elif isinstance(thing, d_Class):
+        _sig_assign_return(inter, func)
+        func.return_ = thing
+        return True
     else:
-        _raise_helper("Expected language value", inter)
+        mes = (
+            "Expected Class or Lang, "
+            f"'{thing.name}' is of type '{thing.public_type}'"
+        )
+        _raise_helper(mes, inter, inter.terminal_loc)
 
-    inter.advance_tokens()
-    if inter.next_tok.grammar == d_Grammar.LISTOF:
-        func.return_list = True
-        inter.advance_tokens()
 
-    if inter.next_tok.grammar in DOTABLES:
-        # func Ditlang numLib.Number
+def _sig_assign_return(inter: InterpretContext, func: d_Function) -> None:
+    if func.return_ is not None:
+        _raise_helper("Return type was already assigned", inter)
+    func.return_list = False if func.return_list is None else func.return_list
 
-        result: d_Thing = _expression_dispatch(inter)  # type: ignore
-        if result.grammar == d_Grammar.VALUE_CLASS:
-            func.return_ = result  # type: ignore
-        else:
-            mes = (
-                "Expected class for return type, "
-                f"'{result.name}' is of type '{result.public_type}'"
-            )
-            _raise_helper(mes, inter, inter.terminal_loc)
-    elif inter.next_tok.grammar == d_Grammar.VOID:
-        # func Ditlang void
-        if func.return_list:
-            _raise_helper("Cannot have listOf void", inter)
-        func.return_ = d_Grammar.VOID
-        inter.advance_tokens(False)
-    elif inter.next_tok.grammar in TYPES:
-        # func Ditlang d_String
-        func.return_ = prim_to_value(_token_to_type(inter.next_tok))  # type: ignore
-        inter.advance_tokens(False)
-    else:
-        _raise_helper("Expected return type", inter)
 
+def _func(inter: InterpretContext) -> Optional[d_Function]:
+    # func test(String right, String left) {{}}
+    # func () {{}}
+    orig_loc = copy.deepcopy(inter.next_tok.loc)
+    func = _sig_or_func(inter)
+    inter.advance_tokens(False)
     if inter.next_tok.grammar == d_Grammar.WORD:
-        # func Ditlang void someName
+        # func someName
         result: d_Thing = inter.body.find_attr(inter.next_tok.word)  # type: ignore
         if result:
             _raise_helper(f"'{result.name}' has already been declared", inter)
@@ -674,8 +707,21 @@ def _func(inter: InterpretContext) -> Optional[d_Function]:
 
     _brace_left(inter, func)
     func.finalize()
-    inter.func_sig = False
+    inter.declaring_func = None  # type: ignore
     return _handle_anon(inter, func, orig_loc)  # type: ignore
+
+
+def _sig_or_func(inter: InterpretContext) -> d_Function:
+    # sig Python String ...
+    # OR
+    # func hello() {{}}
+    if inter.declaring_func is None:
+        func = d_Function()
+        func.containing_scope = inter.body
+        func.is_null = False
+        inter.declaring_func = func
+
+    return inter.declaring_func
 
 
 def _brace_left(inter: InterpretContext, body: d_Body) -> None:
@@ -700,6 +746,7 @@ def _handle_anon(
     if body.name:
         # traditional statement, stop here
         inter.body.attrs.append(body)
+        inter.named_statement = True
         return None
     else:
         # anonymous expression, need to dispatch it
@@ -768,6 +815,7 @@ STATEMENT_DISPATCH = {
     d_Grammar.CIRCLE_LEFT:            _not_implemented,
     d_Grammar.CIRCLE_RIGHT:           _not_implemented,
     d_Grammar.CLASS:                  _class,
+    d_Grammar.SIG:                    _sig,
     d_Grammar.FUNC:                   _func,
     d_Grammar.DITLANG:                _illegal_statement,
     d_Grammar.PYTHON:                 _illegal_statement,
@@ -820,6 +868,7 @@ EXPRESSION_DISPATCH = {
     d_Grammar.CIRCLE_LEFT:            _not_implemented,
     d_Grammar.CIRCLE_RIGHT:           _not_implemented,
     d_Grammar.CLASS:                  _class,
+    d_Grammar.SIG:                    _sig,
     d_Grammar.FUNC:                   _func,
     d_Grammar.DITLANG:                _illegal_expression,
     d_Grammar.PYTHON:                 _illegal_expression,
