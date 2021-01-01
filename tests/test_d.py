@@ -3,10 +3,14 @@ import json
 import os
 from contextlib import redirect_stdout
 
+import pytest
+from _pytest.python import Metafunc
+
 from dit_cli.exceptions import DitError
 from dit_cli.interpreter import interpret
 from dit_cli.oop import d_Dit
 
+# test: pytest.thing = None
 os.environ["NO_COLOR"] = "1"
 PATH = "tests/json_data"
 
@@ -19,14 +23,15 @@ def load_from_json():
                 yield test
 
 
-def pytest_generate_tests(metafunc):
+def pytest_generate_tests(metafunc: Metafunc):
     for fixture in metafunc.fixturenames:
         if fixture == "dit_json":
-            tests = load_from_json()
-            metafunc.parametrize(fixture, tests)
+            test_dicts = list(load_from_json())
+            titles = [test_dict["title"][:35] for test_dict in test_dicts]
+            metafunc.parametrize(argnames=fixture, argvalues=test_dicts, ids=titles)
 
 
-def test_dits(dit_json):
+def test_d(dit_json):
     try:
         output = io.StringIO()
         with redirect_stdout(output):
