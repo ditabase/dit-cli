@@ -27,11 +27,17 @@ def pytest_generate_tests(metafunc: Metafunc):
     for fixture in metafunc.fixturenames:
         if fixture == "dit_json":
             test_dicts = list(load_from_json())
-            titles = [test_dict["title"][:35] for test_dict in test_dicts]
+            titles = []
+            for test_dict in test_dicts:
+                if len(test_dict["title"]) > 62:
+                    raise ValueError(
+                        f"The test titled [{test_dict['title']}] is too long."
+                    )
+                titles.append(test_dict["title"])
             metafunc.parametrize(argnames=fixture, argvalues=test_dicts, ids=titles)
 
 
-def test_d(dit_json):
+def test_dits(dit_json):
     try:
         output = io.StringIO()
         with redirect_stdout(output):

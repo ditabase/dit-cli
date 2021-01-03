@@ -128,19 +128,19 @@
     },
     {
       "type": "fail",
-      "title": "func, duplicate function name, with class return type",
+      "title": "func, duplicate function name, class return",
       "dit": "class Number {{class Decimal {{}}}}\nString test = 'cat';\nsig Number func test() {{}};",
       "expected": "Line: 3 Col: 17 (tests/fail.dit)\nsig Number func test() {{}};\n                ^\n\nSyntaxError: 'test' has already been declared"
     },
     {
       "type": "fail",
-      "title": "func, duplicate function name, with dotted class return type",
+      "title": "func, duplicate function name, dotted class return",
       "dit": "class Number {{class Decimal {{}}}}\nString test = 'cat';\nsig Number.Decimal func test() {{}};",
       "expected": "Line: 3 Col: 25 (tests/fail.dit)\nsig Number.Decimal func test() {{}};\n                        ^\n\nSyntaxError: 'test' has already been declared"
     },
     {
       "type": "fail",
-      "title": "func, duplicate parameter name/same as attribute, already declared",
+      "title": "func, duplicate parameter name",
       "dit": "String test = 'cat';\nfunc test2(String test) {{}}",
       "expected": "Line: 2 Col: 19 (tests/fail.dit)\nfunc test2(String test) {{}}\n                  ^\n\nSyntaxError: 'test' has already been declared"
     },
