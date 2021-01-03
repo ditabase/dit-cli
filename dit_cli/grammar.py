@@ -47,7 +47,6 @@ class d_Grammar(Enum):
     FROM = "from"
     THROW = "throw"
     RETURN = "return"
-    THIS = "this"
     NULL = "null"
 
     # Primitives (basically keywords)
@@ -82,11 +81,13 @@ PRIM_TO_VALUE_DISPATCH = {
     d_Grammar.PRIMITIVE_THING: d_Grammar.VALUE_THING,
     d_Grammar.PRIMITIVE_STRING: d_Grammar.VALUE_STRING,
     d_Grammar.PRIMITIVE_CLASS: d_Grammar.VALUE_CLASS,
+    d_Grammar.PRIMITIVE_INSTANCE: d_Grammar.VALUE_INSTANCE,
     d_Grammar.PRIMITIVE_FUNC: d_Grammar.VALUE_FUNC,
     d_Grammar.PRIMITIVE_DIT: d_Grammar.VALUE_DIT,
     d_Grammar.VALUE_THING: d_Grammar.VALUE_THING,
     d_Grammar.VALUE_STRING: d_Grammar.VALUE_STRING,
     d_Grammar.VALUE_CLASS: d_Grammar.VALUE_CLASS,
+    d_Grammar.VALUE_INSTANCE: d_Grammar.VALUE_INSTANCE,
     d_Grammar.VALUE_FUNC: d_Grammar.VALUE_FUNC,
     d_Grammar.VALUE_DIT: d_Grammar.VALUE_DIT,
     d_Grammar.NULL: d_Grammar.NULL,
@@ -102,11 +103,13 @@ VALUE_TO_PRIM_DISPATCH = {
     d_Grammar.VALUE_THING: d_Grammar.PRIMITIVE_THING,
     d_Grammar.VALUE_STRING: d_Grammar.PRIMITIVE_STRING,
     d_Grammar.VALUE_CLASS: d_Grammar.PRIMITIVE_CLASS,
+    d_Grammar.VALUE_INSTANCE: d_Grammar.PRIMITIVE_INSTANCE,
     d_Grammar.VALUE_FUNC: d_Grammar.PRIMITIVE_FUNC,
     d_Grammar.VALUE_DIT: d_Grammar.PRIMITIVE_DIT,
     d_Grammar.PRIMITIVE_THING: d_Grammar.PRIMITIVE_THING,
     d_Grammar.PRIMITIVE_STRING: d_Grammar.PRIMITIVE_STRING,
     d_Grammar.PRIMITIVE_CLASS: d_Grammar.PRIMITIVE_CLASS,
+    d_Grammar.PRIMITIVE_INSTANCE: d_Grammar.PRIMITIVE_INSTANCE,
     d_Grammar.PRIMITIVE_FUNC: d_Grammar.PRIMITIVE_FUNC,
     d_Grammar.PRIMITIVE_DIT: d_Grammar.PRIMITIVE_DIT,
     d_Grammar.NULL: d_Grammar.NULL,
@@ -142,7 +145,6 @@ NON_VALUES_STARTERS = [
     d_Grammar.FROM,
     d_Grammar.THROW,
     d_Grammar.RETURN,
-    d_Grammar.THIS,
     d_Grammar.NULL,
     d_Grammar.PRIMITIVE_THING,
     d_Grammar.PRIMITIVE_STRING,

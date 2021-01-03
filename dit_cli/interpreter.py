@@ -31,6 +31,7 @@ from dit_cli.oop import (
     Token,
     d_Body,
     d_Class,
+    d_Container,
     d_Dit,
     d_Function,
     d_Instance,
@@ -40,6 +41,9 @@ from dit_cli.oop import (
     d_Thing,
     d_Type,
 )
+
+MAKE = "-make-"
+THIS = "this"
 
 
 def interpret(body: d_Body) -> None:
@@ -255,23 +259,26 @@ def _dotable(inter: InterpretContext) -> Optional[d_Thing]:
 
 def _dot(inter: InterpretContext) -> Token:
     inter.advance_tokens(False)  # We want to manage the next word ourselves
+    target: d_Container = None  # type: ignore
     if inter.next_tok.grammar != d_Grammar.WORD:
         _raise_helper(f"'{inter.next_tok.grammar}' is not dotable", inter)
     if inter.anon_tok:
-        previous: d_Body = inter.anon_tok.thing  # type: ignore
+        target = inter.anon_tok.thing  # type: ignore
     elif inter.call_tok:
-        previous: d_Body = inter.call_tok.thing  # type: ignore
+        target = inter.call_tok.thing  # type: ignore
     else:
-        previous: d_Body = inter.prev_tok.thing  # type: ignore
-    result = inter.body.find_attr(inter.next_tok.word, previous=previous)
+        target = inter.prev_tok.thing  # type: ignore
+    result = target.find_attr(inter.next_tok.word)
     if result:
         # The dot had a known variable, which we just need to return
+        if isinstance(target, d_Instance):
+            inter.dotted_inst = target
         return Token(result.grammar, copy.deepcopy(inter.next_tok.loc), thing=result)
     else:
         # The name was not found in the dotted body, so its a new name.
         # This means we are declaring a new var in the dotted body.
         inter.next_tok.grammar = d_Grammar.NEW_NAME
-        inter.dotted_body = previous  # Save for assignment
+        inter.dotted_body = target  # Save for assignment
         return inter.next_tok
 
 
@@ -286,7 +293,7 @@ def _equalable(inter: InterpretContext) -> Optional[d_Thing]:
         inter.dec.reset()
     elif inter.dec.type_ is not None and not inter.equaling:
         # create variable without assignment
-        inter.body.add_attr(inter.dec)
+        _add_attr_wrap(inter)
         inter.dec.reset()
 
     return _terminal(inter)
@@ -312,6 +319,14 @@ def _equals(inter: InterpretContext) -> None:
             raise CriticalError("No value for _expression_dispatch in _equals")
     if assignee is not None:
         assignee.set_value(value)
+    else:
+        _add_attr_wrap(inter, value=value)
+
+
+def _add_attr_wrap(inter: InterpretContext, value: Optional[d_Thing] = None):
+    if inter.dotted_body is not None:
+        inter.dotted_body.add_attr(inter.dec, value=value)
+        inter.dotted_body = None  # type: ignore
     else:
         inter.body.add_attr(inter.dec, value=value)
 
@@ -381,8 +396,19 @@ def _paren_left(inter: InterpretContext) -> Optional[d_Thing]:
         func: d_Function = inter.anon_tok.thing  #  type: ignore
     elif inter.call_tok is not None:
         func: d_Function = inter.call_tok.thing  #  type: ignore
+    elif isinstance(inter.curr_tok.thing, d_Class):
+        # This means we must be instantiating, and need the -make- func
+        # Number num = Number('3');
+        func = _make(inter)
     else:
         func: d_Function = inter.curr_tok.thing  #  type: ignore
+
+    if inter.dotted_inst is not None:
+        # We are activating a function of this instance, so the func needs 'this'
+        # Subject to change when static functions are implemented
+        # num.inc();
+        func.add_attr(Declarable(inter.dotted_inst.parent, THIS), inter.dotted_inst)
+
     func.orig_loc = copy.deepcopy(inter.curr_tok.loc)
     arg_locs = _arg_list(inter, d_Grammar.PAREN_RIGHT)
     func_name = f"{func.name}()" if func.name is not None else "<anonymous function>()"
@@ -411,8 +437,7 @@ def _paren_left(inter: InterpretContext) -> Optional[d_Thing]:
                 raise NotImplementedError
         else:
             raise CriticalError("Unrecognized type for function argument")
-        attr = func.add_attr(param)
-        attr.set_value(arg_loc.thing)
+        func.add_attr(param, arg_loc.thing)
 
     try:
         interpret(func)
@@ -426,15 +451,37 @@ def _paren_left(inter: InterpretContext) -> Optional[d_Thing]:
     else:
         if func.return_ is not None and func.return_ != d_Grammar.VOID:
             _raise_helper(f"{func_name} expected a return", inter, func.orig_loc)
+        elif func.name == MAKE:
+            thing = func.find_attr(THIS)
+            if thing is None:
+                raise NotImplementedError
+            inter.call_tok = Token(d_Grammar.VALUE_INSTANCE, func.orig_loc, thing=thing)
         else:
             # func ended without 'return' keyword
             inter.call_tok = Token(d_Grammar.NULL, func.orig_loc)
 
     func.attrs.clear()
+    inter.dotted_inst = None  # type: ignore
     if inter.call_tok.grammar == d_Grammar.NULL:
         return _terminal(inter)
     else:
         return _parenable(inter)
+
+
+def _make(inter: InterpretContext) -> d_Function:
+    class_: d_Class = inter.curr_tok.thing  # type: ignore
+    make = class_.find_attr(MAKE)
+    if make is None:
+        _raise_helper(f"Class '{class_.name}' does not define a -make-", inter)
+    elif isinstance(make, d_Function):
+        func: d_Function = make
+        inst = d_Instance()
+        inst.is_null = False
+        inst.parent = class_
+        func.add_attr(Declarable(class_, THIS), inst)
+        return func
+    else:
+        raise NotImplementedError
 
 
 def _return(inter: InterpretContext) -> NoReturn:
@@ -494,7 +541,7 @@ def _import(inter: InterpretContext) -> Optional[d_Dit]:
     if gra == d_Grammar.WORD:
         # import SomeName from "someFilePath.dit";
         # WET: Identical to section in _class
-        if inter.body.find_attr(inter.next_tok.word):
+        if inter.body.find_attr(inter.next_tok.word, scope_mode=True):
             _raise_helper(f"'{inter.next_tok.word}' has already been declared", inter)
         dit.name = inter.next_tok.word
         inter.advance_tokens()
@@ -541,7 +588,7 @@ def _import(inter: InterpretContext) -> Optional[d_Dit]:
 def _class(inter: InterpretContext) -> Optional[d_Class]:
     orig_loc = copy.deepcopy(inter.next_tok.loc)
     class_ = d_Class()
-    class_.containing_scope = inter.body
+    class_.parent_scope = inter.body
     class_.is_null = False
 
     inter.advance_tokens(False)
@@ -550,7 +597,7 @@ def _class(inter: InterpretContext) -> Optional[d_Class]:
 
     if inter.next_tok.grammar == d_Grammar.WORD:
         # WET: Identical to section in _import
-        if inter.body.find_attr(inter.next_tok.word):
+        if inter.body.find_attr(inter.next_tok.word, scope_mode=True):
             _raise_helper(f"'{inter.next_tok.word}' has already been declared", inter)
         class_.name = inter.next_tok.word
         inter.advance_tokens()  # get {{
@@ -650,7 +697,7 @@ def _func(inter: InterpretContext) -> Optional[d_Function]:
     inter.advance_tokens(False)
     if inter.next_tok.grammar == d_Grammar.WORD:
         # func someName
-        result: d_Thing = inter.body.find_attr(inter.next_tok.word)  # type: ignore
+        result: d_Thing = inter.body.find_attr(inter.next_tok.word, scope_mode=True)  # type: ignore
         if result:
             _raise_helper(f"'{result.name}' has already been declared", inter)
         else:
@@ -692,7 +739,7 @@ def _func(inter: InterpretContext) -> Optional[d_Function]:
         else:
             # someName(d_String someParam
             param_name = inter.next_tok.word
-            result: d_Thing = inter.body.find_attr(param_name)  # type: ignore
+            result: d_Thing = inter.body.find_attr(param_name, scope_mode=True)  # type: ignore
             if result:
                 _raise_helper(f"'{param_name}' has already been declared", inter)
             elif param_name in [p.name for p in func.parameters]:
@@ -717,7 +764,7 @@ def _sig_or_func(inter: InterpretContext) -> d_Function:
     # func hello() {{}}
     if inter.declaring_func is None:
         func = d_Function()
-        func.containing_scope = inter.body
+        func.parent_scope = inter.body
         func.is_null = False
         inter.declaring_func = func
 
@@ -826,7 +873,6 @@ STATEMENT_DISPATCH = {
     d_Grammar.FROM:                   _illegal_statement,
     d_Grammar.THROW:                  _throw,
     d_Grammar.RETURN:                 _return,
-    d_Grammar.THIS:                   _not_implemented,
     d_Grammar.NULL:                   _illegal_statement,
     d_Grammar.PRIMITIVE_THING:        _primitive,
     d_Grammar.PRIMITIVE_STRING:       _primitive,
@@ -879,7 +925,6 @@ EXPRESSION_DISPATCH = {
     d_Grammar.FROM:                   _illegal_expression,
     d_Grammar.THROW:                  _illegal_expression,
     d_Grammar.RETURN:                 _illegal_expression,
-    d_Grammar.THIS:                   _not_implemented,
     d_Grammar.NULL:                   _null,
     d_Grammar.PRIMITIVE_THING:        _illegal_expression,
     d_Grammar.PRIMITIVE_STRING:       _illegal_expression,

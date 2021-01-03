@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Callable, Generator, Iterator, List, Optional, Union
+from typing import Callable, Iterator, List, Optional, Union
 from urllib.error import HTTPError, URLError
 from urllib.request import urlopen
 
@@ -106,17 +106,27 @@ def _check_list_type(list_: d_List) -> None:
         return
     elif list_.contained_type == d_Grammar.VALUE_THING:
         return
-    elif isinstance(list_.contained_type, d_Class):
-        raise NotImplementedError
 
-    actual: str = value_to_prim(list_.contained_type).value
+    err = False
     for ele in _traverse(list_.list_value):
         ele: d_Thing
         if ele.is_null:
             continue
+        elif isinstance(list_.contained_type, d_Class) and not _is_subclass(
+            ele, list_.contained_type
+        ):
+            # mismatch class types.
+            # listOf Number numbers= [Bool('3')];
+            err = True
         elif ele.grammar != list_.contained_type:
-            expected = value_to_prim(ele.grammar).value
-            raise TypeMismatchError(f"List of type '{actual}' contained '{expected}'")
+            # Mismatched grammars
+            # listOf Class classes = ['clearly not a class'];
+            err = True
+
+        if err:
+            expected = _type_to_str(list_.contained_type)
+            actual = _thing_to_str(ele)
+            raise TypeMismatchError(f"List of type '{expected}' contained '{actual}'")
 
 
 def _traverse(item: Union[list, d_Thing]) -> Iterator[d_Thing]:
@@ -130,27 +140,33 @@ def _traverse(item: Union[list, d_Thing]) -> Iterator[d_Thing]:
         yield item
 
 
-class d_Body(d_Thing):
+class d_Container(d_Thing):
     def __init__(self) -> None:
         super().__init__()
-        self.path: str = None  # type: ignore
-        self.primitive_loc: CodeLocation = None  # type: ignore
-        self.start_loc: CodeLocation = None  # type: ignore
-        self.end_loc: CodeLocation = None  # type: ignore
-        self.view: memoryview = None  # type: ignore
-        self.containing_scope: d_Body = None  # type: ignore
         self.attrs: List[d_Thing] = []
 
-    def is_ready(self) -> bool:
-        if self.view is None:
-            raise CriticalError("A body had no view during readying")
-        return len(self.view) > 0
+    def find_attr(
+        self, name: str, scope_mode: Optional[bool] = False
+    ) -> Optional[d_Thing]:
+        if scope_mode:
+            if not isinstance(self, d_Body):
+                raise CriticalError("A Container was given for scope mode")
+            # We need to check for this name in upper scopes
+            # String someGlobal = 'cat';
+            # class someClass {{ String someInternal = someGlobal; }}
+            return _find_attr_in_scope(name, self)
+        else:
+            # We're dotting, so only 'self' counts, no upper scopes.
+            # We also need to check for inherited parent classes
+            # someInst.someMember = ...
+            return _find_attr_in_self(name, self)
 
     def set_value(self, new_value: d_Thing) -> None:
         self.is_null = new_value.is_null
-        if isinstance(new_value, d_Body):
+        if isinstance(new_value, d_Container):
             self.attrs = new_value.attrs
-            self.containing_scope = new_value.containing_scope
+        if isinstance(new_value, d_Body):
+            self.parent_scope = new_value.parent_scope
             self.view = new_value.view
             self.path = new_value.path
         elif type(new_value) is d_Thing:
@@ -168,6 +184,7 @@ class d_Body(d_Thing):
         if dec.name is None:
             raise CriticalError("A declarable had no name")
         if self.find_attr(dec.name):
+            # TODO: this could be naive with inheritance, not sure.
             raise CriticalError(f"A duplicate attribute was found: '{dec.name}'")
         if value is not None:
             res = _check_value(value, dec)
@@ -177,37 +194,67 @@ class d_Body(d_Thing):
             if dec.type_ == d_Grammar.PRIMITIVE_THING:
                 value.can_be_anything = True
         else:
-            value = _type_to_obj(dec, self)
+            value = _type_to_obj(dec)
 
         self.attrs.append(value)
         return value
 
-    def find_attr(
-        self, name: str, previous: Optional[d_Body] = None
-    ) -> Optional[d_Thing]:
-        if previous:
-            # search in previous, no matter what kind of body object it is
-            for attr in previous.attrs:
-                if attr.name == name:
-                    return attr
-            return None
-        for scope in _all_scopes(self):
-            for attr in scope.attrs:
-                if attr.name == name:
-                    return attr
+
+def _find_attr_in_scope(name: str, body: d_Body) -> Optional[d_Thing]:
+    for attr in body.attrs:
+        if attr.name == name:
+            return attr
+
+    if body.parent_scope is None:
         return None
+    else:
+        _find_attr_in_scope(name, body.parent_scope)
+
+
+def _find_attr_in_self(name: str, con: d_Container) -> Optional[d_Thing]:
+    for attr in con.attrs:
+        if attr.name == name:
+            return attr
+    if isinstance(con, d_Instance):
+        return _find_attr_in_self(name, con.parent)
+    elif isinstance(con, d_Class):
+        for parent in con.parents:
+            return _find_attr_in_self(name, parent)
+
+
+class d_Instance(d_Container):
+    def __init__(self) -> None:
+        super().__init__()
+        self.public_type = "Instance"
+        self.grammar = d_Grammar.VALUE_INSTANCE
+        self.parent: d_Class = None  # type: ignore
+
+
+class d_Body(d_Container):
+    def __init__(self) -> None:
+        super().__init__()
+        self.path: str = None  # type: ignore
+        self.start_loc: CodeLocation = None  # type: ignore
+        self.end_loc: CodeLocation = None  # type: ignore
+        self.view: memoryview = None  # type: ignore
+        self.parent_scope: d_Body = None  # type: ignore
+
+    def is_ready(self) -> bool:
+        if self.view is None:
+            raise CriticalError("A body had no view during readying")
+        return len(self.view) > 0
 
     def finalize(self) -> None:
         if self.path is None:
-            self.path = self.containing_scope.path
+            self.path = self.parent_scope.path
         if self.view is None:
             # d_Dit sets the view itself, from a file/URL
             self.view = memoryview(
-                self.containing_scope.view[self.start_loc.pos : self.end_loc.pos]
+                self.parent_scope.view[self.start_loc.pos : self.end_loc.pos]
             )
 
 
-def _type_to_obj(dec: Declarable, containing_scope: d_Body) -> d_Thing:
+def _type_to_obj(dec: Declarable) -> d_Thing:
     thing: d_Thing = None  # type: ignore
     if dec.type_ is None:
         raise CriticalError("A declarable had no type")
@@ -226,12 +273,10 @@ def _type_to_obj(dec: Declarable, containing_scope: d_Body) -> d_Thing:
         thing = d_String()
     elif dec.type_ == d_Grammar.PRIMITIVE_CLASS:
         thing = d_Class()
-        thing.containing_scope = containing_scope
     elif dec.type_ == d_Grammar.PRIMITIVE_INSTANCE:
         thing = d_Instance()
     elif dec.type_ == d_Grammar.PRIMITIVE_FUNC:
         thing = d_Function()
-        thing.containing_scope = containing_scope
     elif dec.type_ == d_Grammar.PRIMITIVE_DIT:
         thing = d_Dit()
 
@@ -292,21 +337,7 @@ class d_Class(d_Body):
         super().__init__()
         self.public_type = "Class"
         self.grammar = d_Grammar.VALUE_CLASS
-
-
-class d_Instance(d_Thing):
-    def __init__(self) -> None:
-        super().__init__()
-        self.public_type = "Instance"
-        self.grammar = d_Grammar.VALUE_INSTANCE
-        self.parent: d_Class = None  # type: ignore
-        self.attrs: List[d_Thing] = []
-
-    def find_attr(self, name: str) -> Optional[d_Thing]:
-        for attr in self.attrs:
-            if attr.name == name:
-                return attr
-        return None
+        self.parents: List[d_Class] = []
 
 
 class d_Language(d_Thing):
@@ -369,36 +400,93 @@ class CheckResult:
 def _check_value(thing: d_Thing, dec: Declarable) -> Optional[CheckResult]:
     """Check if a declarable could be a thing. The declarable represents
     what we want this thing to be."""
-    if isinstance(dec.type_, d_Class):
+    if thing.is_null:
+        # assigning null is always allowed
+        # listOf someClass test = null;
+        return
+    elif dec.type_ == d_Grammar.PRIMITIVE_THING:
+        if not dec.listof or isinstance(thing, d_List):
+            # a 'Thing' can be anything, listOf Thing can have any list
+            # Thing test = ...;
+            # listOf Thing test = [...];
+            return
+    elif dec.listof != isinstance(thing, d_List):
+        # non matching lists, obvious error
+        # listOf String test = 'cat';
+        # String test = ['cat'];
+        return _get_check_result(thing, dec)
+    elif dec.listof and isinstance(thing, d_List) and thing.contained_type is None:
+        # a list doesn't know its own type when initially declared, so we'll check
+        # listOf String test = ['cat'];
+        thing.contained_type = _get_gram_or_class(prim_to_value, type_=dec.type_)
+        _check_list_type(thing)
+        return
+    elif not isinstance(dec.type_, d_Class):
+        if value_to_prim(dec.type_) != _get_gram_or_class(value_to_prim, thing=thing):
+            # Not matching grammars
+            # String test = func (){{}};
+            # listOf Class = ['cat'];
+            return _get_check_result(thing, dec)
+    elif not _is_subclass(thing, dec.type_):
+        # not matching class types
+        # sig listOf Bool func test() {{return [Bool('true')];}}
+        # listOf Number numbers = test();
+        # Number count = Bool('true');
+        # Number count = 'cat';
+        return _get_check_result(thing, dec)
+
+
+def _get_check_result(thing: d_Thing, dec: Declarable) -> CheckResult:
+    return CheckResult(expected=_dec_to_str(dec), actual=_thing_to_str(thing))
+
+
+def _is_subclass(thing: d_Thing, target: d_Class) -> bool:
+    if isinstance(thing, d_List):
+        sub = thing.contained_type
+    elif not isinstance(thing, d_Instance):
+        return False
+    else:
+        sub = thing.parent
+
+    if sub is target:
+        return True
+    else:
         raise NotImplementedError
 
-    listof_act = "listof " if dec.listof else ""
-    expected = f"{listof_act}{value_to_prim(dec.type_).value}"
+
+def _dec_to_str(dec: Declarable) -> str:
+    listof = "listOf " if dec.listof else ""
+    return listof + _type_to_str(dec.type_)
+
+
+def _thing_to_str(thing: d_Thing) -> str:
     if isinstance(thing, d_List):
-        if dec.listof:
-            thing.contained_type = prim_to_value(dec.type_)
-            _check_list_type(thing)
-            return
+        con = thing.contained_type
+        return "listOf " + (_type_to_str(con) if con is not None else "?")
+    else:
+        return _type_to_str(thing.grammar)
+
+
+def _type_to_str(type_: d_Type) -> str:
+    if isinstance(type_, d_Class):
+        return type_.name
+    else:
+        return value_to_prim(type_).value
+
+
+def _get_gram_or_class(
+    func: Callable, thing: Optional[d_Thing] = None, type_: Optional[d_Type] = None
+) -> d_Type:
+    if thing is not None:
+        if isinstance(thing, d_List):
+            type_ = thing.contained_type
         else:
-            return CheckResult(expected=expected, actual="List")
-            # raise TypeMismatchError(f"Cannot assign List to {actual}")
-    elif dec.listof:
-        return CheckResult(expected="List", actual=thing.public_type)
-        # raise TypeMismatchError(f"Cannot assign {thing.public_type} to List")
-    elif dec.type_ == d_Grammar.PRIMITIVE_THING:
-        return
-    elif thing.is_null:
-        return
-    elif value_to_prim(dec.type_) != value_to_prim(thing.grammar):
-        return CheckResult(expected=expected, actual=thing.public_type)
-        # raise TypeMismatchError(f"Cannot assign {thing.public_type} to {actual}")
+            type_ = thing.grammar
 
-
-def _all_scopes(body: d_Body) -> Generator[d_Body, None, None]:
-    yield body
-    if body.containing_scope:
-        for scope in _all_scopes(body.containing_scope):
-            yield scope
+    if isinstance(type_, d_Class):
+        return type_
+    else:
+        return func(type_)
 
 
 class ThrowController(FlowControlException):

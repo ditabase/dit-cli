@@ -6,7 +6,7 @@ from dit_cli.built_in import BUILT_INS
 from dit_cli.data_classes import CodeLocation
 from dit_cli.exceptions import EndOfFileError, SyntaxError_
 from dit_cli.grammar import DOUBLES, KEYWORDS, SINGLES, d_Grammar
-from dit_cli.oop import Declarable, Token, d_Body, d_Function
+from dit_cli.oop import Declarable, Token, d_Body, d_Container, d_Function, d_Instance
 
 WHITESPACE = re.compile(r"\s")
 LETTER = re.compile(r"[A-Za-z0-9_-]")
@@ -75,7 +75,8 @@ class InterpretContext:
 
         self.dec: Declarable = Declarable()
         self.equaling: bool = False
-        self.dotted_body: d_Body = None  # type: ignore
+        self.dotted_body: d_Container = None  # type: ignore
+        self.dotted_inst: d_Instance = None  # type: ignore
         self.comma_depth: int = 0
         self.declaring_func: d_Function = None  # type: ignore
         self.terminal_loc: CodeLocation = None  # type: ignore
@@ -189,7 +190,7 @@ def _find_words(inter: InterpretContext, find_word: bool) -> Optional[Token]:
         if find_word is False:
             return Token(d_Grammar.WORD, token_loc, word=word)
         # Most names
-        attr = inter.body.find_attr(word)
+        attr = inter.body.find_attr(word, scope_mode=True)
         if attr:
             return Token(attr.grammar, token_loc, thing=attr)
         else:

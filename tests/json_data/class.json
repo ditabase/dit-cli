@@ -49,6 +49,12 @@
       "expected": "Line: 2 Col: 7 (tests/fail.dit)\nclass test {{}}\n      ^\n\nSyntaxError: 'test' has already been declared"
     },
     {
+      "type": "fail",
+      "title": "class, monkey patch NOT applied to dit",
+      "dit": "class A {{}}\nString A.patch = 'monkey';\nprint(patch);",
+      "expected": "Line: 3 Col: 7 (tests/fail.dit)\nprint(patch);\n      ^\n\nSyntaxError: Undeclared variable 'patch'"
+    },
+    {
       "type": "succeed",
       "title": "class, empty named class",
       "dit": "class A {{}}",
@@ -75,14 +81,14 @@
     {
       "type": "succeed",
       "title": "class, VALUE_CLASS monkey patched",
-      "dit": "class A {{}}\nString A.patch = 'dog';",
-      "expected": "Finished successfully\n"
+      "dit": "class A {{}}\nString A.patch = 'monkey';\nprint(A.patch);",
+      "expected": "monkey\n"
     },
     {
       "type": "succeed",
       "title": "class, inner VALUE_CLASS monkey patched",
-      "dit": "class A {{class B  {{}}}}\nString A.B.patch = 'dog';",
-      "expected": "Finished successfully\n"
+      "dit": "class A {{class B  {{}}}}\nString A.B.patch = 'monkey';\nprint(A.B.patch);",
+      "expected": "monkey\n"
     }
   ]
 }

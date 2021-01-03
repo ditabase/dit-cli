@@ -4,25 +4,25 @@
       "type": "fail",
       "title": "TypeMismatch, [] value assigned to String",
       "dit": "String test = ['cat'];",
-      "expected": "Line: 1 Col: 22 (tests/fail.dit)\nString test = ['cat'];\n                     ^\n\nTypeMismatchError: Cannot assign List to String"
+      "expected": "Line: 1 Col: 22 (tests/fail.dit)\nString test = ['cat'];\n                     ^\n\nTypeMismatchError: Cannot assign listOf ? to String"
     },
     {
       "type": "fail",
       "title": "TypeMismatch, '' value assigned to List",
       "dit": "listOf String test = 'cat';",
-      "expected": "Line: 1 Col: 27 (tests/fail.dit)\nlistOf String test = 'cat';\n                          ^\n\nTypeMismatchError: Cannot assign String to List"
+      "expected": "Line: 1 Col: 27 (tests/fail.dit)\nlistOf String test = 'cat';\n                          ^\n\nTypeMismatchError: Cannot assign String to listOf String"
     },
     {
       "type": "fail",
       "title": "TypeMismatch, String var assigned to List",
       "dit": "String test = 'cat';\nlistOf String test2 = test;",
-      "expected": "Line: 2 Col: 27 (tests/fail.dit)\nlistOf String test2 = test;\n                          ^\n\nTypeMismatchError: Cannot assign String to List"
+      "expected": "Line: 2 Col: 27 (tests/fail.dit)\nlistOf String test2 = test;\n                          ^\n\nTypeMismatchError: Cannot assign String to listOf String"
     },
     {
       "type": "fail",
       "title": "TypeMismatch, List var assigned to String",
       "dit": "listOf String test = ['cat'];\nString test2 = test;",
-      "expected": "Line: 2 Col: 20 (tests/fail.dit)\nString test2 = test;\n                   ^\n\nTypeMismatchError: Cannot assign List to String"
+      "expected": "Line: 2 Col: 20 (tests/fail.dit)\nString test2 = test;\n                   ^\n\nTypeMismatchError: Cannot assign listOf String to String"
     },
     {
       "type": "fail",
@@ -64,7 +64,7 @@
       "type": "fail",
       "title": "TypeMismatch, func call, List instead of String",
       "dit": "sig String func test1() {{\n    return ['cat'];\n}}\nString test2 = test1();",
-      "expected": "Line: 2 Col: 5 (tests/fail.dit)\n    return ['cat'];\n    ^\n\nTypeMismatchError: Expected 'String' for return, got 'List'\n\tat test1 (tests/fail.dit):4:16"
+      "expected": "Line: 2 Col: 5 (tests/fail.dit)\n    return ['cat'];\n    ^\n\nTypeMismatchError: Expected 'String' for return, got 'listOf ?'\n\tat test1 (tests/fail.dit):4:16"
     },
     {
       "type": "fail",
