@@ -1,3 +1,5 @@
+*This readme and master branch are for a prototype of dit released in April 2020. All work since then has been in the 'functions' branch. This update is a total overhaul, turning 'assigners' into proper, first class citizen, [KirbyLang](https://www.reddit.com/r/ProgrammingLanguages/comments/km060w/thoughts_on_kirby_languages_a_lang_that_can/) functions. Stay tuned for updates.*
+
 # dit - The universal container file
 ![Short Demo](https://raw.githubusercontent.com/isaiahshiner/dit-cli/master/docs/gifs/short.gif)
 
