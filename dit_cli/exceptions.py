@@ -132,11 +132,11 @@ class EndOfFileError(DitError):
         super().__init__("EndOfFileError", "Unexpected end of file")
 
 
-class EndOfClassError(DitError):
+class EndOfClangError(DitError):
     """Raised when the end of a class is reached unexpectedly"""
 
-    def __init__(self) -> None:
-        super().__init__("EndOfFileError", "Unexpected end of class")
+    def __init__(self, clang_name) -> None:
+        super().__init__("EndOfFileError", f"Unexpected end of {clang_name}")
 
 
 class CriticalError(DitError):

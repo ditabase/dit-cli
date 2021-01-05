@@ -21,6 +21,7 @@ class d_Thing(object):
         self.py_func: Callable = None  # type: ignore
         self.can_be_anything: bool = False
         self.is_null: bool = True
+        self.is_built_in: bool = False
 
     def set_value(self, new_value: d_Thing) -> None:
         # alter own class to *become* the type it is assigned to.
@@ -276,7 +277,7 @@ def _type_to_obj(dec: Declarable) -> d_Thing:
     elif dec.type_ == d_Grammar.PRIMITIVE_INSTANCE:
         thing = d_Instance()
     elif dec.type_ == d_Grammar.PRIMITIVE_FUNC:
-        thing = d_Function()
+        thing = d_Func()
     elif dec.type_ == d_Grammar.PRIMITIVE_DIT:
         thing = d_Dit()
 
@@ -340,22 +341,25 @@ class d_Class(d_Body):
         self.parents: List[d_Class] = []
 
 
-class d_Language(d_Thing):
-    pass
+class d_Lang(d_Body):
+    def __init__(self) -> None:
+        super().__init__()
+        self.public_type = "Lang"
+        self.grammar = d_Grammar.VALUE_LANG
+        self.parents: List[d_Lang] = []
 
 
-class d_Function(d_Body):
+class d_Func(d_Body):
     def __init__(self) -> None:
         super().__init__()
         self.public_type = "Function"
         self.grammar = d_Grammar.VALUE_FUNC
 
         self.orig_loc: CodeLocation = None  # type: ignore
-        self.lang: d_Grammar = None  # type: ignore
+        self.lang: d_Lang = None  # type: ignore
         self.return_: d_Type = None  # type: ignore
         self.return_list: bool = None  # type: ignore
         self.parameters: List[Declarable] = []
-        self.is_built_in: bool = False
 
 
 d_Type = Union[d_Grammar, d_Class]
@@ -371,9 +375,7 @@ class FlowControlException(Exception):
 class ReturnController(FlowControlException):
     """Raised when a function executes a return statement"""
 
-    def __init__(
-        self, value: d_Thing, func: d_Function, orig_loc: CodeLocation
-    ) -> None:
+    def __init__(self, value: d_Thing, func: d_Func, orig_loc: CodeLocation) -> None:
 
         if value.grammar == d_Grammar.NULL:
             super().__init__(Token(d_Grammar.NULL, orig_loc))

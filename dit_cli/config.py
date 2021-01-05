@@ -5,7 +5,7 @@ import os
 import toml
 
 
-def get_config() -> dict:
+def get_config():
     """Get the config, or generate it if not present"""
     path = get_path()
     if not os.path.isfile(path):

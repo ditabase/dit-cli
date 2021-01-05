@@ -38,9 +38,9 @@ class d_Grammar(Enum):
     CLASS = "class"
     SIG = "sig"
     FUNC = "func"
-    DITLANG = "Ditlang"
-    PYTHON = "Python"
-    JAVASCRIPT = "JavaScript"
+    # DITLANG = "Ditlang"
+    # PYTHON = "Python"
+    # JAVASCRIPT = "JavaScript"
     VOID = "void"
     LISTOF = "listOf"
     IMPORT = "import"
@@ -48,6 +48,7 @@ class d_Grammar(Enum):
     THROW = "throw"
     RETURN = "return"
     NULL = "null"
+    LANG = "lang"
 
     # Primitives (basically keywords)
     PRIMITIVE_THING = "Thing"
@@ -56,6 +57,7 @@ class d_Grammar(Enum):
     PRIMITIVE_INSTANCE = "Instance"
     PRIMITIVE_FUNC = "Func"
     PRIMITIVE_DIT = "Dit"
+    PRIMITIVE_LANG = "Lang"
 
     # Special values
     WORD = 0
@@ -84,12 +86,14 @@ PRIM_TO_VALUE_DISPATCH = {
     d_Grammar.PRIMITIVE_INSTANCE: d_Grammar.VALUE_INSTANCE,
     d_Grammar.PRIMITIVE_FUNC: d_Grammar.VALUE_FUNC,
     d_Grammar.PRIMITIVE_DIT: d_Grammar.VALUE_DIT,
+    d_Grammar.PRIMITIVE_LANG: d_Grammar.VALUE_LANG,
     d_Grammar.VALUE_THING: d_Grammar.VALUE_THING,
     d_Grammar.VALUE_STRING: d_Grammar.VALUE_STRING,
     d_Grammar.VALUE_CLASS: d_Grammar.VALUE_CLASS,
     d_Grammar.VALUE_INSTANCE: d_Grammar.VALUE_INSTANCE,
     d_Grammar.VALUE_FUNC: d_Grammar.VALUE_FUNC,
     d_Grammar.VALUE_DIT: d_Grammar.VALUE_DIT,
+    d_Grammar.VALUE_LANG: d_Grammar.VALUE_LANG,
     d_Grammar.NULL: d_Grammar.NULL,
     d_Grammar.VOID: d_Grammar.VOID,
 }
@@ -106,26 +110,26 @@ VALUE_TO_PRIM_DISPATCH = {
     d_Grammar.VALUE_INSTANCE: d_Grammar.PRIMITIVE_INSTANCE,
     d_Grammar.VALUE_FUNC: d_Grammar.PRIMITIVE_FUNC,
     d_Grammar.VALUE_DIT: d_Grammar.PRIMITIVE_DIT,
+    d_Grammar.VALUE_LANG: d_Grammar.PRIMITIVE_LANG,
     d_Grammar.PRIMITIVE_THING: d_Grammar.PRIMITIVE_THING,
     d_Grammar.PRIMITIVE_STRING: d_Grammar.PRIMITIVE_STRING,
     d_Grammar.PRIMITIVE_CLASS: d_Grammar.PRIMITIVE_CLASS,
     d_Grammar.PRIMITIVE_INSTANCE: d_Grammar.PRIMITIVE_INSTANCE,
     d_Grammar.PRIMITIVE_FUNC: d_Grammar.PRIMITIVE_FUNC,
     d_Grammar.PRIMITIVE_DIT: d_Grammar.PRIMITIVE_DIT,
+    d_Grammar.PRIMITIVE_LANG: d_Grammar.PRIMITIVE_LANG,
     d_Grammar.NULL: d_Grammar.NULL,
 }
 
-VALUE_CLASS_ABLES = [
+VALUE_CLANG_ABLES = [
     d_Grammar.DOT,
     d_Grammar.EQUALS,
     d_Grammar.COMMA,
     d_Grammar.SEMI,
-    d_Grammar.PAREN_LEFT,
     d_Grammar.BRACKET_RIGHT,
     d_Grammar.EOF,  # to trigger _missing_terminal
 ]
 
-LANGS = [d_Grammar.DITLANG, d_Grammar.PYTHON, d_Grammar.JAVASCRIPT]
 
 NON_VALUES_STARTERS = [
     d_Grammar.DOT,
@@ -138,9 +142,9 @@ NON_VALUES_STARTERS = [
     d_Grammar.BRACKET_RIGHT,
     d_Grammar.BACKSLASH,
     d_Grammar.VOID,
-    d_Grammar.DITLANG,
-    d_Grammar.PYTHON,
-    d_Grammar.JAVASCRIPT,
+    # d_Grammar.DITLANG,
+    # d_Grammar.PYTHON,
+    # d_Grammar.JAVASCRIPT,
     d_Grammar.LISTOF,
     d_Grammar.FROM,
     d_Grammar.THROW,
@@ -152,6 +156,7 @@ NON_VALUES_STARTERS = [
     d_Grammar.PRIMITIVE_INSTANCE,
     d_Grammar.PRIMITIVE_FUNC,
     d_Grammar.PRIMITIVE_DIT,
+    d_Grammar.PRIMITIVE_LANG,
 ]
 
 EXPRESSION_STARTERS = [
@@ -159,6 +164,7 @@ EXPRESSION_STARTERS = [
     d_Grammar.QUOTE_SINGLE,
     d_Grammar.BRACKET_LEFT,
     d_Grammar.CLASS,
+    d_Grammar.LANG,
     d_Grammar.SIG,
     d_Grammar.FUNC,
     d_Grammar.IMPORT,
@@ -170,6 +176,7 @@ EXPRESSION_STARTERS = [
     d_Grammar.VALUE_INSTANCE,
     d_Grammar.VALUE_FUNC,
     d_Grammar.VALUE_DIT,
+    d_Grammar.VALUE_LANG,
 ]
 
 SINGLES = [
@@ -198,11 +205,12 @@ DOUBLES = [
 
 KEYWORDS = [
     d_Grammar.CLASS,
+    d_Grammar.LANG,
     d_Grammar.SIG,
     d_Grammar.FUNC,
-    d_Grammar.DITLANG,
-    d_Grammar.PYTHON,
-    d_Grammar.JAVASCRIPT,
+    # d_Grammar.DITLANG,
+    # d_Grammar.PYTHON,
+    # d_Grammar.JAVASCRIPT,
     d_Grammar.VOID,
     d_Grammar.LISTOF,
     d_Grammar.IMPORT,
@@ -226,6 +234,8 @@ VALUES = [
     d_Grammar.VALUE_INSTANCE,
     d_Grammar.VALUE_FUNC,
     d_Grammar.VALUE_DIT,
+    d_Grammar.VALUE_LANG,
+    d_Grammar.VALUE_LANG,
 ]
 
 TYPES = [
@@ -236,6 +246,7 @@ TYPES = [
     d_Grammar.PRIMITIVE_INSTANCE,
     d_Grammar.PRIMITIVE_FUNC,
     d_Grammar.PRIMITIVE_DIT,
+    d_Grammar.PRIMITIVE_LANG,
 ]
 
 PRIMITIVES = [
@@ -252,6 +263,7 @@ DOTABLES = [
     d_Grammar.VALUE_INSTANCE,
     d_Grammar.VALUE_FUNC,
     d_Grammar.VALUE_DIT,
+    d_Grammar.VALUE_LANG,
 ]
 
 NAMEABLES = [
@@ -262,5 +274,6 @@ NAMEABLES = [
     d_Grammar.VALUE_INSTANCE,
     d_Grammar.VALUE_FUNC,
     d_Grammar.VALUE_DIT,
+    d_Grammar.VALUE_LANG,
     d_Grammar.NEW_NAME,
 ]

@@ -3,7 +3,8 @@ from dit_cli.grammar import d_Grammar
 from dit_cli.oop import (
     Declarable,
     d_Dit,
-    d_Function,
+    d_Func,
+    d_Lang,
     d_List,
     d_String,
     d_Thing,
@@ -54,10 +55,6 @@ PRINT = {
 LANG = PRINT
 
 
-def add_built_ins(dit: d_Dit) -> None:
-    pass
-
-
 def d_str(thing: d_Thing) -> str:
     if thing.is_null:
         return LANG["null_type"]
@@ -71,8 +68,17 @@ def d_str(thing: d_Thing) -> str:
         raise CriticalError("Unrecognized argument for str()")
 
 
-def d_print(thing: d_Thing) -> None:
-    print(d_str(thing))
+def d_print(func: d_Func) -> None:
+    # The first attribute is the parameter we want.
+    print(d_str(func.attrs[0]))
+
+
+b_print = d_Func()
+b_print.name = "print"
+b_print.parameters = [Declarable(d_Grammar.PRIMITIVE_THING, "value")]
+b_print.is_built_in = True
+b_print.py_func = d_print
+b_print.is_null = False
 
 
 def _ser_list(thing: d_Thing) -> str:
@@ -127,13 +133,9 @@ def _ser_obj(obj: d_Thing) -> str:
     raise NotImplementedError
 
 
-PRINT_DIT = d_Function()
-PRINT_DIT.name = "print"
-PRINT_DIT.parameters = [Declarable(d_Grammar.PRIMITIVE_THING, "value")]
-PRINT_DIT.is_built_in = True
-PRINT_DIT.py_func = d_print
+b_Ditlang = d_Lang()
+b_Ditlang.name = "Ditlang"
+b_Ditlang.is_built_in = True
 
-BUILT_INS = [
-    {"name": "print", "return": "void", "py_func": d_print, "dit_func": PRINT_DIT},
-    {"name": "str", "return": "d_String", "py_func": d_str},
-]
+
+BUILT_INS = [b_print, b_Ditlang]

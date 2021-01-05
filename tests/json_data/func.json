@@ -10,13 +10,13 @@
       "type": "fail",
       "title": "sig, duplicate Ditlang",
       "dit": "sig Ditlang Ditlang",
-      "expected": "Line: 1 Col: 13 (tests/fail.dit)\nsig Ditlang Ditlang\n            ^\n\nSyntaxError: Language was already assigned"
+      "expected": "Line: 1 Col: 19 (tests/fail.dit)\nsig Ditlang Ditlang\n                  ^\n\nSyntaxError: Language was already assigned"
     },
     {
       "type": "fail",
       "title": "sig, duplicate lang",
-      "dit": "sig Ditlang Python",
-      "expected": "Line: 1 Col: 13 (tests/fail.dit)\nsig Ditlang Python\n            ^\n\nSyntaxError: Language was already assigned"
+      "dit": "lang JavaScript {{}}\nsig Ditlang JavaScript",
+      "expected": "Line: 2 Col: 22 (tests/fail.dit)\nsig Ditlang JavaScript\n                     ^\n\nSyntaxError: Language was already assigned"
     },
     {
       "type": "fail",
@@ -47,12 +47,6 @@
       "title": "sig, listOf void",
       "dit": "func listOf void test(String out) {{}}",
       "expected": "Line: 1 Col: 6 (tests/fail.dit)\nfunc listOf void test(String out) {{}}\n     ^\n\nSyntaxError: Expected parameter list"
-    },
-    {
-      "type": "fail",
-      "title": "sig, misspelled JavaScript, did you mean?",
-      "dit": "sig Javascript func test() {{}}",
-      "expected": "Line: 1 Col: 5 (tests/fail.dit)\nsig Javascript func test() {{}}\n    ^\n\nSyntaxError: Did you mean 'JavaScript'?"
     },
     {
       "type": "fail",
@@ -202,18 +196,6 @@
       "type": "success",
       "title": "func, imported class return type, inner class",
       "dit": "import classDit from 'tests/import2.dit';\nsig classDit.A.B func test2() {{}}",
-      "expected": "Finished successfully\n"
-    },
-    {
-      "type": "success",
-      "title": "func, vanilla Python",
-      "dit": "sig Python func test() {{}}",
-      "expected": "Finished successfully\n"
-    },
-    {
-      "type": "success",
-      "title": "func, vanilla JavaScript",
-      "dit": "sig JavaScript func test() {{}}",
       "expected": "Finished successfully\n"
     },
     {

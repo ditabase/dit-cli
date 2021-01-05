@@ -6,7 +6,14 @@ from dit_cli.built_in import BUILT_INS
 from dit_cli.data_classes import CodeLocation
 from dit_cli.exceptions import EndOfFileError, SyntaxError_
 from dit_cli.grammar import DOUBLES, KEYWORDS, SINGLES, d_Grammar
-from dit_cli.oop import Declarable, Token, d_Body, d_Container, d_Function, d_Instance
+from dit_cli.oop import (
+    Declarable,
+    Token,
+    d_Body,
+    d_Container,
+    d_Func,
+    d_Instance,
+)
 
 WHITESPACE = re.compile(r"\s")
 LETTER = re.compile(r"[A-Za-z0-9_-]")
@@ -78,7 +85,7 @@ class InterpretContext:
         self.dotted_body: d_Container = None  # type: ignore
         self.dotted_inst: d_Instance = None  # type: ignore
         self.comma_depth: int = 0
-        self.declaring_func: d_Function = None  # type: ignore
+        self.declaring_func: d_Func = None  # type: ignore
         self.terminal_loc: CodeLocation = None  # type: ignore
         self.named_statement: bool = False
 
@@ -181,10 +188,8 @@ def _find_words(inter: InterpretContext, find_word: bool) -> Optional[Token]:
             if word == grammar.value:
                 return Token(grammar, token_loc)
         for built_in in BUILT_INS:
-            if word == built_in["name"]:
-                return Token(
-                    d_Grammar.VALUE_FUNC, token_loc, thing=built_in["dit_func"]
-                )
+            if word == built_in.name:
+                return Token(d_Grammar.VALUE_FUNC, token_loc, thing=built_in)
         # Used by var.class.attr expressions
         # They find the word themselves.
         if find_word is False:
