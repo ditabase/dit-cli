@@ -14,12 +14,6 @@
     },
     {
       "type": "fail",
-      "title": "equals, undeclared var",
-      "dit": "test = 'Hello';",
-      "expected": "Line: 1 Col: 1 (tests/fail.dit)\ntest = 'Hello';\n^\n\nSyntaxError: Undeclared variable 'test'"
-    },
-    {
-      "type": "fail",
       "title": "equals, named func",
       "dit": "Func test = func other() {{}}",
       "expected": "Line: 1 Col: 11 (tests/fail.dit)\nFunc test = func other() {{}}\n          ^\n\nSyntaxError: A named declaration cannot be used for assignment"
@@ -35,6 +29,12 @@
       "title": "equals, named class",
       "dit": "Class test = class other {{}}",
       "expected": "Line: 1 Col: 12 (tests/fail.dit)\nClass test = class other {{}}\n           ^\n\nSyntaxError: A named declaration cannot be used for assignment"
+    },
+    {
+      "type": "succeed",
+      "title": "equals, undeclared var",
+      "dit": "test = 'Hello';",
+      "expected": "Finished successfully\n"
     },
     {
       "type": "succeed",

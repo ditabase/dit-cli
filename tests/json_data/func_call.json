@@ -25,22 +25,28 @@
       "expected": "Line: 2 Col: 1 (tests/fail.dit)\ntest();\n^\n\nSyntaxError: test() expected a return"
     },
     {
-      "type": "success",
+      "type": "succeed",
       "title": "func call, Ditlang, 2 parameters",
       "dit": "func test(String a, String b) {{\nString testA = a;\nString testB = b;\n}}\ntest('cat', 'dog');",
       "expected": "Finished successfully\n"
     },
     {
-      "type": "success",
+      "type": "succeed",
       "title": "func call, simple string return",
       "dit": "sig String func test1() {{\n    return 'cat';\n}}\nString test2 = test1();",
       "expected": "Finished successfully\n"
     },
     {
-      "type": "success",
+      "type": "succeed",
       "title": "func call, Ditlang, dotted class return",
       "dit": "sig Class func test() {{\nreturn class {{String output = 'cat';}};\n}}\nString test2 = test().output;",
       "expected": "Finished successfully\n"
+    },
+    {
+      "type": "succeed",
+      "title": "func call, multiple calls, 1 var",
+      "dit": "String test = 'cat';\nsig String func doNothing(String dumb) {{\n    return dumb;\n}}\ntest = doNothing(test);\nprint(test);\ntest = doNothing(test);\nprint(test);",
+      "expected": "cat\ncat\n"
     }
   ]
 }

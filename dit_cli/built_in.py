@@ -2,10 +2,10 @@ from dit_cli.exceptions import CriticalError
 from dit_cli.grammar import d_Grammar
 from dit_cli.oop import (
     Declarable,
-    d_Dit,
     d_Func,
     d_Lang,
     d_List,
+    d_Ref,
     d_String,
     d_Thing,
 )
@@ -70,7 +70,10 @@ def d_str(thing: d_Thing) -> str:
 
 def d_print(func: d_Func) -> None:
     # The first attribute is the parameter we want.
-    print(d_str(func.attrs[0]))
+    val = func.attrs[0]
+    if isinstance(val, d_Ref):
+        val = val.target
+    print(d_str(val))
 
 
 b_print = d_Func()

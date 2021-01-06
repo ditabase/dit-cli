@@ -1,0 +1,5 @@
+lang SomeLang {{
+    -priority- = '5';
+    String value2 = 'poodle';
+    value3 = 'lion';
+}}

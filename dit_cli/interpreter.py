@@ -1,6 +1,6 @@
 import copy
 from itertools import zip_longest
-from typing import List, NoReturn, Optional, Union
+from typing import List, NoReturn, Optional, Tuple, Union
 
 from dit_cli.built_in import b_Ditlang
 from dit_cli.data_classes import CodeLocation
@@ -14,11 +14,8 @@ from dit_cli.exceptions import (
 )
 from dit_cli.grammar import (
     DOTABLES,
-    EXPRESSION_STARTERS,
-    NAMEABLES,
     PRIMITIVES,
     TYPES,
-    VALUE_CLANG_ABLES,
     d_Grammar,
     prim_to_value,
     value_to_prim,
@@ -172,6 +169,16 @@ def _value_lang(inter: InterpretContext) -> Optional[d_Thing]:
     return _value_clang(inter)
 
 
+VALUE_CLANG_ABLES = [
+    d_Grammar.DOT,
+    d_Grammar.EQUALS,
+    d_Grammar.COMMA,
+    d_Grammar.SEMI,
+    d_Grammar.BRACKET_RIGHT,
+    d_Grammar.EOF,  # to trigger _missing_terminal
+]
+
+
 def _value_clang(inter: InterpretContext) -> Optional[d_Thing]:
     if inter.declaring_func is not None:
         # sig someLang someClass...
@@ -191,6 +198,14 @@ def _value_clang(inter: InterpretContext) -> Optional[d_Thing]:
         # This class is being instantiated
         # someClass anInstance = someClass();
         return _parenable(inter)
+    elif (
+        isinstance(inter.curr_tok.thing, d_Lang)
+        and inter.dec.type_ is d_Grammar.PRIMITIVE_LANG
+    ):
+        # This lang is being legally redeclared
+        # lang JavaScript {{}}
+        # Lang JavaScript ...
+        return
     elif inter.next_tok.grammar in VALUE_CLANG_ABLES:
         # someClass = someOtherClass;
         # someLang.someLangFunc();
@@ -207,16 +222,39 @@ def _value_clang(inter: InterpretContext) -> Optional[d_Thing]:
         _type(inter)
 
 
+NAMEABLES = [
+    d_Grammar.VALUE_CLASS,
+    d_Grammar.VALUE_INSTANCE,
+    d_Grammar.VALUE_FUNC,
+    d_Grammar.VALUE_DIT,
+    d_Grammar.VALUE_LANG,
+    d_Grammar.NEW_NAME,
+]
+
+DUPLICABLES = [
+    d_Grammar.VALUE_THING,
+    d_Grammar.VALUE_STRING,
+    d_Grammar.VALUE_LIST,
+]
+
+
 def _type(inter: InterpretContext) -> None:
-    # String test;
-    # someClass test;
+    # String test ...
+    # someClass test ...
+    # String someDotable.monkeyPatch ...
     # This function is reused by _primitive and _value_class
     inter.dec.type_ = _token_to_type(inter.curr_tok)
+    if inter.next_tok.grammar in DUPLICABLES:
+        _raise_helper(f"'{inter.next_tok.thing.name}' has already been declared", inter)
     if inter.next_tok.grammar in NAMEABLES:
         _expression_dispatch(inter)
     else:
         _raise_helper("Expected a new name to follow type", inter)
-    inter.advance_tokens()
+
+    if inter.next_tok.grammar == d_Grammar.NEW_NAME:
+        # to handle the specific case when a lang is being legally redeclared
+        # The tokens were already advanced in _value_lang.
+        inter.advance_tokens()
     _equalable(inter)
 
 
@@ -296,16 +334,26 @@ def _dot(inter: InterpretContext) -> Token:
 
 
 def _equalable(inter: InterpretContext) -> Optional[d_Thing]:
+    if (
+        isinstance(inter.curr_tok.thing, d_Lang)
+        and inter.prev_tok.grammar == d_Grammar.PRIMITIVE_LANG
+    ):
+        # Since Langs can be redeclared, we just remove the type_
+        # and pretend it was never there in the first place.
+        # Lang JavaScript ...
+        inter.dec.type_ = None  # type: ignore
     if inter.dec.type_ is not None and inter.dec.name is None:
         # _new_name should have been found, not an existing variable.
+        # String existingValue ...
         _raise_helper(f"'{inter.curr_tok.thing.name}' has already been declared", inter)
-    if inter.next_tok.grammar == d_Grammar.EQUALS:
-        inter.equaling = True
+    elif inter.next_tok.grammar == d_Grammar.EQUALS:
+        # Assign existing or new variables
+        # String value = ...
         _equals(inter)
-        inter.equaling = False
         inter.dec.reset()
     elif inter.dec.type_ is not None and not inter.equaling:
         # create variable without assignment
+        # String count;
         _add_attr_wrap(inter)
         inter.dec.reset()
 
@@ -322,9 +370,13 @@ def _equals(inter: InterpretContext) -> None:
     else:
         assignee = None
     inter.advance_tokens()
+    inter.equaling = True
     value = _expression_dispatch(inter)
+    inter.equaling = False
     if value is None:
         if inter.named_statement:
+            # Prevent assignment of non-anonymous statements.
+            # Class anonName = class RealName {{}}
             _raise_helper(
                 "A named declaration cannot be used for assignment", inter, orig_loc
             )
@@ -376,9 +428,21 @@ def _terminal(inter: InterpretContext) -> d_Thing:
 
 
 def _new_name(inter: InterpretContext) -> None:
-    if inter.dec.type_ is None:
-        _raise_helper(f"Undeclared variable '{inter.next_tok.word}'", inter)
     inter.dec.name = inter.next_tok.word
+    if inter.dec.type_ is None:
+        # new name without a type declaration is only allowed with an equals
+        # unknownName = ...
+        inter.advance_tokens()
+        if inter.next_tok.grammar != d_Grammar.EQUALS:
+            _raise_helper(
+                f"Undeclared variable '{inter.curr_tok.word}'",
+                inter,
+                inter.curr_tok.loc,
+            )
+        # if there is an equals, then we just pretend the declaration was 'Thing'
+        inter.dec.type_ = d_Grammar.PRIMITIVE_THING
+        _equals(inter)
+        inter.dec.reset()
 
 
 def _string(inter: InterpretContext) -> d_String:
@@ -450,7 +514,7 @@ def _paren_left(inter: InterpretContext) -> Optional[d_Thing]:
                 raise NotImplementedError
         else:
             raise CriticalError("Unrecognized type for function argument")
-        func.add_attr(param, arg_loc.thing)
+        func.add_attr(param, arg_loc.thing, use_ref=True)
 
     try:
         if func.is_built_in:
@@ -530,6 +594,8 @@ def _trailing_comma(inter: InterpretContext, right: d_Grammar) -> Optional[NoRet
 
 
 def _arg_list(inter: InterpretContext, right: d_Grammar) -> List[ArgumentLocation]:
+    # someFunc('arg1', 'arg2');
+    # listOf String = ['a', 'b', ['c'], 'd'];
     args: List[ArgumentLocation] = []
     inter.advance_tokens()
     inter.comma_depth += 1
@@ -546,45 +612,136 @@ def _arg_list(inter: InterpretContext, right: d_Grammar) -> List[ArgumentLocatio
         _trailing_comma(inter, right)
 
 
+STRINGABLES = [
+    d_Grammar.QUOTE_DOUBLE,
+    d_Grammar.QUOTE_SINGLE,
+    d_Grammar.VALUE_THING,
+    d_Grammar.VALUE_STRING,
+    d_Grammar.VALUE_CLASS,
+    d_Grammar.VALUE_INSTANCE,
+    d_Grammar.VALUE_FUNC,
+    d_Grammar.VALUE_DIT,
+    d_Grammar.VALUE_LANG,
+]
+
+
 def _import(inter: InterpretContext) -> Optional[d_Dit]:
+    # import LINK
+    # import NAMESPACE from LINK
     orig_loc = copy.deepcopy(inter.next_tok.loc)
-    dit = d_Dit()
-    dit.is_null = False
+    name = None
 
     inter.advance_tokens(False)
     gra = inter.next_tok.grammar
-    if gra != d_Grammar.WORD and gra not in EXPRESSION_STARTERS:
+    if gra != d_Grammar.WORD and gra not in STRINGABLES:
         _raise_helper("Expected a name or filepath string for import", inter)
 
     if gra == d_Grammar.WORD:
         # import SomeName from "someFilePath.dit";
-        # WET: Identical to section in _class
         if inter.body.find_attr(inter.next_tok.word, scope_mode=True):
             _raise_helper(f"'{inter.next_tok.word}' has already been declared", inter)
-        dit.name = inter.next_tok.word
+        name = inter.next_tok.word
         inter.advance_tokens()
         if inter.next_tok.grammar != d_Grammar.FROM:
             _raise_helper("Expected 'from'", inter)
         inter.advance_tokens()
 
-    if inter.next_tok.grammar not in EXPRESSION_STARTERS:
+    dit = _import_or_pull(inter, orig_loc)
+    dit.name = name  # type: ignore
+
+    # handled slightly differently from other bodies.
+    # import always ends with a semicolon, even with a name.
+    anon = _handle_anon(inter, dit, orig_loc)
+    if anon is not None:
+        return anon  # type: ignore
+    else:
+        # Thus, this explicit call to _terminal.
+        _terminal(inter)
+
+
+def _pull(inter: InterpretContext) -> None:
+    # pull TARGET (as REPLACEMENT), ... from LINK
+    orig_loc = copy.deepcopy(inter.next_tok.loc)
+    targets: List[Tuple[str, Optional[str]]] = []
+    langs: List[Optional[d_Lang]] = []
+    while True:
+        # pull ...
+        # pull THING, ...
+        # pull THING as NAME, ...
+        inter.advance_tokens(False)
+        if inter.next_tok.grammar != d_Grammar.WORD:
+            _raise_helper("Expected name to pull from linked dit", inter)
+        # pull NAME ...
+        target = inter.next_tok.word
+        loc = copy.deepcopy(inter.next_tok.loc)
+        replacement = None
+        inter.advance_tokens()
+        if inter.next_tok.grammar == d_Grammar.AS:
+            # pull NAME as ...
+            inter.advance_tokens(False)
+            if inter.next_tok.grammar != d_Grammar.WORD:
+                _raise_helper("Expected name to replace target name", inter)
+            replacement = inter.next_tok.word
+            loc = inter.next_tok.loc
+            inter.advance_tokens()
+
+        name = replacement if replacement is not None else target
+        result = inter.body.find_attr(name, True)
+        if result is not None:
+            if isinstance(result, d_Lang):
+                # Langauges can overwrite langs already in this dit
+                # lang someLang {{}}
+                # pull someLang from LINK
+                langs.append(result)
+            else:
+                _raise_helper(f"'{name}' has already been declared", inter, loc)
+        else:
+            langs.append(None)
+        targets.append((target, replacement))
+
+        if inter.next_tok.grammar == d_Grammar.FROM:
+            break
+        elif inter.next_tok.grammar == d_Grammar.COMMA:
+            continue
+        else:
+            _raise_helper("Expected 'from' or ',' to follow target", inter)
+
+    inter.advance_tokens()
+    dit = _import_or_pull(inter, orig_loc)
+    for (target, replacement), lang in zip(targets, langs):
+        result = dit.find_attr(target)
+        if result is None:
+            _raise_helper(f"'{target}' is not a valid member of this dit", inter)
+        result.name = replacement if replacement is not None else target
+        if lang is not None:
+            # explicit call to set_value, to activate -priority- comparisons
+            lang.set_value(result)
+        else:
+            inter.body.attrs.append(result)
+
+
+def _import_or_pull(inter: InterpretContext, orig_loc: CodeLocation) -> d_Dit:
+    # The next token is always the link. We just need to get the dit and return it.
+    # import LINK
+    # import NAMESPACE from LINK
+    # pull ... from LINK
+    dit = d_Dit()
+    dit.is_null = False
+    if inter.next_tok.grammar == d_Grammar.NULL:
+        _raise_helper("Cannot import from null", inter)
+    elif inter.next_tok.grammar not in STRINGABLES:
         _raise_helper("Expected a filepath string for import", inter)
 
-    string_loc = copy.deepcopy(inter.next_tok.loc)
     value = _expression_dispatch(inter)
     if inter.dec.name is not None and not inter.equaling:
         dit.path = inter.dec.name
         inter.dec.name = None  # type: ignore
     elif value is None:
         raise NotImplementedError
-    elif value.is_null:
-        _raise_helper("Cannot import from null", inter, string_loc)
     elif isinstance(value, d_String):
         dit.path = value.string_value
-    elif isinstance(value, d_Thing):  # type: ignore
-        _raise_helper(f"Expected string value, not {value.public_type}", inter)
     else:
-        raise CriticalError("Unrecognized value for path assignment")
+        _raise_helper(f"Expected string value, not {value.public_type}", inter)
 
     dit.finalize()
     try:
@@ -592,15 +749,7 @@ def _import(inter: InterpretContext) -> Optional[d_Dit]:
     except DitError as err:
         err.add_trace(dit.path, orig_loc, "import")
         raise
-
-    # handled slightly differently from other bodies.
-    # import always ends with a semicolon, even with a name.
-    anon = _handle_anon(inter, dit, orig_loc)
-    if anon:
-        return anon  # type: ignore
-    else:
-        # Thus, this explicit call to _terminal.
-        _terminal(inter)
+    return dit
 
 
 def _class(inter: InterpretContext) -> Optional[d_Class]:
@@ -620,6 +769,9 @@ def _lang(inter: InterpretContext) -> None:
 def _clang(
     inter: InterpretContext, clang: Union[d_Class, d_Lang]
 ) -> Optional[Union[d_Class, d_Lang]]:
+    # class/lang NAME {{}}
+    # class/lang {{}}; <- Anonymous version
+    lang = None
     orig_loc = copy.deepcopy(inter.next_tok.loc)
     clang_name = "class" if isinstance(clang, d_Class) else "lang"
 
@@ -628,9 +780,17 @@ def _clang(
         _raise_helper(f"Expected name or body to follow {clang_name}", inter)
 
     if inter.next_tok.grammar == d_Grammar.WORD:
-        # WET: Identical to section in _import
-        if inter.body.find_attr(inter.next_tok.word, scope_mode=True):
-            _raise_helper(f"'{inter.next_tok.word}' has already been declared", inter)
+        result = inter.body.find_attr(inter.next_tok.word, scope_mode=True)
+        if result is not None:
+            if isinstance(result, d_Lang):
+                # Langs are allowed to be redeclared
+                # lang someLang {{}}
+                # lang someLang {{}}
+                lang = result
+            else:
+                _raise_helper(
+                    f"'{inter.next_tok.word}' has already been declared", inter
+                )
         clang.name = inter.next_tok.word
         inter.advance_tokens()  # get {{
         if inter.next_tok.grammar != d_Grammar.BRACE_LEFT:
@@ -642,12 +802,11 @@ def _clang(
         interpret(clang)
     except EndOfFileError as err:
         raise EndOfClangError(clang_name) from err
-    return _handle_anon(inter, clang, orig_loc)  # type: ignore
+    return _handle_anon(inter, clang, orig_loc, lang)  # type: ignore
 
 
 def _sig(inter: InterpretContext) -> Optional[d_Func]:
     # sig JavaScript String ... \n func
-    orig_loc = copy.deepcopy(inter.next_tok.loc)
     dotable_loc = None
     func = _sig_or_func(inter)
     did_dispatch = False
@@ -819,11 +978,19 @@ def _brace_left(inter: InterpretContext, body: d_Body) -> None:
 
 
 def _handle_anon(
-    inter: InterpretContext, body: d_Body, orig_loc: CodeLocation
+    inter: InterpretContext,
+    body: d_Body,
+    orig_loc: CodeLocation,
+    lang: Optional[d_Lang] = None,
 ) -> Optional[d_Body]:
-    if body.name:
+    if body.name is not None:
         # traditional statement, stop here
-        inter.body.attrs.append(body)
+        if lang is not None and isinstance(body, d_Lang):
+            # a language is being redeclared, must call set_value to
+            # activate priority comparison stuff
+            lang.set_value(body)
+        else:
+            inter.body.attrs.append(body)
         inter.named_statement = True
         return None
     else:
@@ -859,7 +1026,7 @@ def _trigger_eof_err(inter: InterpretContext) -> NoReturn:
 
 
 def _not_implemented(inter: InterpretContext) -> NoReturn:
-    raise NotImplementedError
+    _raise_helper("This keyword is reserved for later development", inter)
 
 
 def _illegal_statement(inter: InterpretContext) -> NoReturn:
@@ -896,13 +1063,15 @@ STATEMENT_DISPATCH = {
     d_Grammar.LANG:                   _lang,
     d_Grammar.SIG:                    _sig,
     d_Grammar.FUNC:                   _func,
-    #d_Grammar.DITLANG:                _illegal_statement,
-    #d_Grammar.PYTHON:                 _illegal_statement,
-    #d_Grammar.JAVASCRIPT:             _illegal_statement,
     d_Grammar.VOID:                   _illegal_statement,
     d_Grammar.LISTOF:                 _listof,
     d_Grammar.IMPORT:                 _import,
     d_Grammar.FROM:                   _illegal_statement,
+    d_Grammar.AS:                     _illegal_statement,
+    d_Grammar.PULL:                   _pull,
+    d_Grammar.USE:                    _not_implemented,
+    d_Grammar.STATIC:                 _not_implemented,
+    d_Grammar.INSTANCE:               _not_implemented,
     d_Grammar.THROW:                  _throw,
     d_Grammar.RETURN:                 _return,
     d_Grammar.NULL:                   _illegal_statement,
@@ -951,13 +1120,15 @@ EXPRESSION_DISPATCH = {
     d_Grammar.LANG:                   _lang,
     d_Grammar.SIG:                    _sig,
     d_Grammar.FUNC:                   _func,
-    #d_Grammar.DITLANG:                _illegal_expression,
-    #d_Grammar.PYTHON:                 _illegal_expression,
-    #d_Grammar.JAVASCRIPT:             _illegal_expression,
     d_Grammar.VOID:                   _illegal_expression,
     d_Grammar.LISTOF:                 _illegal_expression,
     d_Grammar.IMPORT:                 _import,
     d_Grammar.FROM:                   _illegal_expression,
+    d_Grammar.PULL:                   _illegal_expression,
+    d_Grammar.USE:                    _not_implemented,
+    d_Grammar.STATIC:                 _not_implemented,
+    d_Grammar.INSTANCE:               _not_implemented,
+    d_Grammar.THROW:                  _throw,
     d_Grammar.THROW:                  _illegal_expression,
     d_Grammar.RETURN:                 _illegal_expression,
     d_Grammar.NULL:                   _null,

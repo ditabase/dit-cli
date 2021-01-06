@@ -10,7 +10,7 @@
       "type": "fail",
       "title": "Thing, duplicate",
       "dit": "Thing test;\nThing test;",
-      "expected": "Line: 2 Col: 11 (tests/fail.dit)\nThing test;\n          ^\n\nSyntaxError: 'test' has already been declared"
+      "expected": "Line: 2 Col: 7 (tests/fail.dit)\nThing test;\n      ^\n\nSyntaxError: 'test' has already been declared"
     },
     {
       "type": "succeed",
@@ -22,6 +22,12 @@
       "type": "succeed",
       "title": "Thing, var assignment",
       "dit": "Thing thg;\nString test1 = 'cat';\nlistOf Class test2 = [class {{}}, class {{}}];\nClass test3 = class {{}};\nDit test4 = import 'tests/import.dit';\nFunc test5 = func (){{}};\nthg = test1;\nthg = test2;\nthg = test3;\nthg = test4;\nthg = test5;",
+      "expected": "Finished successfully\n"
+    },
+    {
+      "type": "succeed",
+      "title": "Thing, no primitive assignment",
+      "dit": "someVar = 'cat';\notherVar = 'dog';\nclass A {{\n    classVar = 'bird';\n    classVar2 = ['maybe', 'a', 'list'];\n    func -make-(String test) {{\n        tempVar = 'moon';\n        this.instVar = test;\n        this.instVar2 = 'keyboard';\n    }}\n}}\na = A('bottle');",
       "expected": "Finished successfully\n"
     }
   ]

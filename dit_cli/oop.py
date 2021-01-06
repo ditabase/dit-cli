@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Callable, Iterator, List, Optional, Union
+from typing import Callable, Iterator, List, Optional, Tuple, Union
 from urllib.error import HTTPError, URLError
 from urllib.request import urlopen
 
@@ -22,6 +22,18 @@ class d_Thing(object):
         self.can_be_anything: bool = False
         self.is_null: bool = True
         self.is_built_in: bool = False
+
+    def __hash__(self) -> int:
+        return hash(self.name)
+
+    def __eq__(self, o: object) -> bool:
+        # This hash and eq only check name, because they are only
+        # used for priority comparison in _compare_names
+        if not isinstance(o, d_Thing):
+            return False
+        elif self.name == o.name:
+            return True
+        return False
 
     def set_value(self, new_value: d_Thing) -> None:
         # alter own class to *become* the type it is assigned to.
@@ -44,6 +56,25 @@ class d_Thing(object):
             cls.null_singleton.grammar = d_Grammar.NULL
             cls.null_singleton.public_type = "null"
         return cls.null_singleton
+
+
+class d_Ref(object):
+    def __init__(self, name: str, target: d_Thing) -> None:
+        self.name = name
+        self.target = target
+
+    def __hash__(self) -> int:
+        return hash(self.name)
+
+    def __eq__(self, o: object) -> bool:
+        if not isinstance(o, d_Ref):
+            return False
+        elif self.name == o.name:
+            return True
+        return False
+
+
+Ref_Thing = Union[d_Thing, d_Ref]
 
 
 class d_String(d_Thing):
@@ -144,11 +175,9 @@ def _traverse(item: Union[list, d_Thing]) -> Iterator[d_Thing]:
 class d_Container(d_Thing):
     def __init__(self) -> None:
         super().__init__()
-        self.attrs: List[d_Thing] = []
+        self.attrs: List[Ref_Thing] = []
 
-    def find_attr(
-        self, name: str, scope_mode: Optional[bool] = False
-    ) -> Optional[d_Thing]:
+    def find_attr(self, name: str, scope_mode: bool = False) -> Optional[d_Thing]:
         if scope_mode:
             if not isinstance(self, d_Body):
                 raise CriticalError("A Container was given for scope mode")
@@ -181,7 +210,10 @@ class d_Container(d_Thing):
                 f"Cannot assign {new_value.public_type} to {self.public_type}"  # type: ignore
             )
 
-    def add_attr(self, dec: Declarable, value: Optional[d_Thing] = None) -> d_Thing:
+    def add_attr(
+        self, dec: Declarable, value: Optional[d_Thing] = None, use_ref: bool = False
+    ) -> d_Thing:
+        ref = None
         if dec.name is None:
             raise CriticalError("A declarable had no name")
         if self.find_attr(dec.name):
@@ -191,20 +223,29 @@ class d_Container(d_Thing):
             res = _check_value(value, dec)
             if res is not None:
                 raise TypeMismatchError(f"Cannot assign {res.actual} to {res.expected}")
-            value.name = dec.name
+
             if dec.type_ == d_Grammar.PRIMITIVE_THING:
                 value.can_be_anything = True
+            if use_ref:
+                # Use a ref to hide the original name without changing it
+                # Currently only used for function parameters afaik
+                ref = d_Ref(dec.name, value)
+            else:
+                value.name = dec.name
         else:
             value = _type_to_obj(dec)
 
-        self.attrs.append(value)
+        if ref is not None:
+            self.attrs.append(ref)
+        else:
+            self.attrs.append(value)
         return value
 
 
 def _find_attr_in_scope(name: str, body: d_Body) -> Optional[d_Thing]:
-    for attr in body.attrs:
-        if attr.name == name:
-            return attr
+    res = _simple_attr_search(body.attrs, name)
+    if res is not None:
+        return res
 
     if body.parent_scope is None:
         return None
@@ -213,14 +254,20 @@ def _find_attr_in_scope(name: str, body: d_Body) -> Optional[d_Thing]:
 
 
 def _find_attr_in_self(name: str, con: d_Container) -> Optional[d_Thing]:
-    for attr in con.attrs:
-        if attr.name == name:
-            return attr
+    res = _simple_attr_search(con.attrs, name)
+    if res is not None:
+        return res
     if isinstance(con, d_Instance):
         return _find_attr_in_self(name, con.parent)
     elif isinstance(con, d_Class):
         for parent in con.parents:
             return _find_attr_in_self(name, parent)
+
+
+def _simple_attr_search(attrs: List[Ref_Thing], name: str) -> Optional[d_Thing]:
+    for attr in attrs:
+        if attr.name == name:
+            return attr if isinstance(attr, d_Thing) else attr.target
 
 
 class d_Instance(d_Container):
@@ -347,6 +394,62 @@ class d_Lang(d_Body):
         self.public_type = "Lang"
         self.grammar = d_Grammar.VALUE_LANG
         self.parents: List[d_Lang] = []
+
+    def add_attr(self, dec: Declarable, value: Optional[d_Thing]) -> d_Thing:
+        result = super().add_attr(dec, value=value)
+        priority = 0
+        for item in self.attrs:
+            if item.name == "-priority-":
+                if not isinstance(item, d_String):
+                    raise TypeMismatchError("-priority- must be of type String")
+                priority = int(item.string_value)
+                break
+
+        if not hasattr(result, "priority_num"):
+            result.priority = priority  # type: ignore
+        return result
+
+    def set_value(self, new_value: d_Thing) -> None:
+        if isinstance(new_value, d_Lang):
+            self.attrs = _combine_langs(self, new_value)
+        else:
+            super().set_value(new_value)
+
+
+def _combine_langs(lang1: d_Lang, lang2: d_Lang) -> List[Ref_Thing]:
+    _del_name(lang1.attrs, "-priority-")
+    _del_name(lang2.attrs, "-priority-")
+    set1, set2 = set(lang1.attrs), set(lang2.attrs)
+    # Start by pulling all the items that don't have the same names into a list
+    fin = list(set1.symmetric_difference(set2))
+    # Get the indices of matching elements
+    indices = _find_matching_indices(lang1.attrs, lang2.attrs)
+    for ind1, ind2 in indices:
+        item1, item2 = lang1.attrs[ind2], lang2.attrs[ind1]
+        fin.append(item1 if item1.priority > item2.priority else item2)  # type: ignore
+    return fin
+
+
+def _del_name(list_: List[Ref_Thing], name: str) -> None:
+    for index, item in enumerate(list_):
+        if item.name == name:
+            del list_[index]
+            return
+
+
+def _find_matching_indices(
+    list1: List[Ref_Thing], list2: List[Ref_Thing]
+) -> List[Tuple[int, int]]:
+    """Return a list of tuples of indices for list1 and list2,
+    where there are matching elements.
+    [1,3,4,5,10], [5,1,3,2])  -> [(0,1), (1,2), (3,0)]
+    see: https://stackoverflow.com/a/49247599/8412474"""
+    inverse_index = {element: index for index, element in enumerate(list1)}
+    return [
+        (index, inverse_index[element])
+        for index, element in enumerate(list2)
+        if element in inverse_index
+    ]
 
 
 class d_Func(d_Body):

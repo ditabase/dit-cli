@@ -26,15 +26,33 @@
     },
     {
       "type": "fail",
+      "title": "import, null string",
+      "dit": "String test = null;\nimport dit from test;",
+      "expected": "Line: 2 Col: 17 (tests/fail.dit)\nimport dit from test;\n                ^\n\nSyntaxError: Cannot import from null"
+    },
+    {
+      "type": "fail",
       "title": "import, filepath is a list",
       "dit": "import dit from ['troll'];",
-      "expected": "Line: 1 Col: 26 (tests/fail.dit)\nimport dit from ['troll'];\n                         ^\n\nSyntaxError: Expected string value, not List"
+      "expected": "Line: 1 Col: 17 (tests/fail.dit)\nimport dit from ['troll'];\n                ^\n\nSyntaxError: Expected a filepath string for import"
     },
     {
       "type": "fail",
       "title": "import, filepath is a Class",
       "dit": "import dit from class {{String test = 'nope';}};",
-      "expected": "Line: 1 Col: 48 (tests/fail.dit)\nimport dit from class {{String test = 'nope';}};\n                                               ^\n\nSyntaxError: Expected string value, not Class"
+      "expected": "Line: 1 Col: 17 (tests/fail.dit)\nimport dit from class {{String test = 'nope';}};\n                ^\n\nSyntaxError: Expected a filepath string for import"
+    },
+    {
+      "type": "fail",
+      "title": "import, filepath is a Class",
+      "dit": "import dit from class {{String test = 'nope';}};",
+      "expected": "Line: 1 Col: 17 (tests/fail.dit)\nimport dit from class {{String test = 'nope';}};\n                ^\n\nSyntaxError: Expected a filepath string for import"
+    },
+    {
+      "type": "fail",
+      "title": "import, dotted VALUE_CLASS, not a String",
+      "dit": "class storage {{Func path = func(){{}};}}\nimport dit from storage.path;",
+      "expected": "Line: 2 Col: 29 (tests/fail.dit)\nimport dit from storage.path;\n                            ^\n\nSyntaxError: Expected string value, not Function"
     },
     {
       "type": "fail",

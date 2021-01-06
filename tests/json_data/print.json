@@ -1,13 +1,13 @@
 {
   "dits": [
     {
-      "type": "success",
+      "type": "succeed",
       "title": "print, raw string",
       "dit": "print('dog');",
       "expected": "dog\n"
     },
     {
-      "type": "success",
+      "type": "succeed",
       "title": "print, value string",
       "dit": "String test = 'cat';\nprint(test);",
       "expected": "cat\n"

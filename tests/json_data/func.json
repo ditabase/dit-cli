@@ -145,91 +145,91 @@
       "expected": "Line: 1 Col: 43 (tests/fail.dit)\nsig String func test(String param, String param) {{}}\n                                          ^\n\nSyntaxError: 'param' is already a parameter name"
     },
     {
-      "type": "success",
+      "type": "succeed",
       "title": "func, vanilla Ditlang void",
       "dit": "func test() {{}}",
       "expected": "Finished successfully\n"
     },
     {
-      "type": "success",
+      "type": "succeed",
       "title": "func, String return",
       "dit": "sig String func test() {{}}",
       "expected": "Finished successfully\n"
     },
     {
-      "type": "success",
+      "type": "succeed",
       "title": "func, anon, vanilla Ditlang void",
       "dit": "func () {{}};",
       "expected": "Finished successfully\n"
     },
     {
-      "type": "success",
+      "type": "succeed",
       "title": "func, anon, String return",
       "dit": "sig String func () {{}};",
       "expected": "Finished successfully\n"
     },
     {
-      "type": "success",
+      "type": "succeed",
       "title": "func, anon, vanilla Ditlang void",
       "dit": "func () {{}};",
       "expected": "Finished successfully\n"
     },
     {
-      "type": "success",
+      "type": "succeed",
       "title": "func, class return type",
       "dit": "class A {{class B {{}}}}\nsig A func test() {{}}",
       "expected": "Finished successfully\n"
     },
     {
-      "type": "success",
+      "type": "succeed",
       "title": "func, class return type, inner class",
       "dit": "class A {{class B {{}}}}\nsig A.B func test() {{}}",
       "expected": "Finished successfully\n"
     },
     {
-      "type": "success",
+      "type": "succeed",
       "title": "func, imported class return type",
       "dit": "import classDit from 'tests/import2.dit';\nsig classDit.A func test2() {{}}",
       "expected": "Finished successfully\n"
     },
     {
-      "type": "success",
+      "type": "succeed",
       "title": "func, imported class return type, inner class",
       "dit": "import classDit from 'tests/import2.dit';\nsig classDit.A.B func test2() {{}}",
       "expected": "Finished successfully\n"
     },
     {
-      "type": "success",
+      "type": "succeed",
       "title": "sig, Thing return",
       "dit": "sig Thing func test() {{}}",
       "expected": "Finished successfully\n"
     },
     {
-      "type": "success",
+      "type": "succeed",
       "title": "sig, String return",
       "dit": "sig String func test() {{}}",
       "expected": "Finished successfully\n"
     },
     {
-      "type": "success",
+      "type": "succeed",
       "title": "sig, Class return",
       "dit": "sig Class func test() {{}}",
       "expected": "Finished successfully\n"
     },
     {
-      "type": "success",
+      "type": "succeed",
       "title": "sig, listOf Thing return",
       "dit": "sig listOf Thing func test() {{}}",
       "expected": "Finished successfully\n"
     },
     {
-      "type": "success",
+      "type": "succeed",
       "title": "sig, listOf String return",
       "dit": "sig listOf String func test() {{}}",
       "expected": "Finished successfully\n"
     },
     {
-      "type": "success",
+      "type": "succeed",
       "title": "sig, listOf Class return",
       "dit": "sig listOf Class func test() {{}}",
       "expected": "Finished successfully\n"

@@ -1,0 +1,6 @@
+lang SomeLang {{
+    String value1 = 'cat';
+    value2 = 'dog';
+}}
+String message1 = 'quick';
+String message2 = 'brown';

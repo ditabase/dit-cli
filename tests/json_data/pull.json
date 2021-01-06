@@ -1,0 +1,106 @@
+{
+  "dits": [
+    {
+      "type": "fail",
+      "title": "pull, bare pull",
+      "dit": "pull",
+      "expected": "Line: 1 Col: 4 (tests/fail.dit)\npull\n   ^\n\nSyntaxError: Expected name to pull from linked dit"
+    },
+    {
+      "type": "fail",
+      "title": "pull, directly 'pull from'",
+      "dit": "pull from",
+      "expected": "Line: 1 Col: 6 (tests/fail.dit)\npull from\n     ^\n\nSyntaxError: Expected name to pull from linked dit"
+    },
+    {
+      "type": "fail",
+      "title": "pull, name but no 'from' or ','",
+      "dit": "pull JavaScript",
+      "expected": "Line: 1 Col: 15 (tests/fail.dit)\npull JavaScript\n              ^\n\nSyntaxError: Expected 'from' or ',' to follow target"
+    },
+    {
+      "type": "fail",
+      "title": "pull, 'as' but no name",
+      "dit": "pull JavaScript as",
+      "expected": "Line: 1 Col: 18 (tests/fail.dit)\npull JavaScript as\n                 ^\n\nSyntaxError: Expected name to replace target name"
+    },
+    {
+      "type": "fail",
+      "title": "pull, 'as' name but no 'from' or ','",
+      "dit": "pull JavaScript as JS",
+      "expected": "Line: 1 Col: 21 (tests/fail.dit)\npull JavaScript as JS\n                    ^\n\nSyntaxError: Expected 'from' or ',' to follow target"
+    },
+    {
+      "type": "fail",
+      "title": "pull, full 'as', but no extra name",
+      "dit": "pull JavaScript as JS,",
+      "expected": "Line: 1 Col: 22 (tests/fail.dit)\npull JavaScript as JS,\n                     ^\n\nSyntaxError: Expected name to pull from linked dit"
+    },
+    {
+      "type": "fail",
+      "title": "pull, 'as NAME from', but no link",
+      "dit": "pull JavaScript as JS from",
+      "expected": "Line: 1 Col: 26 (tests/fail.dit)\npull JavaScript as JS from\n                         ^\n\nSyntaxError: Expected a filepath string for import"
+    },
+    {
+      "type": "fail",
+      "title": "pull, no link",
+      "dit": "pull JavaScript from",
+      "expected": "Line: 1 Col: 20 (tests/fail.dit)\npull JavaScript from\n                   ^\n\nSyntaxError: Expected a filepath string for import"
+    },
+    {
+      "type": "fail",
+      "title": "pull, duplicate target",
+      "dit": "String JavaScript = 'cat';\npull JavaScript from",
+      "expected": "Line: 2 Col: 6 (tests/fail.dit)\npull JavaScript from\n     ^\n\nSyntaxError: 'JavaScript' has already been declared"
+    },
+    {
+      "type": "fail",
+      "title": "pull, duplicate replacement",
+      "dit": "String JS = 'cat';\npull JavaScript as JS from",
+      "expected": "Line: 2 Col: 20 (tests/fail.dit)\npull JavaScript as JS from\n                   ^\n\nSyntaxError: 'JS' has already been declared"
+    },
+    {
+      "type": "fail",
+      "title": "pull, target not found",
+      "dit": "pull nonsense from 'tests/import.dit';",
+      "expected": "Line: 1 Col: 38 (tests/fail.dit)\npull nonsense from 'tests/import.dit';\n                                     ^\n\nSyntaxError: 'nonsense' is not a valid member of this dit"
+    },
+    {
+      "type": "fail",
+      "title": "pull, 2 targets, second one is dup",
+      "dit": "String test = 'cat';\npull JavaScript, test from",
+      "expected": "Line: 2 Col: 18 (tests/fail.dit)\npull JavaScript, test from\n                 ^\n\nSyntaxError: 'test' has already been declared"
+    },
+    {
+      "type": "fail",
+      "title": "pull, 2 targets w/ replacements, second one is dup",
+      "dit": "String test = 'cat';\npull JavaScript as JS, thing as test from",
+      "expected": "Line: 2 Col: 33 (tests/fail.dit)\npull JavaScript as JS, thing as test from\n                                ^\n\nSyntaxError: 'test' has already been declared"
+    },
+    {
+      "type": "succeed",
+      "title": "pull, target success",
+      "dit": "pull message1 from 'tests/lang1.dit';\nprint(message1);",
+      "expected": "quick\n"
+    },
+    {
+      "type": "succeed",
+      "title": "pull, 2 target success",
+      "dit": "pull message1, message2 from 'tests/lang1.dit';\nprint(message1);\nprint(message2);",
+      "expected": "quick\nbrown\n"
+    },
+    {
+      "type": "succeed",
+      "title": "pull, replacement success",
+      "dit": "pull message1 as mes from 'tests/lang1.dit';\nprint(mes);",
+      "expected": "quick\n"
+    },
+    {
+      "type": "succeed",
+      "title": "pull, 2 target success",
+      "dit": "pull message1 as mes, message2 as messy from 'tests/lang1.dit';\nprint(mes);\nprint(messy);",
+      "expected": "quick\nbrown\n"
+    }
+  ]
+}
