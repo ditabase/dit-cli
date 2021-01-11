@@ -518,7 +518,10 @@ def _paren_left(inter: InterpretContext) -> Optional[d_Thing]:
 
     try:
         if func.is_built_in:
-            func.py_func(func)
+            if func.name == "getConfig":
+                _handle_get_config(inter, func)
+            else:
+                func.py_func(func)
         elif func.lang is b_Ditlang:
             interpret(func)
         else:
@@ -548,6 +551,23 @@ def _paren_left(inter: InterpretContext) -> Optional[d_Thing]:
         return _terminal(inter)
     else:
         return _parenable(inter)
+
+
+def _handle_get_config(inter: InterpretContext, func: d_Func) -> None:
+    res: List[d_Dit] = func.py_func(func)
+    if res is None:
+        raise NotImplementedError
+    for dit in res:
+        # interpret all the .ditconf from -main- to root
+        interpret(dit)
+        for attr in dit.attrs:
+            if isinstance(attr, d_Lang):
+                # add all the langs to this dit
+                lang = inter.body.find_attr(attr.name)
+                if lang is not None:
+                    lang.set_value(attr)
+                else:
+                    inter.body.attrs.append(attr)
 
 
 def _make(inter: InterpretContext) -> d_Func:

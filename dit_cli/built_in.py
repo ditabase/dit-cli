@@ -1,7 +1,12 @@
+import os
+from typing import List
+
+import dit_cli.config
 from dit_cli.exceptions import CriticalError
 from dit_cli.grammar import d_Grammar
 from dit_cli.oop import (
     Declarable,
+    d_Dit,
     d_Func,
     d_Lang,
     d_List,
@@ -136,9 +141,36 @@ def _ser_obj(obj: d_Thing) -> str:
     raise NotImplementedError
 
 
+def _get_config(func: d_Func) -> List[d_Dit]:
+    path = os.path.abspath(dit_cli.config.DIT_FILEPATH)
+    directory = os.path.dirname(path)
+    dits: List[d_Dit] = []
+    while True:
+        if os.path.isfile(directory + "/.ditconf"):
+            dit = d_Dit()
+            dit.path = directory + "/.ditconf"
+            dit.is_null = False
+            dit.name = "ditconf"
+            dit.finalize()
+            dits.append(dit)
+
+        if directory == "/":
+            break
+        directory = os.path.dirname(directory)
+    return dits
+
+
+b_get_config = d_Func()
+b_get_config.name = "getConfig"
+b_get_config.parameters = []
+b_get_config.is_built_in = True
+b_get_config.py_func = _get_config
+b_get_config.is_null = False
+
+
 b_Ditlang = d_Lang()
 b_Ditlang.name = "Ditlang"
 b_Ditlang.is_built_in = True
 
 
-BUILT_INS = [b_print, b_Ditlang]
+BUILT_INS = [b_print, b_get_config, b_Ditlang]

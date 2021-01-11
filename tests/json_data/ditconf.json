@@ -1,0 +1,10 @@
+{
+  "dits": [
+    {
+      "type": "succeed",
+      "title": "ditconf, simple message",
+      "dit": "getConfig();\nprint(TestLangNotReal.aTestMessage);",
+      "expected": "Test Message\n"
+    }
+  ]
+}

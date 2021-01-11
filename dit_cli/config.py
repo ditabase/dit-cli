@@ -1,8 +1,11 @@
 """Handle the config file"""
 
 import os
+from typing import Optional
 
 import toml
+
+DIT_FILEPATH: Optional[str] = None
 
 
 def get_config():

@@ -1,0 +1,4 @@
+lang TestLangNotReal {{
+    -priority- = '100';
+    aTestMessage = 'Test Message';
+}}

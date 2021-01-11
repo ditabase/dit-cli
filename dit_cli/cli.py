@@ -2,6 +2,7 @@
 import argparse
 import sys
 
+import dit_cli.config
 from dit_cli import __version__
 from dit_cli.color import Color, color
 from dit_cli.exceptions import DitError
@@ -42,8 +43,9 @@ def main():
     try:
         sys.stdout = PrintLogger()
         dit = d_Dit()
-        dit.name = "__main__"
+        dit.name = "-main-"
         dit.path = args.filepath
+        dit_cli.config.DIT_FILEPATH = args.filepath
         dit.finalize()
         interpret(dit)
         if not sys.stdout.any_print:

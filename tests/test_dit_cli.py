@@ -6,9 +6,12 @@ from contextlib import redirect_stdout
 import pytest
 from _pytest.python import Metafunc
 
+import dit_cli.config
 from dit_cli.exceptions import DitError
 from dit_cli.interpreter import interpret
 from dit_cli.oop import d_Dit
+
+dit_cli.config.DIT_FILEPATH = "tests/fail.dit"
 
 # test: pytest.thing = None
 os.environ["NO_COLOR"] = "1"
