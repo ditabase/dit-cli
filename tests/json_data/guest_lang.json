@@ -1,0 +1,16 @@
+{
+  "dits": [
+    {
+      "type": "succeed",
+      "title": "guest, blank code",
+      "dit": "getConfig();\npull JavaScript from 'https://raw.githubusercontent.com/ditabase/dits/master/langs/commonLangs.dit';\nsig JavaScript\nfunc jsPrint() {{}}\njsPrint();",
+      "expected": "Finished successfully\n"
+    },
+    {
+      "type": "succeed",
+      "title": "guest, JS print",
+      "dit": "getConfig();\npull JavaScript from 'https://raw.githubusercontent.com/ditabase/dits/master/langs/commonLangs.dit';\nsig JavaScript\nfunc jsPrint() {{\n    console.log('message from JavaScript');\n}}\njsPrint();",
+      "expected": "message from JavaScript\n"
+    }
+  ]
+}

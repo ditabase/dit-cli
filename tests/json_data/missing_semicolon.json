@@ -2,6 +2,12 @@
   "dits": [
     {
       "type": "fail",
+      "title": "Missing semicolon after implicit thing declare",
+      "dit": "test = 'cat'",
+      "expected": "Line: 1 Col: 13 (tests/fail.dit)\ntest = 'cat'\n            ^\n\nSyntaxError: Expected ';'"
+    },
+    {
+      "type": "fail",
       "title": "Missing semicolon after String declare",
       "dit": "String test",
       "expected": "Line: 1 Col: 12 (tests/fail.dit)\nString test\n           ^\n\nSyntaxError: Expected ';'"

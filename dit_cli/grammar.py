@@ -15,10 +15,12 @@ class d_Grammar(Enum):
     # Doubles
     BRACE_LEFT = "{{"
     BRACE_RIGHT = "}}"
-    TRIANGLE_LEFT = "<|"
-    TRIANGLE_RIGHT = "|>"
-    CIRCLE_LEFT = "(|"
-    CIRCLE_RIGHT = "|)"
+
+    # Shapes
+    TRI_LEFT = "<|"
+    TRI_RIGHT = "|>"
+    CIR_LEFT = "(|"
+    CIR_RIGHT = "|)"
 
     # Singles
     QUOTE_DOUBLE = '"'
@@ -122,83 +124,3 @@ VALUE_TO_PRIM_DISPATCH = {
     d_Grammar.PRIMITIVE_LANG: d_Grammar.PRIMITIVE_LANG,
     d_Grammar.NULL: d_Grammar.NULL,
 }
-
-
-SINGLES = [
-    d_Grammar.QUOTE_DOUBLE,
-    d_Grammar.QUOTE_SINGLE,
-    d_Grammar.DOT,
-    d_Grammar.EQUALS,
-    d_Grammar.PLUS,
-    d_Grammar.COMMA,
-    d_Grammar.SEMI,
-    d_Grammar.PAREN_LEFT,
-    d_Grammar.PAREN_RIGHT,
-    d_Grammar.BRACKET_LEFT,
-    d_Grammar.BRACKET_RIGHT,
-    d_Grammar.BACKSLASH,
-]
-
-DOUBLES = [
-    d_Grammar.BRACE_LEFT,
-    d_Grammar.BRACE_RIGHT,
-    d_Grammar.TRIANGLE_LEFT,
-    d_Grammar.TRIANGLE_RIGHT,
-    d_Grammar.CIRCLE_LEFT,
-    d_Grammar.CIRCLE_RIGHT,
-]
-
-KEYWORDS = [
-    d_Grammar.CLASS,
-    d_Grammar.LANG,
-    d_Grammar.SIG,
-    d_Grammar.FUNC,
-    d_Grammar.VOID,
-    d_Grammar.LISTOF,
-    d_Grammar.IMPORT,
-    d_Grammar.FROM,
-    d_Grammar.AS,
-    d_Grammar.PULL,
-    d_Grammar.USE,
-    d_Grammar.STATIC,
-    d_Grammar.INSTANCE,
-    d_Grammar.THROW,
-    d_Grammar.RETURN,
-    d_Grammar.NULL,
-    d_Grammar.PRIMITIVE_THING,
-    d_Grammar.PRIMITIVE_STRING,
-    d_Grammar.PRIMITIVE_CLASS,
-    d_Grammar.PRIMITIVE_INSTANCE,
-    d_Grammar.PRIMITIVE_FUNC,
-    d_Grammar.PRIMITIVE_DIT,
-    d_Grammar.PRIMITIVE_LANG,
-]
-
-TYPES = [
-    d_Grammar.VALUE_CLASS,
-    d_Grammar.PRIMITIVE_THING,
-    d_Grammar.PRIMITIVE_STRING,
-    d_Grammar.PRIMITIVE_CLASS,
-    d_Grammar.PRIMITIVE_INSTANCE,
-    d_Grammar.PRIMITIVE_FUNC,
-    d_Grammar.PRIMITIVE_DIT,
-    d_Grammar.PRIMITIVE_LANG,
-]
-
-PRIMITIVES = [
-    d_Grammar.PRIMITIVE_THING,
-    d_Grammar.PRIMITIVE_STRING,
-    d_Grammar.PRIMITIVE_CLASS,
-    d_Grammar.PRIMITIVE_INSTANCE,
-    d_Grammar.PRIMITIVE_FUNC,
-    d_Grammar.PRIMITIVE_DIT,
-    d_Grammar.PRIMITIVE_LANG,
-]
-
-DOTABLES = [
-    d_Grammar.VALUE_CLASS,
-    d_Grammar.VALUE_INSTANCE,
-    d_Grammar.VALUE_FUNC,
-    d_Grammar.VALUE_DIT,
-    d_Grammar.VALUE_LANG,
-]

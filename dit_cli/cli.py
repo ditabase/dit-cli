@@ -1,31 +1,12 @@
 """The CLI for dit"""
 import argparse
-import sys
 
-import dit_cli.config
+import dit_cli.settings
 from dit_cli import __version__
-from dit_cli.color import Color, color
 from dit_cli.exceptions import DitError
 from dit_cli.interpreter import interpret
+from dit_cli.lang_daemon import start_daemon
 from dit_cli.oop import d_Dit
-
-
-class PrintLogger(object):
-    def __init__(self):
-        self.terminal = sys.stdout
-        self.log: str = ""
-        self.any_print: bool = False
-
-    def write(self, message):
-        self.terminal.write(message)
-        self.log += message
-        self.any_print = True
-
-    def flush(self):
-        # this flush method is needed for python 3 compatibility.
-        # this handles the flush command by doing nothing.
-        # you might want to specify some extra behavior here.
-        pass
 
 
 def main():
@@ -41,15 +22,13 @@ def main():
     args = arg_parser.parse_args()
 
     try:
-        sys.stdout = PrintLogger()
         dit = d_Dit()
         dit.name = "-main-"
         dit.path = args.filepath
-        dit_cli.config.DIT_FILEPATH = args.filepath
+        dit_cli.settings.DIT_FILEPATH = args.filepath
         dit.finalize()
+        start_daemon()
         interpret(dit)
-        if not sys.stdout.any_print:
-            print(color("Finished successfully", Color.GREEN_LIGHT))
     except DitError as err:
         final = err.get_cli_trace()
         print(final)

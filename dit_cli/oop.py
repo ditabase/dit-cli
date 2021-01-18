@@ -1,13 +1,18 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Callable, Iterator, List, Optional, Tuple, Union
+from typing import Callable, Dict, Iterator, List, Optional, Tuple, Union
 from urllib.error import HTTPError, URLError
 from urllib.request import urlopen
 
-from dit_cli.data_classes import CodeLocation
-from dit_cli.exceptions import CriticalError, FileError, TypeMismatchError
+from dit_cli.exceptions import (
+    CriticalError,
+    FileError,
+    MissingLangPropertyError,
+    TypeMismatchError,
+)
 from dit_cli.grammar import d_Grammar, prim_to_value, value_to_prim
+from dit_cli.settings import CodeLocation
 
 
 class d_Thing(object):
@@ -415,6 +420,14 @@ class d_Lang(d_Body):
         else:
             super().set_value(new_value)
 
+    def get_prop(self, name: str) -> str:
+        res = self.find_attr(name)
+        if res is None or not isinstance(res, d_String):
+            raise MissingLangPropertyError(
+                f"A lang was missing a required property: '{name}'"
+            )
+        return res.string_value
+
 
 def _combine_langs(lang1: d_Lang, lang2: d_Lang) -> List[Ref_Thing]:
     _del_name(lang1.attrs, "-priority-")
@@ -458,11 +471,13 @@ class d_Func(d_Body):
         self.public_type = "Function"
         self.grammar = d_Grammar.VALUE_FUNC
 
-        self.orig_loc: CodeLocation = None  # type: ignore
+        self.call_loc: CodeLocation = None  # type: ignore
         self.lang: d_Lang = None  # type: ignore
         self.return_: d_Type = None  # type: ignore
         self.return_list: bool = None  # type: ignore
         self.parameters: List[Declarable] = []
+        self.code: bytearray
+        self.guest_func_path: str
 
 
 d_Type = Union[d_Grammar, d_Class]
@@ -493,7 +508,7 @@ class ReturnController(FlowControlException):
         elif isinstance(func.return_, d_Class):
             raise NotImplementedError
         elif isinstance(value, d_Thing):  # type: ignore
-            super().__init__(Token(func.return_, func.orig_loc, thing=value))
+            super().__init__(Token(func.return_, func.call_loc, thing=value))
 
 
 @dataclass
@@ -635,3 +650,35 @@ class ArgumentLocation:
 
     loc: CodeLocation
     thing: d_Thing
+
+
+import json
+from enum import Enum
+
+
+class JobType(Enum):
+    CALL_FUNC = "call_func"
+    EXE_DITLANG = "exe_ditlang"
+    DITLANG_CALLBACK = "ditlang_callback"
+    FINISH_FUNC = "finish_func"
+    CRASH = "crash"
+
+
+@dataclass
+class GuestDaemonJob:
+    """A function to be evaluated, with its arguments and result"""
+
+    type_: JobType
+    func: d_Func
+    result: d_Thing = None  # type: ignore
+    crash: BaseException = None  # type: ignore
+    active: bool = False
+
+    def get_json(self) -> bytes:
+        py_json: Dict[str, str] = {
+            "type": self.type_.value,
+            "lang_name": self.func.lang.name,
+            "func_name": self.func.name,
+            "func_path": self.func.guest_func_path,
+        }
+        return json.dumps(py_json).encode()

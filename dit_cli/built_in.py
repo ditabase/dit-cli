@@ -1,7 +1,7 @@
 import os
 from typing import List
 
-import dit_cli.config
+import dit_cli.settings
 from dit_cli.exceptions import CriticalError
 from dit_cli.grammar import d_Grammar
 from dit_cli.oop import (
@@ -142,7 +142,7 @@ def _ser_obj(obj: d_Thing) -> str:
 
 
 def _get_config(func: d_Func) -> List[d_Dit]:
-    path = os.path.abspath(dit_cli.config.DIT_FILEPATH)
+    path = os.path.abspath(dit_cli.settings.DIT_FILEPATH)
     directory = os.path.dirname(path)
     dits: List[d_Dit] = []
     while True:

@@ -3,7 +3,6 @@ from itertools import zip_longest
 from typing import List, NoReturn, Optional, Tuple, Union
 
 from dit_cli.built_in import b_Ditlang
-from dit_cli.data_classes import CodeLocation
 from dit_cli.exceptions import (
     CriticalError,
     DitError,
@@ -12,18 +11,14 @@ from dit_cli.exceptions import (
     SyntaxError_,
     TypeMismatchError,
 )
-from dit_cli.grammar import (
-    DOTABLES,
-    PRIMITIVES,
-    TYPES,
-    d_Grammar,
-    prim_to_value,
-    value_to_prim,
-)
+from dit_cli.grammar import d_Grammar, prim_to_value, value_to_prim
 from dit_cli.interpret_context import InterpretContext
+from dit_cli.lang_daemon import run_job
 from dit_cli.oop import (
     ArgumentLocation,
     Declarable,
+    GuestDaemonJob,
+    JobType,
     ReturnController,
     Token,
     d_Body,
@@ -38,9 +33,29 @@ from dit_cli.oop import (
     d_Thing,
     d_Type,
 )
+from dit_cli.preprocessor import preprocess
+from dit_cli.settings import CodeLocation
 
 MAKE = "-make-"
 THIS = "this"
+
+PRIMITIVES = [
+    d_Grammar.PRIMITIVE_THING,
+    d_Grammar.PRIMITIVE_STRING,
+    d_Grammar.PRIMITIVE_CLASS,
+    d_Grammar.PRIMITIVE_INSTANCE,
+    d_Grammar.PRIMITIVE_FUNC,
+    d_Grammar.PRIMITIVE_DIT,
+    d_Grammar.PRIMITIVE_LANG,
+]
+
+DOTABLES = [
+    d_Grammar.VALUE_CLASS,
+    d_Grammar.VALUE_INSTANCE,
+    d_Grammar.VALUE_FUNC,
+    d_Grammar.VALUE_DIT,
+    d_Grammar.VALUE_LANG,
+]
 
 
 def interpret(body: d_Body) -> None:
@@ -443,6 +458,7 @@ def _new_name(inter: InterpretContext) -> None:
         inter.dec.type_ = d_Grammar.PRIMITIVE_THING
         _equals(inter)
         inter.dec.reset()
+        _terminal(inter)
 
 
 def _string(inter: InterpretContext) -> d_String:
@@ -486,7 +502,7 @@ def _paren_left(inter: InterpretContext) -> Optional[d_Thing]:
         # num.inc();
         func.add_attr(Declarable(inter.dotted_inst.parent, THIS), inter.dotted_inst)
 
-    func.orig_loc = copy.deepcopy(inter.curr_tok.loc)
+    func.call_loc = copy.deepcopy(inter.curr_tok.loc)
     arg_locs = _arg_list(inter, d_Grammar.PAREN_RIGHT)
     func_name = f"{func.name}()" if func.name is not None else "<anonymous function>()"
     miss = abs(len(func.parameters) - len(arg_locs))
@@ -525,9 +541,12 @@ def _paren_left(inter: InterpretContext) -> Optional[d_Thing]:
         elif func.lang is b_Ditlang:
             interpret(func)
         else:
-            raise NotImplementedError
+            if not hasattr(func, "code"):
+                raise ReturnController(d_Thing.get_null_thing(), func, func.call_loc)
+            job = GuestDaemonJob(JobType.CALL_FUNC, func)
+            res = run_job(job)
     except DitError as err:
-        err.add_trace(func.path, func.orig_loc, func.name)
+        err.add_trace(func.path, func.call_loc, func.name)
         raise err
     except ReturnController as ret:
         inter.call_tok = ret.token
@@ -535,15 +554,15 @@ def _paren_left(inter: InterpretContext) -> Optional[d_Thing]:
         raise NotImplementedError
     else:
         if func.return_ is not None and func.return_ != d_Grammar.VOID:
-            _raise_helper(f"{func_name} expected a return", inter, func.orig_loc)
+            _raise_helper(f"{func_name} expected a return", inter, func.call_loc)
         elif func.name == MAKE:
             thing = func.find_attr(THIS)
             if thing is None:
                 raise NotImplementedError
-            inter.call_tok = Token(d_Grammar.VALUE_INSTANCE, func.orig_loc, thing=thing)
+            inter.call_tok = Token(d_Grammar.VALUE_INSTANCE, func.call_loc, thing=thing)
         else:
             # func ended without 'return' keyword
-            inter.call_tok = Token(d_Grammar.NULL, func.orig_loc)
+            inter.call_tok = Token(d_Grammar.NULL, func.call_loc)
 
     func.attrs.clear()
     inter.dotted_inst = None  # type: ignore
@@ -825,6 +844,18 @@ def _clang(
     return _handle_anon(inter, clang, orig_loc, lang)  # type: ignore
 
 
+TYPES = [
+    d_Grammar.VALUE_CLASS,
+    d_Grammar.PRIMITIVE_THING,
+    d_Grammar.PRIMITIVE_STRING,
+    d_Grammar.PRIMITIVE_CLASS,
+    d_Grammar.PRIMITIVE_INSTANCE,
+    d_Grammar.PRIMITIVE_FUNC,
+    d_Grammar.PRIMITIVE_DIT,
+    d_Grammar.PRIMITIVE_LANG,
+]
+
+
 def _sig(inter: InterpretContext) -> Optional[d_Func]:
     # sig JavaScript String ... \n func
     dotable_loc = None
@@ -965,6 +996,8 @@ def _func(inter: InterpretContext) -> Optional[d_Func]:
     _brace_left(inter, func)
     func.finalize()
     inter.declaring_func = None  # type: ignore
+    if func.lang is not b_Ditlang:
+        preprocess(inter, func)
     return _handle_anon(inter, func, orig_loc)  # type: ignore
 
 
@@ -1075,10 +1108,6 @@ STATEMENT_DISPATCH = {
     d_Grammar.COMMENT_START:          _illegal_statement,
     d_Grammar.BRACE_LEFT:             _illegal_statement,
     d_Grammar.BRACE_RIGHT:            _illegal_statement,
-    d_Grammar.TRIANGLE_LEFT:          _not_implemented,
-    d_Grammar.TRIANGLE_RIGHT:         _not_implemented,
-    d_Grammar.CIRCLE_LEFT:            _not_implemented,
-    d_Grammar.CIRCLE_RIGHT:           _not_implemented,
     d_Grammar.CLASS:                  _class,
     d_Grammar.LANG:                   _lang,
     d_Grammar.SIG:                    _sig,
@@ -1132,10 +1161,6 @@ EXPRESSION_DISPATCH = {
     d_Grammar.COMMENT_START:          _illegal_expression,
     d_Grammar.BRACE_LEFT:             _illegal_expression,
     d_Grammar.BRACE_RIGHT:            _illegal_expression,
-    d_Grammar.TRIANGLE_LEFT:          _not_implemented,
-    d_Grammar.TRIANGLE_RIGHT:         _not_implemented,
-    d_Grammar.CIRCLE_LEFT:            _not_implemented,
-    d_Grammar.CIRCLE_RIGHT:           _not_implemented,
     d_Grammar.CLASS:                  _class,
     d_Grammar.LANG:                   _lang,
     d_Grammar.SIG:                    _sig,

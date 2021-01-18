@@ -1,10 +1,10 @@
 """All Exceptions used by dit_cli"""
 
 from dataclasses import dataclass
-from typing import Any, List
+from typing import List
 
 from dit_cli.color import Color, color
-from dit_cli.data_classes import CodeLocation
+from dit_cli.settings import CodeLocation
 
 
 @dataclass
@@ -137,6 +137,14 @@ class EndOfClangError(DitError):
 
     def __init__(self, clang_name) -> None:
         super().__init__("EndOfFileError", f"Unexpected end of {clang_name}")
+
+
+class MissingLangPropertyError(DitError):
+    """Raised when a language was missing a required property to be used
+    as a a guest language"""
+
+    def __init__(self, message: str):
+        super().__init__("MissingLangPropertyError", message)
 
 
 class CriticalError(DitError):

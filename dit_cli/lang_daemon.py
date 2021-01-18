@@ -5,17 +5,15 @@ This is roughly 50% faster, and can be made much faster still."""
 import json
 import selectors
 import socket
+import subprocess
+import sys
 import time
-from ast import literal_eval
 from dataclasses import dataclass
-from subprocess import Popen
 from threading import Thread
-from typing import Union
+from typing import List, Optional
 
-from dit_cli import CONFIG
-from dit_cli.data_classes import ScriptEvalJob
-from dit_cli.exceptions import CodeError
-
+from dit_cli.exceptions import MissingLangPropertyError
+from dit_cli.oop import GuestDaemonJob, JobType, d_Func, d_Lang
 
 """Dev note: much of this is copied from https://realpython.com/python-sockets/
 It's a little crude, and was intended for working with many clients that
@@ -35,10 +33,10 @@ class ClientInfo:
     lang: str
 
 
-JOB: ScriptEvalJob = None
-CLIENTS = []
-PORT = None
-CRASH = None
+PORT: Optional[int] = None
+CLIENTS: List[d_Lang] = []
+JOB: Optional[GuestDaemonJob] = None
+CONTINUE: bool = True
 
 
 def start_daemon():
@@ -47,56 +45,57 @@ def start_daemon():
     Thread(target=_daemon_loop, daemon=True).start()
 
 
-def start_client(lang: str):
-    """Start a client process for a specific language.
-    Will not start duplicate clients"""
-
-    global CLIENTS, PORT, CRASH
-    if lang not in CLIENTS:  # Don't start a second client for a lang
+def run_job(job: GuestDaemonJob) -> Optional[GuestDaemonJob]:
+    global CLIENTS, PORT, JOB
+    if job.type_ == JobType.CALL_FUNC:
+        if job.func.lang not in CLIENTS:
+            CLIENTS.append(job.func.lang)
+            while True:
+                if PORT is not None:
+                    _start_guest(job.func.lang)
+                    break
+        JOB = job
         while True:
-            if CRASH:
-                raise CRASH
-            if PORT:  # Wait for port to be assigned
-                CLIENTS.append(lang)
-                cmd = [CONFIG[lang]["path"], CONFIG[lang]["socket"], str(PORT)]
-                Popen(cmd)
-                break
+            if JOB.type_ == JobType.FINISH_FUNC:
+                job = JOB
+                JOB = None
+                return job
+            elif JOB.type_ == JobType.EXE_DITLANG:
+                raise NotImplementedError
 
 
-def run_script(job: ScriptEvalJob) -> ScriptEvalJob:
-    """Send a job to the client daemons and get the response."""
-    global JOB
-    JOB = job
-    while True:
-        if CRASH:
-            raise CRASH
-        if job.result:  # Wait for job to finish, is assigned in _service_client
-            JOB = None
-            return job
+def _start_guest(lang: d_Lang):
+    global PORT
+    file_extension = lang.get_prop("file_extension")
+    daemon_path = "/tmp/dit/" + lang.name + "_guest_daemon." + file_extension
+    daemon_body = lang.find_attr("guest_daemon")
+    if daemon_body is None or not isinstance(daemon_body, d_Func):
+        raise MissingLangPropertyError("A lang had no guest_daemon function")
+    open(daemon_path, "w").write(bytes(daemon_body.view).decode())
+    path = lang.get_prop("executable_path")
+    cmd: List[str] = [path, daemon_path, str(PORT)]
+    subprocess.Popen(cmd, stdout=sys.stdout)
 
 
 def _daemon_loop():
     """Starts the socket server and runs the main event loop"""
-    global PORT, CRASH
-    try:
-        # Sending port 0 will get a random open port
-        with socket.create_server(("127.0.0.1", 0)) as daemon:
-            daemon.listen()
-            daemon.setblocking(False)
-            sel = selectors.DefaultSelector()
-            sel.register(daemon, selectors.EVENT_READ, data=None)
-            # Assign the port so it can be sent to clients
-            PORT = daemon.getsockname()[1]
+    global PORT
+    # Sending port 0 will get a random open port
+    with socket.create_server(("127.0.0.1", 0)) as daemon:
+        daemon.listen()
+        daemon.setblocking(False)
+        sel = selectors.DefaultSelector()
+        sel.register(daemon, selectors.EVENT_READ, data=None)
+        # Assign the port so it can be sent to clients
+        PORT = daemon.getsockname()[1]
 
-            while True:  # This while will be destroyed only when the thread exits
-                events = sel.select(timeout=None)
-                for key, mask in events:
-                    if key.data is None:
-                        _accept_client(key.fileobj, sel)
-                    else:
-                        _service_client(key, mask)
-    except BaseException as err:
-        CRASH = err
+        while True:  # This while will be destroyed only when the thread exits
+            events = sel.select(timeout=None)
+            for key, mask in events:
+                if key.data is None:
+                    _accept_client(key.fileobj, sel)  # type: ignore
+                else:
+                    _service_client(key, mask)
 
 
 def _accept_client(daemon: socket.socket, sel: selectors.DefaultSelector):
@@ -113,21 +112,29 @@ def _accept_client(daemon: socket.socket, sel: selectors.DefaultSelector):
 def _service_client(key: selectors.SelectorKey, mask: int):
     """Send or receive message from a client daemon."""
     global JOB
-    client: socket.socket = key.fileobj
+    client: socket.socket = key.fileobj  # type: ignore
     info: ClientInfo = key.data
-    if mask & selectors.EVENT_READ:
+    if JOB and mask & selectors.EVENT_READ:
         recv_data = client.recv(1024)
         if recv_data:
             data = _decode(recv_data)
-            if data["type"] == "job":
-                JOB.crash = data["crash"]
-                JOB.result = data["result"]
-            elif data["type"] == "heart":
-                pass  # The client is just sending data to make sure we're still here.
+            if data["type"] == JobType.CRASH.value:
+                raise NotImplementedError
+            elif data["type"] == JobType.EXE_DITLANG.value:
+                raise NotImplementedError
+            elif data["type"] == JobType.FINISH_FUNC.value:
+                JOB.type_ = JobType.FINISH_FUNC
+                JOB.active = False
+
     elif mask & selectors.EVENT_WRITE:
-        # Job is for this language, and the job has not already been assigned
-        if JOB and JOB.lang == info.lang and not JOB.active:
-            client.sendall(JOB.file_path.encode())
+        if (
+            JOB is not None
+            and not JOB.active
+            and JOB.func.lang.name == info.lang
+            and JOB.type_ in [JobType.CALL_FUNC, JobType.DITLANG_CALLBACK]
+        ):
+            mes = JOB.get_json()
+            client.sendall(mes)
             JOB.active = True
 
 
