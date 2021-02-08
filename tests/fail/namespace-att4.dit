@@ -1,7 +1,0 @@
-A {
-    list String value;
-}
-
-A a;
-
-a.value = 'test';

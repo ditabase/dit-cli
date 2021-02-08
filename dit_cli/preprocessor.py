@@ -76,41 +76,37 @@ def _recurse_section(proc: PreProcessContext) -> None:
         cur = proc.char_feed.current() + proc.char_feed.peek()
         if cur == d_Grammar.TRI_LEFT.value:
             if _in_guest_lang(proc.depth):
-                proc.func.code += proc.func.view[proc.prev_loc : proc.char_feed.loc.pos]
-                proc.prev_loc = proc.char_feed.loc.pos + 2
+                add_section(proc, "triangle_expr_left")
                 proc.depth += 1
             else:
                 raise NotImplementedError
         elif cur == d_Grammar.TRI_RIGHT.value:
             if not _in_guest_lang(proc.depth):
-                left = proc.func.lang.find_attr("exe_ditlang_left")
-                right = proc.func.lang.find_attr("exe_ditlang_right")
-                if left is None or not isinstance(left, d_String):
-                    raise NotImplementedError
-                if right is None or not isinstance(right, d_String):
-                    raise NotImplementedError
-                sec = (
-                    left.string_value.encode()
-                    + proc.func.view[proc.prev_loc : proc.char_feed.loc.pos]
-                    + right.string_value.encode()
-                )
-                proc.func.code += sec
-                proc.prev_loc = proc.char_feed.loc.pos + 2
+                add_section(proc, "triangle_expr_right")
                 proc.depth -= 1
             else:
                 raise NotImplementedError
         elif cur == d_Grammar.CIR_LEFT.value:
             if not _in_guest_lang(proc.depth):
-                raise NotImplementedError
+                add_section(proc, "circle_expr_left")
                 proc.depth += 1
             else:
                 raise NotImplementedError
         elif cur == d_Grammar.CIR_RIGHT.value:
             if _in_guest_lang(proc.depth):
-                raise NotImplementedError
+                add_section(proc, "circle_expr_right")
                 proc.depth -= 1
             else:
                 raise NotImplementedError
+
+
+def add_section(proc: PreProcessContext, prop: str):
+    prop_expr = proc.func.lang.get_prop(prop)
+    proc.func.code += (
+        bytes(proc.func.view[proc.prev_loc : proc.char_feed.loc.pos])
+        + prop_expr.encode()
+    )
+    proc.prev_loc = proc.char_feed.loc.pos + 2
 
 
 def _in_guest_lang(depth: int) -> bool:

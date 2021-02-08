@@ -1,9 +1,10 @@
 """Misc global configuration options"""
 
 from dataclasses import dataclass
-from typing import Optional
+from typing import Optional, TextIO
 
 DIT_FILEPATH: Optional[str] = None
+TEST_OUTPUT: Optional[TextIO] = None
 
 
 @dataclass

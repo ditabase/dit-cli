@@ -139,12 +139,14 @@ class EndOfClangError(DitError):
         super().__init__("EndOfFileError", f"Unexpected end of {clang_name}")
 
 
-class MissingLangPropertyError(DitError):
+class MissingPropError(DitError):
     """Raised when a language was missing a required property to be used
     as a a guest language"""
 
-    def __init__(self, message: str):
-        super().__init__("MissingLangPropertyError", message)
+    def __init__(self, lang: str, prop: str):
+        super().__init__(
+            "MissingPropError", f"lang '{lang}' was missing a required prop, '{prop}'"
+        )
 
 
 class CriticalError(DitError):

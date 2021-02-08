@@ -1,37 +1,42 @@
 """The CLI for dit"""
 import argparse
+import sys
 
 import dit_cli.settings
 from dit_cli import __version__
 from dit_cli.exceptions import DitError
 from dit_cli.interpreter import interpret
-from dit_cli.lang_daemon import start_daemon
+from dit_cli.lang_daemon import kill_all, start_daemon
 from dit_cli.oop import d_Dit
 
 
 def main():
     """Run the dit_cli, via argparse"""
-    arg_parser = argparse.ArgumentParser(
-        description="Utility for the dit container file."
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-v", "--version", action="version", version=__version__)
+    parser.add_argument(
+        "filepath", nargs="?", type=argparse.FileType("r"), default=sys.stdin
     )
+    args = parser.parse_args()
+    if sys.stdin.isatty() and args.filepath.name == "<stdin>":
+        parser.error("must provide one of filepath or stdin pipe")
+    code = args.filepath.read()
+    code = code.replace("\\n", "\n")
+    start_daemon()
+    run_string(code, args.filepath.name)
 
-    arg_parser.add_argument(
-        "filepath", metavar="filepath", type=str, help="path to the dit file"
-    )
-    arg_parser.add_argument("-v", "--version", action="version", version=__version__)
-    args = arg_parser.parse_args()
 
+def run_string(dit_string: str, path: str):
     try:
-        dit = d_Dit()
-        dit.name = "-main-"
-        dit.path = args.filepath
-        dit_cli.settings.DIT_FILEPATH = args.filepath
+        dit_cli.settings.DIT_FILEPATH = path
+        dit = d_Dit.from_str("-main-", dit_string, path)
         dit.finalize()
-        start_daemon()
         interpret(dit)
     except DitError as err:
         final = err.get_cli_trace()
         print(final)
+    finally:
+        kill_all()
 
 
 if __name__ == "__main__":

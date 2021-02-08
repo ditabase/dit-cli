@@ -52,11 +52,11 @@ class Color(Enum):
     END = "\033[0m"
 
 
-def color(message: str, *colors: Color) -> str:
+def color(message: str, *colors: Color, always_color: bool = False,) -> str:
     """Add 1 or more colors to a string, and get that string back.
     If NO_COLOR has any value, no colors will be added.
     This supports https://no-color.org/"""
-    if os.environ.get("NO_COLOR"):
+    if not always_color and os.environ.get("NO_COLOR") is not None:
         return message
     out = ""
     for col in colors:

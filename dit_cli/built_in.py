@@ -15,54 +15,10 @@ from dit_cli.oop import (
     d_Thing,
 )
 
-JAVASCRIPT = {
-    "name": "Javascript",
-    "path": "/usr/bin/node",
-    "socket": "dit_cli/client_daemons/js_daemon.js",
-    "function_string": "function run() {@@CODE}\\n",
-    "call_string": "module.exports: {\\nrun\\n};",
-    "null_type": "null",
-    "str_open": '"',
-    "str_close": '"',
-    "str_escape": "\\",
-    "str_newline": "\\n",
-    "str_tab": "\\t",
-    "list_open": "[",
-    "list_delimiter": ",",
-    "list_close": "]",
-    "obj_open": "{",
-    "obj_colon": ":",
-    "obj_delimiter": ",",
-    "obj_close": "}",
-}
-
-PRINT = {
-    "name": "Print",
-    "path": None,
-    "socket": None,
-    "function_string": None,
-    "call_string": None,
-    "null_type": "null",
-    "str_open": None,
-    "str_close": None,
-    "str_escape": "\\",
-    "str_newline": "\\n",
-    "str_tab": "\\t",
-    "list_open": "[",
-    "list_delimiter": ",",
-    "list_close": "]",
-    "obj_open": "{",
-    "obj_colon": ":",
-    "obj_delimiter": ",",
-    "obj_close": "}",
-}
-
-LANG = PRINT
-
 
 def d_str(thing: d_Thing) -> str:
     if thing.is_null:
-        return LANG["null_type"]
+        return "null"
     elif isinstance(thing, d_String):
         return _ser_str(thing.string_value)
     elif isinstance(thing, d_List):
@@ -74,6 +30,8 @@ def d_str(thing: d_Thing) -> str:
 
 
 def d_print(func: d_Func) -> None:
+    # TODO: The entire print stack is subject to change since we're switching to always
+    # JSON serialization. We might just be able to use JSON.encode, or something similar
     # The first attribute is the parameter we want.
     val = func.attrs[0]
     if isinstance(val, d_Ref):
@@ -91,17 +49,17 @@ b_print.is_null = False
 
 def _ser_list(thing: d_Thing) -> str:
     if thing.is_null:
-        return LANG["null_type"]
+        return d_Grammar.NULL.value
     elif isinstance(thing, d_List):
         if len(thing.list_value) == 0:
-            return LANG["list_open"] + LANG["list_close"]
-        value = LANG["list_open"]
+            return "[]"
+        value = "["
         for i in thing.list_value:
             # Serialize any depth of list by recursing
             value += _ser_list(i)
-            value += LANG["list_delimiter"]
+            value += ","
         # Replace last comma with ]
-        value = value[:-1] + LANG["list_close"]
+        value = value[:-1] + "]"
         return value
     elif isinstance(thing, d_String):
         return _ser_str(thing.string_value)
@@ -112,28 +70,6 @@ def _ser_list(thing: d_Thing) -> str:
 
 
 def _ser_str(str_: str) -> str:
-    if LANG["str_escape"] in str_:
-        str_ = str_.replace(LANG["str_escape"], LANG["str_escape"] + LANG["str_escape"])
-
-    if "\n" in str_:
-        str_ = str_.replace("\n", LANG["str_newline"])
-
-    if "\t" in str_:
-        str_ = str_.replace("\t", LANG["str_tab"])
-
-    if LANG["str_open"] is not None:
-        if LANG["str_open"] in str_:
-            str_ = str_.replace(LANG["str_open"], LANG["str_escape"] + LANG["str_open"])
-
-    if LANG["str_open"] != LANG["str_close"] and LANG["str_close"] in str_:
-        str_ = str_.replace(LANG["str_close"], LANG["str_escape"] + LANG["str_close"])
-
-    if LANG["str_open"] is not None:
-        str_ = LANG["str_open"] + str_
-
-    if LANG["str_close"] is not None:
-        str_ = str_ + LANG["str_close"]
-
     return str_
 
 

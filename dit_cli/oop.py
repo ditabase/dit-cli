@@ -8,7 +8,7 @@ from urllib.request import urlopen
 from dit_cli.exceptions import (
     CriticalError,
     FileError,
-    MissingLangPropertyError,
+    MissingPropError,
     TypeMismatchError,
 )
 from dit_cli.grammar import d_Grammar, prim_to_value, value_to_prim
@@ -67,6 +67,8 @@ class d_Ref(object):
     def __init__(self, name: str, target: d_Thing) -> None:
         self.name = name
         self.target = target
+        if target.name is None:
+            target.name = name
 
     def __hash__(self) -> int:
         return hash(self.name)
@@ -225,7 +227,7 @@ class d_Container(d_Thing):
             # TODO: this could be naive with inheritance, not sure.
             raise CriticalError(f"A duplicate attribute was found: '{dec.name}'")
         if value is not None:
-            res = _check_value(value, dec)
+            res = check_value(value, dec)
             if res is not None:
                 raise TypeMismatchError(f"Cannot assign {res.actual} to {res.expected}")
 
@@ -255,7 +257,7 @@ def _find_attr_in_scope(name: str, body: d_Body) -> Optional[d_Thing]:
     if body.parent_scope is None:
         return None
     else:
-        _find_attr_in_scope(name, body.parent_scope)
+        return _find_attr_in_scope(name, body.parent_scope)
 
 
 def _find_attr_in_self(name: str, con: d_Container) -> Optional[d_Thing]:
@@ -291,6 +293,14 @@ class d_Body(d_Container):
         self.end_loc: CodeLocation = None  # type: ignore
         self.view: memoryview = None  # type: ignore
         self.parent_scope: d_Body = None  # type: ignore
+
+    @classmethod
+    def from_str(cls, name: str, code: str, mock_path: str) -> d_Body:
+        bod = cls()
+        bod.name = name
+        bod.path = mock_path
+        bod.view = memoryview(code.encode())
+        return bod
 
     def is_ready(self) -> bool:
         if self.view is None:
@@ -348,21 +358,12 @@ class d_Dit(d_Body):
 
         self.start_loc = CodeLocation(0, 1, 1)
 
-    @staticmethod
-    def from_str(name: str, code: str, mock_path: str) -> d_Dit:
-        # Currently used by integration tests, which have dits stored in json files
-        dit = d_Dit()
-        dit.name = name
-        dit.path = mock_path
-        dit.view = memoryview(code.encode())
-        return dit
-
     def finalize(self) -> None:
         self.handle_filepath()
         super().finalize()
 
     def handle_filepath(self) -> None:
-        if self.view:
+        if self.view is not None:
             return
         if self.path is None:
             raise CriticalError("A dit had no path")
@@ -423,9 +424,7 @@ class d_Lang(d_Body):
     def get_prop(self, name: str) -> str:
         res = self.find_attr(name)
         if res is None or not isinstance(res, d_String):
-            raise MissingLangPropertyError(
-                f"A lang was missing a required property: '{name}'"
-            )
+            raise MissingPropError(self.name, name)
         return res.string_value
 
 
@@ -479,6 +478,15 @@ class d_Func(d_Body):
         self.code: bytearray
         self.guest_func_path: str
 
+    def get_mock(self, code: str) -> d_Func:
+        mock_func: d_Func = d_Func.from_str("mock_exe_ditlang", code, self.guest_func_path)  # type: ignore
+        mock_func.attrs = self.attrs
+        mock_func.parent_scope = self.parent_scope
+        mock_func.start_loc = CodeLocation(0, 1, 1)
+        mock_func.return_ = self.return_
+        mock_func.return_list = self.return_list
+        return mock_func
+
 
 d_Type = Union[d_Grammar, d_Class]
 
@@ -498,7 +506,7 @@ class ReturnController(FlowControlException):
         if value.grammar == d_Grammar.NULL:
             super().__init__(Token(d_Grammar.NULL, orig_loc))
         return_declarable = Declarable(type_=func.return_, listof=func.return_list)
-        res = _check_value(value, return_declarable)
+        res = check_value(value, return_declarable)
         if res is not None:
             raise TypeMismatchError(
                 f"Expected '{res.expected}' for return, got '{res.actual}'"
@@ -517,7 +525,7 @@ class CheckResult:
     actual: str
 
 
-def _check_value(thing: d_Thing, dec: Declarable) -> Optional[CheckResult]:
+def check_value(thing: d_Thing, dec: Declarable) -> Optional[CheckResult]:
     """Check if a declarable could be a thing. The declarable represents
     what we want this thing to be."""
     if thing.is_null:
@@ -662,6 +670,8 @@ class JobType(Enum):
     DITLANG_CALLBACK = "ditlang_callback"
     FINISH_FUNC = "finish_func"
     CRASH = "crash"
+    HEART = "heart"
+    CLOSE = "close"
 
 
 @dataclass
@@ -670,15 +680,17 @@ class GuestDaemonJob:
 
     type_: JobType
     func: d_Func
-    result: d_Thing = None  # type: ignore
+    result: Union[str, list] = None  # type: ignore
     crash: BaseException = None  # type: ignore
     active: bool = False
 
     def get_json(self) -> bytes:
-        py_json: Dict[str, str] = {
+        py_json: Dict[str, Union[str, list]] = {
             "type": self.type_.value,
             "lang_name": self.func.lang.name,
             "func_name": self.func.name,
             "func_path": self.func.guest_func_path,
+            "result": self.result,
         }
-        return json.dumps(py_json).encode()
+        temp = json.dumps(py_json) + "\n"
+        return temp.encode()

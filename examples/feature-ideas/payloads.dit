@@ -1,0 +1,48 @@
+getConfig();
+pull Lua from '/home/isaiah/general/dits/langs/commonLangs.dit';
+
+class Payload {{
+    // maybe all payload classes just inherit from the payload class?
+}}
+
+class JPEG {{
+    -extends- += [Payload];
+    header = 'theslls'; // payload objects must have certain properties?
+
+    func -make-(payload) {
+        this.resolution = decode(payload.getBYtes[20]); 
+        //maybe they're required to decode the payload bay themselves?
+    }
+
+    sig Python
+    func show() {{
+        import graphics;
+        graphics.display(<|this|>) // using payload objects with kirbylangs
+    }}
+}}
+
+// store the binary payload inline, like this?
+// actually, since thinking about this, I already don't like it.
+// I think the payload bay should still be encapsulated, at the bottom of the file
+// A Payload construct can discuss and describe payloads in the payload bay seperately
+payload myImage JPEG 495034 {{
+    A8 D5 FF 00
+}}
+
+myMP4 = MP4(payload {{}})
+
+// Other than perhaps text payloads? although I'm still not sure how I 
+// want to do this. some way that makes it easy to do syntax highlighting and formatting
+payload myJson JSON {{
+    {
+        "TopObject": {
+            "List": [1, 2, 3, 4]
+        }
+    }
+}}
+
+sig Lua
+func pyPrint() {{
+    myImage.show();
+    print(myImage.resolution)
+}}

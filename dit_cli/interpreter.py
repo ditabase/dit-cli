@@ -4,6 +4,7 @@ from typing import List, NoReturn, Optional, Tuple, Union
 
 from dit_cli.built_in import b_Ditlang
 from dit_cli.exceptions import (
+    CodeError,
     CriticalError,
     DitError,
     EndOfClangError,
@@ -11,7 +12,7 @@ from dit_cli.exceptions import (
     SyntaxError_,
     TypeMismatchError,
 )
-from dit_cli.grammar import d_Grammar, prim_to_value, value_to_prim
+from dit_cli.grammar import d_Grammar, prim_to_value
 from dit_cli.interpret_context import InterpretContext
 from dit_cli.lang_daemon import run_job
 from dit_cli.oop import (
@@ -21,6 +22,7 @@ from dit_cli.oop import (
     JobType,
     ReturnController,
     Token,
+    check_value,
     d_Body,
     d_Class,
     d_Container,
@@ -58,7 +60,7 @@ DOTABLES = [
 ]
 
 
-def interpret(body: d_Body) -> None:
+def interpret(body: d_Body) -> Optional[d_Thing]:
     """Read text from a body and interpret it as ditlang code.
     Creates a new InterpretContext and executes statements on tokens,
     one after another, until EOF.
@@ -71,6 +73,7 @@ def interpret(body: d_Body) -> None:
     if not body.is_ready():
         return
     inter = InterpretContext(body)
+    last_ret: Optional[d_Thing] = None
     try:
         at_eof = False
         while not at_eof:
@@ -78,14 +81,14 @@ def interpret(body: d_Body) -> None:
                 at_eof = True  # one extra iteration for the last char
             inter.advance_tokens()
             if inter.next_tok.grammar == d_Grammar.EOF:
-                return  # Only at EOF whitespace or comment
+                return last_ret  # Only at EOF whitespace or comment
             else:
-                _statement_dispatch(inter)
+                last_ret = _statement_dispatch(inter)
                 inter.named_statement = False
     except DitError as err:
         _generate_origin(err, inter)
         raise
-    return
+    return last_ret
 
 
 def _generate_origin(
@@ -102,9 +105,7 @@ def _generate_origin(
 
 
 def _raise_helper(
-    message: str,
-    inter: InterpretContext,
-    loc: Optional[CodeLocation] = None,
+    message: str, inter: InterpretContext, loc: Optional[CodeLocation] = None,
 ) -> NoReturn:
     err = SyntaxError_(message)
     loc = loc if loc is not None else inter.next_tok.loc
@@ -112,12 +113,12 @@ def _raise_helper(
     raise err
 
 
-def _statement_dispatch(inter: InterpretContext) -> None:
+def _statement_dispatch(inter: InterpretContext) -> Optional[d_Thing]:
     """Execute the interpretation function that goes with the next_tok.
     Uses the large grammer -> function dictionary at the end of this file.
     Every grammer is paired with one function."""
     func = STATEMENT_DISPATCH[inter.next_tok.grammar]
-    func(inter)
+    return func(inter)
 
 
 def _expression_dispatch(inter: InterpretContext) -> Optional[d_Thing]:
@@ -464,9 +465,30 @@ def _new_name(inter: InterpretContext) -> None:
 def _string(inter: InterpretContext) -> d_String:
     left = inter.next_tok.grammar.value
     data = ""
-    while inter.char_feed.current() != left:
-        data += inter.char_feed.current()
-        inter.char_feed.pop()
+    if inter.char_feed.current() != left:
+        while True:
+            if inter.char_feed.current() == d_Grammar.BACKSLASH.value:
+                # String test = "some\t"
+                # String test = 'Let\'s'
+                escape_char = inter.char_feed.pop()
+                inter.char_feed.pop()
+                if escape_char in [
+                    d_Grammar.QUOTE_DOUBLE.value,
+                    d_Grammar.QUOTE_SINGLE.value,
+                    d_Grammar.BACKSLASH.value,
+                ]:
+                    data += escape_char
+                elif escape_char == d_Grammar.ESCAPE_NEWLINE.value:
+                    data += "\n"
+                elif escape_char == d_Grammar.ESCAPE_TAB.value:
+                    data += "\t"
+            else:
+                data += inter.char_feed.current()
+                inter.char_feed.pop()
+
+            if inter.char_feed.current() == left:
+                break
+
     inter.advance_tokens()  # next_tok is now ' "
     inter.advance_tokens()  # next_tok is now ; , ] )
     thing = d_String()
@@ -500,7 +522,9 @@ def _paren_left(inter: InterpretContext) -> Optional[d_Thing]:
         # We are activating a function of this instance, so the func needs 'this'
         # Subject to change when static functions are implemented
         # num.inc();
-        func.add_attr(Declarable(inter.dotted_inst.parent, THIS), inter.dotted_inst)
+        func.add_attr(
+            Declarable(inter.dotted_inst.parent, THIS), inter.dotted_inst, use_ref=True
+        )
 
     func.call_loc = copy.deepcopy(inter.curr_tok.loc)
     arg_locs = _arg_list(inter, d_Grammar.PAREN_RIGHT)
@@ -515,21 +539,15 @@ def _paren_left(inter: InterpretContext) -> Optional[d_Thing]:
         elif param is None:
             # TODO: implement proper k-args functionality
             _raise_helper(f"{func_name} given {miss} too many arguments", inter)
-        elif param.type_ == d_Grammar.PRIMITIVE_THING:
-            pass  # No need to check this
-        elif param.type_ in PRIMITIVES:
-            prim = value_to_prim(arg_loc.thing.grammar)
-            if param.type_ != prim:
-                _raise_helper(
-                    f"{func_name} expected '{prim.value}'", inter, arg_loc.loc
-                )
-        elif isinstance(param.type_, d_Class):
-            if not isinstance(arg_loc.thing, d_Instance):
-                raise NotImplementedError
-            elif arg_loc.thing.parent is not param.type_:
-                raise NotImplementedError
         else:
-            raise CriticalError("Unrecognized type for function argument")
+            res = check_value(arg_loc.thing, param)
+            if res is not None:
+                _raise_helper(
+                    f"{func_name} expected '{res.expected}', got '{res.actual}'",
+                    inter,
+                    arg_loc.loc,
+                )
+
         func.add_attr(param, arg_loc.thing, use_ref=True)
 
     try:
@@ -544,7 +562,31 @@ def _paren_left(inter: InterpretContext) -> Optional[d_Thing]:
             if not hasattr(func, "code"):
                 raise ReturnController(d_Thing.get_null_thing(), func, func.call_loc)
             job = GuestDaemonJob(JobType.CALL_FUNC, func)
-            res = run_job(job)
+            while True:
+                res = run_job(job)
+                if res.type_ == JobType.FINISH_FUNC:
+                    break
+                elif res.type_ == JobType.EXE_DITLANG:
+                    mock_func = func.get_mock(res.result)
+                    value = interpret(mock_func)
+                    job.type_ = JobType.DITLANG_CALLBACK
+                    if value is None:
+                        pass
+                    elif isinstance(value, d_String):
+                        job.result = value.string_value
+                    elif isinstance(value, d_List):
+                        final_list = []
+                        for item in value.list_value:
+                            if isinstance(item, d_String):
+                                final_list.append(item.string_value)
+                        job.result = final_list
+                    else:
+                        raise NotImplementedError
+    except CodeError as err:
+        err.set_origin(
+            inter.body.path, func.call_loc, inter.char_feed.get_line(func.call_loc)
+        )
+        raise err
     except DitError as err:
         err.add_trace(func.path, func.call_loc, func.name)
         raise err
@@ -599,7 +641,7 @@ def _make(inter: InterpretContext) -> d_Func:
         inst = d_Instance()
         inst.is_null = False
         inst.parent = class_
-        func.add_attr(Declarable(class_, THIS), inst)
+        func.add_attr(Declarable(class_, THIS), inst, use_ref=True)
         return func
     else:
         raise NotImplementedError
@@ -933,6 +975,10 @@ def _func(inter: InterpretContext) -> Optional[d_Func]:
     # func () {{}}
     orig_loc = copy.deepcopy(inter.next_tok.loc)
     func = _sig_or_func(inter)
+    if func.return_ is None:
+        func.return_ = d_Grammar.VOID
+    if func.return_list is None:
+        func.return_list = False
     if func.lang is None:
         func.lang = b_Ditlang
     inter.advance_tokens(False)
@@ -956,6 +1002,11 @@ def _func(inter: InterpretContext) -> Optional[d_Func]:
         if inter.next_tok.grammar == d_Grammar.PAREN_RIGHT:
             inter.advance_tokens()
             break
+
+        param_list = False
+        if inter.next_tok.grammar == d_Grammar.LISTOF:
+            param_list = True
+            inter.advance_tokens()
 
         if inter.next_tok.grammar in DOTABLES:
             # someName(numLib.Number
@@ -985,7 +1036,7 @@ def _func(inter: InterpretContext) -> Optional[d_Func]:
                 _raise_helper(f"'{param_name}' has already been declared", inter)
             elif param_name in [p.name for p in func.parameters]:
                 _raise_helper(f"'{param_name}' is already a parameter name", inter)
-        func.parameters.append(Declarable(param_type, param_name))
+        func.parameters.append(Declarable(param_type, param_name, param_list))
 
         inter.advance_tokens()
         _trailing_comma(inter, d_Grammar.PAREN_RIGHT)

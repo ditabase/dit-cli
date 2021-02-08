@@ -17,6 +17,30 @@
       "title": "string, string assigned to value string",
       "dit": "String test = 'cat';\nString test2 = test;",
       "expected": "Finished successfully\n"
+    },
+    {
+      "type": "succeed",
+      "title": "escape, single quote",
+      "dit": "print('let\\'s do');",
+      "expected": "let's do\n"
+    },
+    {
+      "type": "succeed",
+      "title": "escape, double quote",
+      "dit": "print(\"I said \\\"Go!\\\"\");",
+      "expected": "I said \"Go!\"\n"
+    },
+    {
+      "type": "succeed",
+      "title": "escape, tab",
+      "dit": "print('val1\\tval2\\tval3');",
+      "expected": "val1\tval2\tval3\n"
+    },
+    {
+      "type": "succeed",
+      "title": "escape, newline",
+      "dit": "print('val1\\nval2\\nval3');",
+      "expected": "val1\nval2\nval3\n"
     }
   ]
 }

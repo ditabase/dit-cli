@@ -34,7 +34,11 @@ class d_Grammar(Enum):
     PAREN_RIGHT = ")"
     BRACKET_LEFT = "["
     BRACKET_RIGHT = "]"
+
+    # Escapes
     BACKSLASH = "\\"
+    ESCAPE_TAB = "t"
+    ESCAPE_NEWLINE = "n"
 
     # Keywords
     CLASS = "class"
@@ -93,6 +97,7 @@ PRIM_TO_VALUE_DISPATCH = {
     d_Grammar.PRIMITIVE_LANG: d_Grammar.VALUE_LANG,
     d_Grammar.VALUE_THING: d_Grammar.VALUE_THING,
     d_Grammar.VALUE_STRING: d_Grammar.VALUE_STRING,
+    d_Grammar.VALUE_LIST: d_Grammar.VALUE_LIST,
     d_Grammar.VALUE_CLASS: d_Grammar.VALUE_CLASS,
     d_Grammar.VALUE_INSTANCE: d_Grammar.VALUE_INSTANCE,
     d_Grammar.VALUE_FUNC: d_Grammar.VALUE_FUNC,
@@ -110,6 +115,7 @@ def value_to_prim(grammar: d_Grammar) -> d_Grammar:
 VALUE_TO_PRIM_DISPATCH = {
     d_Grammar.VALUE_THING: d_Grammar.PRIMITIVE_THING,
     d_Grammar.VALUE_STRING: d_Grammar.PRIMITIVE_STRING,
+    d_Grammar.VALUE_LIST: d_Grammar.LISTOF,
     d_Grammar.VALUE_CLASS: d_Grammar.PRIMITIVE_CLASS,
     d_Grammar.VALUE_INSTANCE: d_Grammar.PRIMITIVE_INSTANCE,
     d_Grammar.VALUE_FUNC: d_Grammar.PRIMITIVE_FUNC,
@@ -123,4 +129,5 @@ VALUE_TO_PRIM_DISPATCH = {
     d_Grammar.PRIMITIVE_DIT: d_Grammar.PRIMITIVE_DIT,
     d_Grammar.PRIMITIVE_LANG: d_Grammar.PRIMITIVE_LANG,
     d_Grammar.NULL: d_Grammar.NULL,
+    d_Grammar.VOID: d_Grammar.VOID,
 }
