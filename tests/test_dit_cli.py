@@ -1,6 +1,5 @@
 import json
 import os
-import subprocess
 
 import pytest
 from _pytest.python import Metafunc

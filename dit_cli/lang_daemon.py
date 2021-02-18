@@ -11,7 +11,7 @@ from dataclasses import dataclass
 from threading import Thread
 from typing import List, Optional
 
-from dit_cli.exceptions import CodeError, MissingPropError
+from dit_cli.exceptions import d_CodeError, d_MissingPropError
 from dit_cli.oop import GuestDaemonJob, JobType, d_Func, d_Lang
 
 """Dev note: much of this is copied from https://realpython.com/python-sockets/
@@ -90,7 +90,7 @@ def _start_guest(lang: d_Lang):
     daemon_path = "/tmp/dit/" + lang.name + "_guest_daemon." + file_extension
     daemon_body = lang.find_attr("guest_daemon")
     if daemon_body is None or not isinstance(daemon_body, d_Func):
-        raise MissingPropError(lang.name, "guest_daemon")
+        raise d_MissingPropError(lang.name, "guest_daemon")
     open(daemon_path, "w").write(bytes(daemon_body.view).decode())
     path = lang.get_prop("executable_path")
     cmd: List[str] = [
@@ -163,7 +163,7 @@ def _service_client(key: selectors.SelectorKey, mask: int):
             if data["type"] == JobType.HEART.value:
                 pass
             elif data["type"] == JobType.CRASH.value:
-                JOB.crash = CodeError(
+                JOB.crash = d_CodeError(
                     data["result"], JOB.func.lang.name, JOB.func.guest_func_path
                 )
             elif data["type"] == JobType.EXE_DITLANG.value:

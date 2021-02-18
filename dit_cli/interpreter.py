@@ -1,16 +1,17 @@
 import copy
 from itertools import zip_longest
-from typing import List, NoReturn, Optional, Tuple, Union
+from typing import List, NoReturn, Optional, Tuple, Type, Union
 
 from dit_cli.built_in import b_Ditlang
 from dit_cli.exceptions import (
-    CodeError,
-    CriticalError,
-    DitError,
-    EndOfClangError,
-    EndOfFileError,
-    SyntaxError_,
-    TypeMismatchError,
+    d_CodeError,
+    d_CriticalError,
+    d_DitError,
+    d_EndOfClangError,
+    d_EndOfFileError,
+    d_NameError,
+    d_SyntaxError,
+    d_TypeMismatchError,
 )
 from dit_cli.grammar import d_Grammar, prim_to_value
 from dit_cli.interpret_context import InterpretContext
@@ -85,14 +86,14 @@ def interpret(body: d_Body) -> Optional[d_Thing]:
             else:
                 last_ret = _statement_dispatch(inter)
                 inter.named_statement = False
-    except DitError as err:
+    except d_DitError as err:
         _generate_origin(err, inter)
         raise
     return last_ret
 
 
 def _generate_origin(
-    err: DitError, inter: InterpretContext, loc: Optional[CodeLocation] = None
+    err: d_DitError, inter: InterpretContext, loc: Optional[CodeLocation] = None
 ) -> None:
     if err.origin is not None:
         return
@@ -100,17 +101,8 @@ def _generate_origin(
         loc = inter.char_feed.loc
     code = inter.char_feed.get_line(loc)
     if inter.body.path is None:
-        raise CriticalError("A body had no path during exception")
+        raise d_CriticalError("A body had no path during exception")
     err.set_origin(inter.body.path, loc, code)
-
-
-def _raise_helper(
-    message: str, inter: InterpretContext, loc: Optional[CodeLocation] = None,
-) -> NoReturn:
-    err = SyntaxError_(message)
-    loc = loc if loc is not None else inter.next_tok.loc
-    _generate_origin(err, inter, loc)
-    raise err
 
 
 def _statement_dispatch(inter: InterpretContext) -> Optional[d_Thing]:
@@ -147,7 +139,7 @@ def _listof(inter: InterpretContext) -> None:
         else:
             inter.dec.type_ = type_
     else:
-        _raise_helper("Expected type for listOf declaration", inter)
+        raise d_SyntaxError("Expected type for listOf declaration", inter)
 
 
 def _primitive(inter: InterpretContext) -> None:
@@ -261,11 +253,13 @@ def _type(inter: InterpretContext) -> None:
     # This function is reused by _primitive and _value_class
     inter.dec.type_ = _token_to_type(inter.curr_tok)
     if inter.next_tok.grammar in DUPLICABLES:
-        _raise_helper(f"'{inter.next_tok.thing.name}' has already been declared", inter)
+        raise d_SyntaxError(
+            f"'{inter.next_tok.thing.name}' has already been declared", inter
+        )
     if inter.next_tok.grammar in NAMEABLES:
         _expression_dispatch(inter)
     else:
-        _raise_helper("Expected a new name to follow type", inter)
+        raise d_SyntaxError("Expected a new name to follow type", inter)
 
     if inter.next_tok.grammar == d_Grammar.NEW_NAME:
         # to handle the specific case when a lang is being legally redeclared
@@ -328,7 +322,7 @@ def _dot(inter: InterpretContext) -> Token:
     inter.advance_tokens(False)  # We want to manage the next word ourselves
     target: d_Container = None  # type: ignore
     if inter.next_tok.grammar != d_Grammar.WORD:
-        _raise_helper(f"'{inter.next_tok.grammar}' is not dotable", inter)
+        raise d_SyntaxError(f"'{inter.next_tok.grammar}' is not dotable", inter)
     if inter.anon_tok:
         target = inter.anon_tok.thing  # type: ignore
     elif inter.call_tok:
@@ -361,7 +355,9 @@ def _equalable(inter: InterpretContext) -> Optional[d_Thing]:
     if inter.dec.type_ is not None and inter.dec.name is None:
         # _new_name should have been found, not an existing variable.
         # String existingValue ...
-        _raise_helper(f"'{inter.curr_tok.thing.name}' has already been declared", inter)
+        raise d_SyntaxError(
+            f"'{inter.curr_tok.thing.name}' has already been declared", inter
+        )
     elif inter.next_tok.grammar == d_Grammar.EQUALS:
         # Assign existing or new variables
         # String value = ...
@@ -393,11 +389,11 @@ def _equals(inter: InterpretContext) -> None:
         if inter.named_statement:
             # Prevent assignment of non-anonymous statements.
             # Class anonName = class RealName {{}}
-            _raise_helper(
+            raise d_SyntaxError(
                 "A named declaration cannot be used for assignment", inter, orig_loc
             )
         else:
-            raise CriticalError("No value for _expression_dispatch in _equals")
+            raise d_CriticalError("No value for _expression_dispatch in _equals")
     if assignee is not None:
         assignee.set_value(value)
     else:
@@ -450,8 +446,8 @@ def _new_name(inter: InterpretContext) -> None:
         # unknownName = ...
         inter.advance_tokens()
         if inter.next_tok.grammar != d_Grammar.EQUALS:
-            _raise_helper(
-                f"Undeclared variable '{inter.curr_tok.word}'",
+            raise d_NameError(
+                f"Undefined variable '{inter.curr_tok.word}'",
                 inter,
                 inter.curr_tok.loc,
             )
@@ -535,14 +531,14 @@ def _paren_left(inter: InterpretContext) -> Optional[d_Thing]:
         param: Declarable
         arg_loc: ArgumentLocation
         if arg_loc is None:
-            _raise_helper(f"{func_name} missing {miss} required arguments", inter)
+            raise d_SyntaxError(f"{func_name} missing {miss} required arguments", inter)
         elif param is None:
             # TODO: implement proper k-args functionality
-            _raise_helper(f"{func_name} given {miss} too many arguments", inter)
+            raise d_SyntaxError(f"{func_name} given {miss} too many arguments", inter)
         else:
             res = check_value(arg_loc.thing, param)
             if res is not None:
-                _raise_helper(
+                raise d_SyntaxError(
                     f"{func_name} expected '{res.expected}', got '{res.actual}'",
                     inter,
                     arg_loc.loc,
@@ -567,7 +563,7 @@ def _paren_left(inter: InterpretContext) -> Optional[d_Thing]:
                 if res.type_ == JobType.FINISH_FUNC:
                     break
                 elif res.type_ == JobType.EXE_DITLANG:
-                    mock_func = func.get_mock(res.result)
+                    mock_func = func.get_mock(res.result)  # type: ignore
                     value = interpret(mock_func)
                     job.type_ = JobType.DITLANG_CALLBACK
                     if value is None:
@@ -582,21 +578,21 @@ def _paren_left(inter: InterpretContext) -> Optional[d_Thing]:
                         job.result = final_list
                     else:
                         raise NotImplementedError
-    except CodeError as err:
+    except d_CodeError as err:
         err.set_origin(
             inter.body.path, func.call_loc, inter.char_feed.get_line(func.call_loc)
         )
         raise err
-    except DitError as err:
+    except d_DitError as err:
         err.add_trace(func.path, func.call_loc, func.name)
         raise err
     except ReturnController as ret:
         inter.call_tok = ret.token
-    except TypeMismatchError as mis:
+    except d_TypeMismatchError as mis:
         raise NotImplementedError
     else:
         if func.return_ is not None and func.return_ != d_Grammar.VOID:
-            _raise_helper(f"{func_name} expected a return", inter, func.call_loc)
+            raise d_SyntaxError(f"{func_name} expected a return", inter, func.call_loc)
         elif func.name == MAKE:
             thing = func.find_attr(THIS)
             if thing is None:
@@ -614,28 +610,33 @@ def _paren_left(inter: InterpretContext) -> Optional[d_Thing]:
         return _parenable(inter)
 
 
-def _handle_get_config(inter: InterpretContext, func: d_Func) -> None:
-    res: List[d_Dit] = func.py_func(func)
-    if res is None:
+def _handle_get_config(inter: InterpretContext, getConfig: d_Func) -> None:
+    # Load the .ditconf files from cwd to root
+    config_files: List[d_Dit] = getConfig.py_func(getConfig)
+    if config_files is None:
         raise NotImplementedError
-    for dit in res:
-        # interpret all the .ditconf from -main- to root
+    for dit in config_files:
+        # interpret each file
         interpret(dit)
-        for attr in dit.attrs:
-            if isinstance(attr, d_Lang):
-                # add all the langs to this dit
-                lang = inter.body.find_attr(attr.name)
-                if lang is not None:
-                    lang.set_value(attr)
+
+        for name in dit.attrs:
+            conf_lang = dit.attrs[name].get_thing()
+            if isinstance(conf_lang, d_Lang):
+                # for each lang in the conf file
+                local_lang = inter.body.find_attr(name)
+                if local_lang is not None:
+                    # If they exit both places, merge them
+                    local_lang.set_value(conf_lang)
                 else:
-                    inter.body.attrs.append(attr)
+                    # or just put the conf lang here
+                    inter.body.attrs[name] = conf_lang
 
 
 def _make(inter: InterpretContext) -> d_Func:
     class_: d_Class = inter.curr_tok.thing  # type: ignore
     make = class_.find_attr(MAKE)
     if make is None:
-        _raise_helper(f"Class '{class_.name}' does not define a -make-", inter)
+        raise d_SyntaxError(f"Class '{class_.name}' does not define a -make-", inter)
     elif isinstance(make, d_Func):
         func: d_Func = make
         inst = d_Instance()
@@ -650,14 +651,14 @@ def _make(inter: InterpretContext) -> d_Func:
 def _return(inter: InterpretContext) -> NoReturn:
     orig_loc = copy.deepcopy(inter.next_tok.loc)
     if not isinstance(inter.body, d_Func):
-        _raise_helper("'return' outside of function", inter)
+        raise d_SyntaxError("'return' outside of function", inter)
     inter.advance_tokens()
     value = _expression_dispatch(inter)
     if value is None:
         raise NotImplementedError
     try:
         raise ReturnController(value, inter.body, orig_loc)
-    except TypeMismatchError as mis:
+    except d_TypeMismatchError as mis:
         mis.set_origin(inter.body.path, orig_loc, inter.char_feed.get_line(orig_loc))
         raise mis
 
@@ -715,16 +716,18 @@ def _import(inter: InterpretContext) -> Optional[d_Dit]:
     inter.advance_tokens(False)
     gra = inter.next_tok.grammar
     if gra != d_Grammar.WORD and gra not in STRINGABLES:
-        _raise_helper("Expected a name or filepath string for import", inter)
+        raise d_SyntaxError("Expected a name or filepath string for import", inter)
 
     if gra == d_Grammar.WORD:
         # import SomeName from "someFilePath.dit";
         if inter.body.find_attr(inter.next_tok.word, scope_mode=True):
-            _raise_helper(f"'{inter.next_tok.word}' has already been declared", inter)
+            raise d_SyntaxError(
+                f"'{inter.next_tok.word}' has already been declared", inter
+            )
         name = inter.next_tok.word
         inter.advance_tokens()
         if inter.next_tok.grammar != d_Grammar.FROM:
-            _raise_helper("Expected 'from'", inter)
+            raise d_SyntaxError("Expected 'from'", inter)
         inter.advance_tokens()
 
     dit = _import_or_pull(inter, orig_loc)
@@ -751,7 +754,7 @@ def _pull(inter: InterpretContext) -> None:
         # pull THING as NAME, ...
         inter.advance_tokens(False)
         if inter.next_tok.grammar != d_Grammar.WORD:
-            _raise_helper("Expected name to pull from linked dit", inter)
+            raise d_SyntaxError("Expected name to pull from linked dit", inter)
         # pull NAME ...
         target = inter.next_tok.word
         loc = copy.deepcopy(inter.next_tok.loc)
@@ -761,7 +764,7 @@ def _pull(inter: InterpretContext) -> None:
             # pull NAME as ...
             inter.advance_tokens(False)
             if inter.next_tok.grammar != d_Grammar.WORD:
-                _raise_helper("Expected name to replace target name", inter)
+                raise d_SyntaxError("Expected name to replace target name", inter)
             replacement = inter.next_tok.word
             loc = inter.next_tok.loc
             inter.advance_tokens()
@@ -775,7 +778,7 @@ def _pull(inter: InterpretContext) -> None:
                 # pull someLang from LINK
                 langs.append(result)
             else:
-                _raise_helper(f"'{name}' has already been declared", inter, loc)
+                raise d_SyntaxError(f"'{name}' has already been declared", inter, loc)
         else:
             langs.append(None)
         targets.append((target, replacement))
@@ -785,20 +788,20 @@ def _pull(inter: InterpretContext) -> None:
         elif inter.next_tok.grammar == d_Grammar.COMMA:
             continue
         else:
-            _raise_helper("Expected 'from' or ',' to follow target", inter)
+            raise d_SyntaxError("Expected 'from' or ',' to follow target", inter)
 
     inter.advance_tokens()
     dit = _import_or_pull(inter, orig_loc)
     for (target, replacement), lang in zip(targets, langs):
         result = dit.find_attr(target)
         if result is None:
-            _raise_helper(f"'{target}' is not a valid member of this dit", inter)
+            raise d_SyntaxError(f"'{target}' is not a valid member of this dit", inter)
         result.name = replacement if replacement is not None else target
         if lang is not None:
             # explicit call to set_value, to activate -priority- comparisons
             lang.set_value(result)
         else:
-            inter.body.attrs.append(result)
+            inter.body.attrs[result.name] = result
 
 
 def _import_or_pull(inter: InterpretContext, orig_loc: CodeLocation) -> d_Dit:
@@ -809,9 +812,9 @@ def _import_or_pull(inter: InterpretContext, orig_loc: CodeLocation) -> d_Dit:
     dit = d_Dit()
     dit.is_null = False
     if inter.next_tok.grammar == d_Grammar.NULL:
-        _raise_helper("Cannot import from null", inter)
+        raise d_SyntaxError("Cannot import from null", inter)
     elif inter.next_tok.grammar not in STRINGABLES:
-        _raise_helper("Expected a filepath string for import", inter)
+        raise d_SyntaxError("Expected a filepath string for import", inter)
 
     value = _expression_dispatch(inter)
     if inter.dec.name is not None and not inter.equaling:
@@ -822,12 +825,12 @@ def _import_or_pull(inter: InterpretContext, orig_loc: CodeLocation) -> d_Dit:
     elif isinstance(value, d_String):
         dit.path = value.string_value
     else:
-        _raise_helper(f"Expected string value, not {value.public_type}", inter)
+        raise d_SyntaxError(f"Expected string value, not {value.public_type}", inter)
 
     dit.finalize()
     try:
         interpret(dit)
-    except DitError as err:
+    except d_DitError as err:
         err.add_trace(dit.path, orig_loc, "import")
         raise
     return dit
@@ -858,7 +861,7 @@ def _clang(
 
     inter.advance_tokens(False)
     if inter.next_tok.grammar not in [d_Grammar.WORD, d_Grammar.BRACE_LEFT]:
-        _raise_helper(f"Expected name or body to follow {clang_name}", inter)
+        raise d_SyntaxError(f"Expected name or body to follow {clang_name}", inter)
 
     if inter.next_tok.grammar == d_Grammar.WORD:
         result = inter.body.find_attr(inter.next_tok.word, scope_mode=True)
@@ -869,20 +872,20 @@ def _clang(
                 # lang someLang {{}}
                 lang = result
             else:
-                _raise_helper(
+                raise d_SyntaxError(
                     f"'{inter.next_tok.word}' has already been declared", inter
                 )
         clang.name = inter.next_tok.word
         inter.advance_tokens()  # get {{
         if inter.next_tok.grammar != d_Grammar.BRACE_LEFT:
-            _raise_helper(f"Expected a {clang_name} body", inter)
+            raise d_SyntaxError(f"Expected a {clang_name} body", inter)
 
     _brace_left(inter, clang)
     clang.finalize()
     try:
         interpret(clang)
-    except EndOfFileError as err:
-        raise EndOfClangError(clang_name) from err
+    except d_EndOfFileError as err:
+        raise d_EndOfClangError(clang_name) from err
     return _handle_anon(inter, clang, orig_loc, lang)  # type: ignore
 
 
@@ -917,16 +920,18 @@ def _sig(inter: InterpretContext) -> Optional[d_Func]:
         if func.return_list and func.return_ is None:
             # sig ... listOf ...
             if gra == d_Grammar.VOID:
-                _raise_helper("Cannot have listOf void", inter)
+                raise d_SyntaxError("Cannot have listOf void", inter)
             elif gra not in TYPES and gra not in DOTABLES:
-                _raise_helper("Expected type to follow listOf", inter, dotable_loc)
+                raise d_SyntaxError(
+                    "Expected type to follow listOf", inter, dotable_loc
+                )
             elif gra in DOTABLES:
                 dotable_loc = copy.deepcopy(inter.next_tok.loc)
 
         if gra == d_Grammar.FUNC:
             return _func(inter)
         elif gra == d_Grammar.EOF or None not in switches:
-            _raise_helper("Expected 'func' to follow sig", inter)
+            raise d_SyntaxError("Expected 'func' to follow sig", inter)
         elif thing is not None:
             # handles dotables and explicit Lang/Class objects
             _sig_thing_handler(inter, func)
@@ -939,10 +944,10 @@ def _sig(inter: InterpretContext) -> Optional[d_Func]:
         elif gra == d_Grammar.LISTOF:
             # sig ... listOf ...
             if func.return_ is not None:
-                _raise_helper("Unexpected 'listOf' after type", inter)
+                raise d_SyntaxError("Unexpected 'listOf' after type", inter)
             func.return_list = True
         else:
-            _raise_helper("Unrecognized token for signature", inter)
+            raise d_SyntaxError("Unrecognized token for signature", inter)
 
 
 def _sig_thing_handler(inter: InterpretContext, func: d_Func) -> None:
@@ -951,7 +956,7 @@ def _sig_thing_handler(inter: InterpretContext, func: d_Func) -> None:
         raise NotImplementedError
     elif isinstance(thing, d_Lang):
         if func.lang is not None:
-            _raise_helper("Language was already assigned", inter)
+            raise d_SyntaxError("Language was already assigned", inter)
         func.lang = thing
     elif isinstance(thing, d_Class):
         _sig_assign_return(inter, func)
@@ -961,12 +966,12 @@ def _sig_thing_handler(inter: InterpretContext, func: d_Func) -> None:
             "Expected Class or Lang, "
             f"'{thing.name}' is of type '{thing.public_type}'"
         )
-        _raise_helper(mes, inter, inter.terminal_loc)
+        raise d_SyntaxError(mes, inter, inter.terminal_loc)
 
 
 def _sig_assign_return(inter: InterpretContext, func: d_Func) -> None:
     if func.return_ is not None:
-        _raise_helper("Return type was already assigned", inter)
+        raise d_SyntaxError("Return type was already assigned", inter)
     func.return_list = False if func.return_list is None else func.return_list
 
 
@@ -986,7 +991,7 @@ def _func(inter: InterpretContext) -> Optional[d_Func]:
         # func someName
         result: d_Thing = inter.body.find_attr(inter.next_tok.word, scope_mode=True)  # type: ignore
         if result:
-            _raise_helper(f"'{result.name}' has already been declared", inter)
+            raise d_SyntaxError(f"'{result.name}' has already been declared", inter)
         else:
             func.name = inter.next_tok.word
             # Advance only if the name was there
@@ -995,7 +1000,7 @@ def _func(inter: InterpretContext) -> Optional[d_Func]:
 
     if inter.next_tok.grammar != d_Grammar.PAREN_LEFT:
         # func Ditlang void someName(
-        _raise_helper("Expected parameter list", inter)
+        raise d_SyntaxError("Expected parameter list", inter)
 
     inter.advance_tokens()
     while True:
@@ -1018,31 +1023,33 @@ def _func(inter: InterpretContext) -> Optional[d_Func]:
                     "Expected class for parameter type, "
                     f"'{result.name}' is of type '{result.public_type}'"
                 )
-                _raise_helper(mes, inter, inter.terminal_loc)
+                raise d_SyntaxError(mes, inter, inter.terminal_loc)
         elif inter.next_tok.grammar in PRIMITIVES:
             # someName(d_String
             param_type = _token_to_type(inter.next_tok)
         else:
-            _raise_helper("Expected parameter type", inter)
+            raise d_SyntaxError("Expected parameter type", inter)
 
         inter.advance_tokens(False)
         if inter.next_tok.grammar != d_Grammar.WORD:
-            _raise_helper("Expected parameter name", inter)
+            raise d_SyntaxError("Expected parameter name", inter)
         else:
             # someName(d_String someParam
             param_name = inter.next_tok.word
             result: d_Thing = inter.body.find_attr(param_name, scope_mode=True)  # type: ignore
             if result:
-                _raise_helper(f"'{param_name}' has already been declared", inter)
+                raise d_SyntaxError(f"'{param_name}' has already been declared", inter)
             elif param_name in [p.name for p in func.parameters]:
-                _raise_helper(f"'{param_name}' is already a parameter name", inter)
+                raise d_SyntaxError(
+                    f"'{param_name}' is already a parameter name", inter
+                )
         func.parameters.append(Declarable(param_type, param_name, param_list))
 
         inter.advance_tokens()
         _trailing_comma(inter, d_Grammar.PAREN_RIGHT)
 
     if inter.next_tok.grammar != d_Grammar.BRACE_LEFT:
-        _raise_helper("Expected function body", inter)
+        raise d_SyntaxError("Expected function body", inter)
 
     _brace_left(inter, func)
     func.finalize()
@@ -1083,23 +1090,23 @@ def _brace_left(inter: InterpretContext, body: d_Body) -> None:
 
 def _handle_anon(
     inter: InterpretContext,
-    body: d_Body,
+    anon_body: d_Body,
     orig_loc: CodeLocation,
     lang: Optional[d_Lang] = None,
 ) -> Optional[d_Body]:
-    if body.name is not None:
+    if anon_body.name is not None:
         # traditional statement, stop here
-        if lang is not None and isinstance(body, d_Lang):
+        if lang is not None and isinstance(anon_body, d_Lang):
             # a language is being redeclared, must call set_value to
             # activate priority comparison stuff
-            lang.set_value(body)
+            lang.set_value(anon_body)
         else:
-            inter.body.attrs.append(body)
+            inter.body.attrs[anon_body.name] = anon_body
         inter.named_statement = True
         return None
     else:
         # anonymous expression, need to dispatch it
-        inter.anon_tok = Token(body.grammar, orig_loc, thing=body)
+        inter.anon_tok = Token(anon_body.grammar, orig_loc, thing=anon_body)
         return _expression_dispatch(inter)  # type: ignore
 
 
@@ -1119,26 +1126,26 @@ def _missing_terminal(inter: InterpretContext, message: str) -> NoReturn:
     target.pos += length
     target.col += length
 
-    err = SyntaxError_(message)
+    err = d_SyntaxError(message)
     err.set_origin(inter.body.path, target, line)
     raise err
 
 
 def _trigger_eof_err(inter: InterpretContext) -> NoReturn:
     inter.char_feed.pop()
-    raise CriticalError("EOF reached, but failed to trigger")
+    raise d_CriticalError("EOF reached, but failed to trigger")
 
 
 def _not_implemented(inter: InterpretContext) -> NoReturn:
-    _raise_helper("This keyword is reserved for later development", inter)
+    raise d_SyntaxError("This keyword is reserved for later development", inter)
 
 
 def _illegal_statement(inter: InterpretContext) -> NoReturn:
-    _raise_helper("Illegal start of statement", inter)
+    raise d_SyntaxError("Illegal start of statement", inter)
 
 
 def _illegal_expression(inter: InterpretContext) -> NoReturn:
-    _raise_helper("Illegal start of expression", inter)
+    raise d_SyntaxError("Illegal start of expression", inter)
 
 
 # disable black formatting temporarily

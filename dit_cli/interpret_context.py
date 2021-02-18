@@ -3,7 +3,7 @@ import re
 from typing import Optional
 
 from dit_cli.built_in import BUILT_INS, b_Ditlang
-from dit_cli.exceptions import EndOfFileError, SyntaxError_
+from dit_cli.exceptions import d_EndOfFileError, d_SyntaxError
 from dit_cli.grammar import d_Grammar
 from dit_cli.oop import (
     Declarable,
@@ -33,7 +33,7 @@ class CharFeed:
         try:
             return chr(self.view[self.loc.pos + 1])
         except IndexError as err:
-            raise EndOfFileError from err
+            raise d_EndOfFileError from err
 
     def pop(self) -> str:
         char = self.peek()
@@ -120,7 +120,7 @@ class InterpretContext:
         if res is not None:
             return res
 
-        raise SyntaxError_(f"Unrecognized token '{self.char_feed.current()}'")
+        raise d_SyntaxError(f"Unrecognized token '{self.char_feed.current()}'")
 
 
 WHITESPACE = re.compile(r"\s")

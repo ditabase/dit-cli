@@ -2,7 +2,7 @@ import os
 from typing import List
 
 import dit_cli.settings
-from dit_cli.exceptions import CriticalError
+from dit_cli.exceptions import d_CriticalError
 from dit_cli.grammar import d_Grammar
 from dit_cli.oop import (
     Declarable,
@@ -26,17 +26,15 @@ def d_str(thing: d_Thing) -> str:
     elif isinstance(thing, d_Thing):  # type: ignore
         return _ser_obj(thing)
     else:
-        raise CriticalError("Unrecognized argument for str()")
+        raise d_CriticalError("Unrecognized argument for str()")
 
 
 def d_print(func: d_Func) -> None:
     # TODO: The entire print stack is subject to change since we're switching to always
     # JSON serialization. We might just be able to use JSON.encode, or something similar
     # The first attribute is the parameter we want.
-    val = func.attrs[0]
-    if isinstance(val, d_Ref):
-        val = val.target
-    print(d_str(val))
+    key, val = next(iter(func.attrs.items()))
+    print(d_str(val.get_thing()))
 
 
 b_print = d_Func()
@@ -66,7 +64,7 @@ def _ser_list(thing: d_Thing) -> str:
     elif isinstance(thing, d_Thing):  # type: ignore
         return _ser_obj(thing)
     else:
-        raise CriticalError("Unrecognized argument for _ser_list()")
+        raise d_CriticalError("Unrecognized argument for _ser_list()")
 
 
 def _ser_str(str_: str) -> str:

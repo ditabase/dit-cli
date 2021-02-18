@@ -1,0 +1,21 @@
+// old dit number serialization
+// sig JavaScript String func add(String num1, String num2) {{
+//    <|return (|'"' + String(parseFloat(<|num1;|>) + parseFloat(<|num2;|>)) + '"'|)|>;
+// }}
+
+JSON myJson = { "someKey": "A string" };
+print(myJson); // -> { "someKey": "A string" }
+String customKey = 'otherKey';
+print(myJson[customKey]) // -> "A String"
+Number dream = 1.75E12;
+Bool someBool = false;
+
+// new style
+sig JavaScript Number func add(Number num1, Number num2) {{
+    <|return (|<|num1;|>) + <|num2;|>|)|>;
+}}
+
+sig Python func do_some_numpy() {{
+    import numpy
+    
+}}

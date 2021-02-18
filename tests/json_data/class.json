@@ -52,7 +52,7 @@
       "type": "fail",
       "title": "class, monkey patch NOT applied to dit",
       "dit": "class A {{}}\nString A.patch = 'monkey';\nprint(patch);",
-      "expected": "Line: 3 Col: 7 (tests/fail.dit)\nprint(patch);\n      ^\n\nSyntaxError: Undeclared variable 'patch'"
+      "expected": "Line: 3 Col: 7 (tests/fail.dit)\nprint(patch);\n      ^\n\nNameError: Undefined variable 'patch'"
     },
     {
       "type": "succeed",

@@ -6,10 +6,12 @@ from urllib.error import HTTPError, URLError
 from urllib.request import urlopen
 
 from dit_cli.exceptions import (
-    CriticalError,
-    FileError,
-    MissingPropError,
-    TypeMismatchError,
+    d_AttributeError,
+    d_CriticalError,
+    d_FileError,
+    d_MissingPropError,
+    d_NameError,
+    d_TypeMismatchError,
 )
 from dit_cli.grammar import d_Grammar, prim_to_value, value_to_prim
 from dit_cli.settings import CodeLocation
@@ -23,7 +25,6 @@ class d_Thing(object):
         self.grammar: d_Grammar = d_Grammar.VALUE_THING
 
         self.name: str = None  # type: ignore
-        self.py_func: Callable = None  # type: ignore
         self.can_be_anything: bool = False
         self.is_null: bool = True
         self.is_built_in: bool = False
@@ -49,7 +50,7 @@ class d_Thing(object):
             self.grammar = new_value.grammar
             self.public_type = new_value.public_type
         else:
-            raise CriticalError("Unrecognized type for thing assignment")
+            raise d_CriticalError("Unrecognized type for thing assignment")
 
         # After altering class, set the actual value using subclass set_value
         self.set_value(new_value)
@@ -61,6 +62,9 @@ class d_Thing(object):
             cls.null_singleton.grammar = d_Grammar.NULL
             cls.null_singleton.public_type = "null"
         return cls.null_singleton
+
+    def get_thing(self) -> d_Thing:
+        return self
 
 
 class d_Ref(object):
@@ -79,6 +83,9 @@ class d_Ref(object):
         elif self.name == o.name:
             return True
         return False
+
+    def get_thing(self) -> d_Thing:
+        return self.target
 
 
 Ref_Thing = Union[d_Thing, d_Ref]
@@ -107,9 +114,11 @@ class d_String(d_Thing):
             # String test2 = test1;
             pass
         elif isinstance(new_value, d_Thing):  # type: ignore
-            raise TypeMismatchError(f"Cannot assign {new_value.public_type} to String")
+            raise d_TypeMismatchError(
+                f"Cannot assign {new_value.public_type} to String"
+            )
         else:
-            raise CriticalError("Unrecognized type for string assignment")
+            raise d_CriticalError("Unrecognized type for string assignment")
 
 
 class d_List(d_Thing):
@@ -134,9 +143,9 @@ class d_List(d_Thing):
             # listOf String test2 = test1;
             pass
         elif isinstance(new_value, d_Thing):  # type: ignore
-            raise TypeMismatchError(f"Cannot assign {new_value.public_type} to List")
+            raise d_TypeMismatchError(f"Cannot assign {new_value.public_type} to List")
         else:
-            raise CriticalError("Unrecognized type for list assignment")
+            raise d_CriticalError("Unrecognized type for list assignment")
 
 
 def _check_list_type(list_: d_List) -> None:
@@ -165,7 +174,7 @@ def _check_list_type(list_: d_List) -> None:
         if err:
             expected = _type_to_str(list_.contained_type)
             actual = _thing_to_str(ele)
-            raise TypeMismatchError(f"List of type '{expected}' contained '{actual}'")
+            raise d_TypeMismatchError(f"List of type '{expected}' contained '{actual}'")
 
 
 def _traverse(item: Union[list, d_Thing]) -> Iterator[d_Thing]:
@@ -182,12 +191,12 @@ def _traverse(item: Union[list, d_Thing]) -> Iterator[d_Thing]:
 class d_Container(d_Thing):
     def __init__(self) -> None:
         super().__init__()
-        self.attrs: List[Ref_Thing] = []
+        self.attrs: Dict[str, Ref_Thing] = {}
 
     def find_attr(self, name: str, scope_mode: bool = False) -> Optional[d_Thing]:
         if scope_mode:
             if not isinstance(self, d_Body):
-                raise CriticalError("A Container was given for scope mode")
+                raise d_CriticalError("A Container was given for scope mode")
             # We need to check for this name in upper scopes
             # String someGlobal = 'cat';
             # class someClass {{ String someInternal = someGlobal; }}
@@ -213,7 +222,7 @@ class d_Container(d_Thing):
         elif self.can_be_anything:
             super().set_value(new_value)
         else:  # isinstance(new_value, d_Thing):
-            raise TypeMismatchError(
+            raise d_TypeMismatchError(
                 f"Cannot assign {new_value.public_type} to {self.public_type}"  # type: ignore
             )
 
@@ -222,14 +231,16 @@ class d_Container(d_Thing):
     ) -> d_Thing:
         ref = None
         if dec.name is None:
-            raise CriticalError("A declarable had no name")
+            raise d_CriticalError("A declarable had no name")
         if self.find_attr(dec.name):
             # TODO: this could be naive with inheritance, not sure.
-            raise CriticalError(f"A duplicate attribute was found: '{dec.name}'")
+            raise d_CriticalError(f"A duplicate attribute was found: '{dec.name}'")
         if value is not None:
             res = check_value(value, dec)
             if res is not None:
-                raise TypeMismatchError(f"Cannot assign {res.actual} to {res.expected}")
+                raise d_TypeMismatchError(
+                    f"Cannot assign {res.actual} to {res.expected}"
+                )
 
             if dec.type_ == d_Grammar.PRIMITIVE_THING:
                 value.can_be_anything = True
@@ -243,38 +254,30 @@ class d_Container(d_Thing):
             value = _type_to_obj(dec)
 
         if ref is not None:
-            self.attrs.append(ref)
+            self.attrs[ref.name] = ref
         else:
-            self.attrs.append(value)
+            self.attrs[value.name] = value
         return value
 
 
 def _find_attr_in_scope(name: str, body: d_Body) -> Optional[d_Thing]:
-    res = _simple_attr_search(body.attrs, name)
-    if res is not None:
-        return res
-
-    if body.parent_scope is None:
-        return None
-    else:
+    if name in body.attrs:
+        return body.attrs[name].get_thing()
+    elif body.parent_scope is not None:
         return _find_attr_in_scope(name, body.parent_scope)
+    else:
+        return None
 
 
 def _find_attr_in_self(name: str, con: d_Container) -> Optional[d_Thing]:
-    res = _simple_attr_search(con.attrs, name)
-    if res is not None:
-        return res
-    if isinstance(con, d_Instance):
+    if name in con.attrs:
+        return con.attrs[name].get_thing()
+    elif isinstance(con, d_Instance):
         return _find_attr_in_self(name, con.parent)
     elif isinstance(con, d_Class):
         for parent in con.parents:
             return _find_attr_in_self(name, parent)
-
-
-def _simple_attr_search(attrs: List[Ref_Thing], name: str) -> Optional[d_Thing]:
-    for attr in attrs:
-        if attr.name == name:
-            return attr if isinstance(attr, d_Thing) else attr.target
+    return None
 
 
 class d_Instance(d_Container):
@@ -304,7 +307,7 @@ class d_Body(d_Container):
 
     def is_ready(self) -> bool:
         if self.view is None:
-            raise CriticalError("A body had no view during readying")
+            raise d_CriticalError("A body had no view during readying")
         return len(self.view) > 0
 
     def finalize(self) -> None:
@@ -320,7 +323,7 @@ class d_Body(d_Container):
 def _type_to_obj(dec: Declarable) -> d_Thing:
     thing: d_Thing = None  # type: ignore
     if dec.type_ is None:
-        raise CriticalError("A declarable had no type")
+        raise d_CriticalError("A declarable had no type")
     elif isinstance(dec.type_, d_Class):
         thing = d_Instance()
         thing.parent = dec.type_
@@ -344,7 +347,7 @@ def _type_to_obj(dec: Declarable) -> d_Thing:
         thing = d_Dit()
 
     if thing is None:
-        raise CriticalError("Unrecognized type for declaration")
+        raise d_CriticalError("Unrecognized type for declaration")
     else:
         thing.name = dec.name
         return thing
@@ -366,22 +369,22 @@ class d_Dit(d_Body):
         if self.view is not None:
             return
         if self.path is None:
-            raise CriticalError("A dit had no path")
+            raise d_CriticalError("A dit had no path")
         if self.path.startswith("https://") or self.path.startswith("http://"):
             try:
                 contents = urlopen(self.path).read().decode()
             except (HTTPError, URLError) as error:
-                raise FileError(f"Import failed, {error}")
+                raise d_FileError(f"Import failed, {error}")
         else:
             try:
                 with open(self.path) as file_object:
                     contents = file_object.read()
             except FileNotFoundError:
-                raise FileError("Import failed, file not found")
+                raise d_FileError("Import failed, file not found")
             except PermissionError:
-                raise FileError("Import failed, permission denied")
+                raise d_FileError("Import failed, permission denied")
             except IsADirectoryError:
-                raise FileError("Import failed, not a directory")
+                raise d_FileError("Import failed, not a directory")
 
         self.view = memoryview(contents.encode())
 
@@ -404,12 +407,12 @@ class d_Lang(d_Body):
     def add_attr(self, dec: Declarable, value: Optional[d_Thing]) -> d_Thing:
         result = super().add_attr(dec, value=value)
         priority = 0
-        for item in self.attrs:
-            if item.name == "-priority-":
-                if not isinstance(item, d_String):
-                    raise TypeMismatchError("-priority- must be of type String")
-                priority = int(item.string_value)
-                break
+
+        if "-priority-" in self.attrs:
+            item = self.attrs["-priority-"]
+            if not isinstance(item, d_String):
+                raise d_TypeMismatchError("-priority- must be of type String")
+            priority = int(item.string_value)
 
         if not hasattr(result, "priority_num"):
             result.priority = priority  # type: ignore
@@ -424,44 +427,27 @@ class d_Lang(d_Body):
     def get_prop(self, name: str) -> str:
         res = self.find_attr(name)
         if res is None or not isinstance(res, d_String):
-            raise MissingPropError(self.name, name)
+            raise d_MissingPropError(self.name, name)
         return res.string_value
 
 
-def _combine_langs(lang1: d_Lang, lang2: d_Lang) -> List[Ref_Thing]:
-    _del_name(lang1.attrs, "-priority-")
-    _del_name(lang2.attrs, "-priority-")
+def _combine_langs(lang1: d_Lang, lang2: d_Lang) -> Dict[str, Ref_Thing]:
+    lang1.attrs.pop("-priority-", None)
+    lang2.attrs.pop("-priority-", None)
     set1, set2 = set(lang1.attrs), set(lang2.attrs)
     # Start by pulling all the items that don't have the same names into a list
-    fin = list(set1.symmetric_difference(set2))
-    # Get the indices of matching elements
-    indices = _find_matching_indices(lang1.attrs, lang2.attrs)
-    for ind1, ind2 in indices:
-        item1, item2 = lang1.attrs[ind2], lang2.attrs[ind1]
-        fin.append(item1 if item1.priority > item2.priority else item2)  # type: ignore
-    return fin
+    out: Dict[str, Ref_Thing] = {}
+    for unique_name in set1.symmetric_difference(set2):
+        if unique_name in lang1.attrs:
+            out[unique_name] = lang1.attrs[unique_name]
+        else:
+            out[unique_name] = lang2.attrs[unique_name]
 
-
-def _del_name(list_: List[Ref_Thing], name: str) -> None:
-    for index, item in enumerate(list_):
-        if item.name == name:
-            del list_[index]
-            return
-
-
-def _find_matching_indices(
-    list1: List[Ref_Thing], list2: List[Ref_Thing]
-) -> List[Tuple[int, int]]:
-    """Return a list of tuples of indices for list1 and list2,
-    where there are matching elements.
-    [1,3,4,5,10], [5,1,3,2])  -> [(0,1), (1,2), (3,0)]
-    see: https://stackoverflow.com/a/49247599/8412474"""
-    inverse_index = {element: index for index, element in enumerate(list1)}
-    return [
-        (index, inverse_index[element])
-        for index, element in enumerate(list2)
-        if element in inverse_index
-    ]
+    # Add the matching names to the list, based on priority
+    for match_name in set1.intersection(set2):
+        v1, v2 = lang1.attrs[match_name], lang2.attrs[match_name]
+        out[match_name] = v1 if v1.priority > v2.priority else v2  # type: ignore
+    return out
 
 
 class d_Func(d_Body):
@@ -470,6 +456,7 @@ class d_Func(d_Body):
         self.public_type = "Function"
         self.grammar = d_Grammar.VALUE_FUNC
 
+        self.py_func: Callable = None  # type: ignore
         self.call_loc: CodeLocation = None  # type: ignore
         self.lang: d_Lang = None  # type: ignore
         self.return_: d_Type = None  # type: ignore
@@ -508,7 +495,7 @@ class ReturnController(FlowControlException):
         return_declarable = Declarable(type_=func.return_, listof=func.return_list)
         res = check_value(value, return_declarable)
         if res is not None:
-            raise TypeMismatchError(
+            raise d_TypeMismatchError(
                 f"Expected '{res.expected}' for return, got '{res.actual}'"
             )
         if isinstance(value, d_List):

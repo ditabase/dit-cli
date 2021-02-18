@@ -4,7 +4,7 @@ import sys
 
 import dit_cli.settings
 from dit_cli import __version__
-from dit_cli.exceptions import DitError
+from dit_cli.exceptions import d_DitError
 from dit_cli.interpreter import interpret
 from dit_cli.lang_daemon import kill_all, start_daemon
 from dit_cli.oop import d_Dit
@@ -32,7 +32,7 @@ def run_string(dit_string: str, path: str):
         dit = d_Dit.from_str("-main-", dit_string, path)
         dit.finalize()
         interpret(dit)
-    except DitError as err:
+    except d_DitError as err:
         final = err.get_cli_trace()
         print(final)
     finally:
