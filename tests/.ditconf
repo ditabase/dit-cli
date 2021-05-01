@@ -1,4 +1,4 @@
-lang TestLangNotReal {{
-    -priority- = '100';
+lang TestLangNotReal {|
+    Priority = '100';
     aTestMessage = 'Test Message';
-}}
+|}

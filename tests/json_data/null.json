@@ -3,9 +3,8 @@
     {
       "type": "succeed",
       "title": "null, var assignment",
-      "dit": "String test = null;",
+      "dit": "Str test = null;",
       "expected": "Finished successfully\n"
     }
-
   ]
 }

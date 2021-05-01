@@ -2,9 +2,9 @@ import copy
 import re
 from typing import Optional
 
-from dit_cli.built_in import BUILT_INS, b_Ditlang
+from dit_cli.built_in import BUILT_INS
 from dit_cli.exceptions import d_EndOfFileError, d_SyntaxError
-from dit_cli.grammar import d_Grammar
+from dit_cli.grammar import DOUBLES, KEYWORDS, SINGLES, d_Grammar
 from dit_cli.oop import (
     Declarable,
     Token,
@@ -85,6 +85,8 @@ class InterpretContext:
         self.declaring_func: d_Func = None  # type: ignore
         self.terminal_loc: CodeLocation = None  # type: ignore
         self.named_statement: bool = False
+        self.in_json: bool = False
+        self.negative_num: bool = False
 
     def advance_tokens(self, find_word: bool = True) -> None:
         self._manipulate_tokens(self.get_token(find_word=find_word))
@@ -116,6 +118,10 @@ class InterpretContext:
         if res is not None:
             return res
 
+        res = _find_digit(self)
+        if res is not None:
+            return res
+
         res = _find_words(self, find_word)
         if res is not None:
             return res
@@ -141,12 +147,6 @@ def _clear_whitespace_and_comments(inter: InterpretContext) -> Optional[Token]:
             return None
 
 
-DOUBLES = [
-    d_Grammar.BRACE_LEFT,
-    d_Grammar.BRACE_RIGHT,
-]
-
-
 def _find_double_chars(inter: InterpretContext) -> Optional[Token]:
     if inter.char_feed.eof():  # Can't be double if we only have 1 char
         return None
@@ -163,22 +163,6 @@ def _find_double_chars(inter: InterpretContext) -> Optional[Token]:
             return Token(d_Grammar, lok)
 
 
-SINGLES = [
-    d_Grammar.QUOTE_DOUBLE,
-    d_Grammar.QUOTE_SINGLE,
-    d_Grammar.DOT,
-    d_Grammar.EQUALS,
-    d_Grammar.PLUS,
-    d_Grammar.COMMA,
-    d_Grammar.SEMI,
-    d_Grammar.PAREN_LEFT,
-    d_Grammar.PAREN_RIGHT,
-    d_Grammar.BRACKET_LEFT,
-    d_Grammar.BRACKET_RIGHT,
-    d_Grammar.BACKSLASH,
-]
-
-
 def _find_single_chars(inter: InterpretContext) -> Optional[Token]:
     cur = inter.char_feed.current()
     lok = copy.deepcopy(inter.char_feed.loc)
@@ -193,33 +177,20 @@ def _find_single_chars(inter: InterpretContext) -> Optional[Token]:
     return None
 
 
-LETTER = re.compile(r"[A-Za-z0-9_-]")
+DIGIT = re.compile(r"[0-9]")
 
-KEYWORDS = [
-    d_Grammar.CLASS,
-    d_Grammar.LANG,
-    d_Grammar.SIG,
-    d_Grammar.FUNC,
-    d_Grammar.VOID,
-    d_Grammar.LISTOF,
-    d_Grammar.IMPORT,
-    d_Grammar.FROM,
-    d_Grammar.AS,
-    d_Grammar.PULL,
-    d_Grammar.USE,
-    d_Grammar.STATIC,
-    d_Grammar.INSTANCE,
-    d_Grammar.THROW,
-    d_Grammar.RETURN,
-    d_Grammar.NULL,
-    d_Grammar.PRIMITIVE_THING,
-    d_Grammar.PRIMITIVE_STRING,
-    d_Grammar.PRIMITIVE_CLASS,
-    d_Grammar.PRIMITIVE_INSTANCE,
-    d_Grammar.PRIMITIVE_FUNC,
-    d_Grammar.PRIMITIVE_DIT,
-    d_Grammar.PRIMITIVE_LANG,
-]
+
+def _find_digit(inter: InterpretContext) -> Optional[Token]:
+    lok = copy.deepcopy(inter.char_feed.loc)
+    cur = inter.char_feed.current()
+    if DIGIT.match(cur):
+        inter.char_feed.pop()
+        # we only get the first digit, interpreter handles the number
+        return Token(d_Grammar.DIGIT, lok, cur)
+
+
+FIRST_LETTER = re.compile(r"[A-Za-z_]")
+LETTER = re.compile(r"[A-Za-z0-9_-]")
 
 
 def _find_words(inter: InterpretContext, find_word: bool) -> Optional[Token]:

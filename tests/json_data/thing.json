@@ -15,19 +15,19 @@
     {
       "type": "succeed",
       "title": "Thing, value assignment",
-      "dit": "Thing test = 'cat';\ntest = ['dog', class {{}}];\ntest = class {{}};\ntest = import 'tests/import.dit';\ntest = func (){{}};",
+      "dit": "Thing test = 'cat';\ntest = ['dog', class {||}];\ntest = class {||};\ntest = import 'tests/import.dit';\ntest = func (){||};",
       "expected": "Finished successfully\n"
     },
     {
       "type": "succeed",
       "title": "Thing, var assignment",
-      "dit": "Thing thg;\nString test1 = 'cat';\nlistOf Class test2 = [class {{}}, class {{}}];\nClass test3 = class {{}};\nDit test4 = import 'tests/import.dit';\nFunc test5 = func (){{}};\nthg = test1;\nthg = test2;\nthg = test3;\nthg = test4;\nthg = test5;",
+      "dit": "Thing thg;\nStr test1 = 'cat';\nlistOf Class test2 = [class {||}, class {||}];\nClass test3 = class {||};\nDit test4 = import 'tests/import.dit';\nFunc test5 = func (){||};\nthg = test1;\nthg = test2;\nthg = test3;\nthg = test4;\nthg = test5;",
       "expected": "Finished successfully\n"
     },
     {
       "type": "succeed",
       "title": "Thing, no primitive assignment",
-      "dit": "someVar = 'cat';\notherVar = 'dog';\nclass A {{\n    classVar = 'bird';\n    classVar2 = ['maybe', 'a', 'list'];\n    func -make-(String test) {{\n        tempVar = 'moon';\n        this.instVar = test;\n        this.instVar2 = 'keyboard';\n    }}\n}}\na = A('bottle');",
+      "dit": "someVar = 'cat';\notherVar = 'dog';\nclass A {|\n    classVar = 'bird';\n    classVar2 = ['maybe', 'a', 'list'];\n    func Make(Str test) {|\n        tempVar = 'moon';\n        this.instVar = test;\n        this.instVar2 = 'keyboard';\n    |}\n|}\na = A('bottle');",
       "expected": "Finished successfully\n"
     }
   ]

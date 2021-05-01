@@ -8,21 +8,21 @@
     },
     {
       "type": "fail",
-      "title": "Missing semicolon after String declare",
-      "dit": "String test",
-      "expected": "Line: 1 Col: 12 (tests/fail.dit)\nString test\n           ^\n\nSyntaxError: Expected ';'"
+      "title": "Missing semicolon after Str declare",
+      "dit": "Str test",
+      "expected": "Line: 1 Col: 9 (tests/fail.dit)\nStr test\n        ^\n\nSyntaxError: Expected ';'"
     },
     {
       "type": "fail",
-      "title": "Missing semicolon after String declare and assignment",
-      "dit": "String test = 'cat'",
-      "expected": "Line: 1 Col: 20 (tests/fail.dit)\nString test = 'cat'\n                   ^\n\nSyntaxError: Expected ';'"
+      "title": "Missing semicolon after Str declare and assignment",
+      "dit": "Str test = 'cat'",
+      "expected": "Line: 1 Col: 17 (tests/fail.dit)\nStr test = 'cat'\n                ^\n\nSyntaxError: Expected ';'"
     },
     {
       "type": "fail",
       "title": "Missing semicolon after list assignment",
-      "dit": "listOf String test = ['Hello', 'world']",
-      "expected": "Line: 1 Col: 40 (tests/fail.dit)\nlistOf String test = ['Hello', 'world']\n                                       ^\n\nSyntaxError: Expected ';'"
+      "dit": "listOf Str test = ['Hello', 'world']",
+      "expected": "Line: 1 Col: 37 (tests/fail.dit)\nlistOf Str test = ['Hello', 'world']\n                                    ^\n\nSyntaxError: Expected ';'"
     },
     {
       "type": "fail",
@@ -39,8 +39,8 @@
     {
       "type": "fail",
       "title": "Missing semicolon after anon class",
-      "dit": "Class A = class {{}}",
-      "expected": "Line: 1 Col: 21 (tests/fail.dit)\nClass A = class {{}}\n                    ^\n\nSyntaxError: Expected ';'"
+      "dit": "Class A = class {||}",
+      "expected": "Line: 1 Col: 21 (tests/fail.dit)\nClass A = class {||}\n                    ^\n\nSyntaxError: Expected ';'"
     }
   ]
 }

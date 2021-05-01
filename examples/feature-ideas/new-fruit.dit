@@ -1,7 +1,7 @@
 // A series of cartoonish dits to demonstrate dit syntax.
 
 // A dit class
-class Fruit {{
+class Fruit {|
     // A class attribute. Unsurprisingly, its a list of strings.
     listOf String knownFruits = ['apple', 'banana', 'pear', 'clementine', 'kiwi'];
 
@@ -16,9 +16,9 @@ class Fruit {{
         Also -dashCase- for all reserved functions.
         I don't think -dashCase- looks very good, but it works, and I can change it.
         The important thing is that -dashFunctions- are special.
-        '-make-' is the current reserved name for constructors, subject to change
+        'Make' is the current reserved name for constructors, subject to change
     */
-    func -make-(String val) {{
+    func Make(String val) {|
         // Instance attribute.
         String this.myFruit = val;
         /* 
@@ -26,20 +26,20 @@ class Fruit {{
             It can assign values and call functions and nothing else.
             All the real work is done by other languages.
         */
-    }}
+    |}
 
     // Built-in method for telling this instance to do whatever it needs to do.
     // Since fruit is just a data object, it should validate itself on run.
-    func -run-() {{
+    func Run() {|
         this.validate();
-    }}
+    |}
 
     // Language agnostic scripting.
     // sig defines switches, which can be very long.
     // "sig LANG RETURN_TYPE STATIC/INSTANCE ...""
     // by default, lang is DitLang, return is void, and function is Instance
     sig Python
-    func validate() {{
+    func validate() {|
         # A "Triangle Expression"
         value = <|this.myFruit|>
         fruits = <|this.knownFruits|>
@@ -67,11 +67,11 @@ class Fruit {{
         # Review:
         # Triangle Expression: Pull info from dit, execute dit commands.
         # Circle Expression: Send info back to dit, arguments for dit commands.
-    }}
+    |}
 
     // Language overloading, this could be run in a browser or other non-Python context.
     sig JavaScript
-    func validate() {{
+    func validate() {|
         const value = <|this.myFruit|>; // Notice the Shape Expressions look the same,
         const fruits = <|this.knownFruits|>; // except for the semicolon.
 
@@ -85,11 +85,11 @@ class Fruit {{
         if (fruits.indexOf(value) === -1) { 
             <|throw (|`"${value}" is not a valid fruit.`;|)|>
         }
-    }}
+    |}
 
     // Compiled languages are not implemented yet, but will work fine in the future.
     sig Java
-    func validate() {{
+    func validate() {|
         // pre will blindly place whatever you want at the top of the file.
         <|pre (|import java.util.Arrays;|)|>
 
@@ -111,7 +111,7 @@ class Fruit {{
         if (!fruits.contains(value)) {
             <|throw (|"\"" + value + "\" is not a valid fruit.";|)|>
         }
-    }}
+    |}
 
     // If multiple languages are available, there will be options to choose
     // a specific one, a preference hierarchy, or just the fastest one.
@@ -122,10 +122,10 @@ class Fruit {{
     // all client side code, (no internet connection, sensitive private data).
     // Your dit data will still be compatible with the greater DitaBase ecosystem.
 
-    func Ditlang String -str-() {{
+    func Ditlang String -str-() {|
         return this.value;
-    }}
-}}
+    |}
+|}
 
 // Declaration/instantiation.
 Fruit goodFruit = Fruit('kiwi');
@@ -133,15 +133,15 @@ Fruit goodFruit = Fruit('kiwi');
 // Would throw an error if validated.
 Fruit badFruit = Fruit('Clearly not a fruit');
 
-// We aren't validating these objects yet, or even in -make-
+// We aren't validating these objects yet, or even in Make
 // That's because of this:
-func -run-() {{
+func Run() {|
     dit.runAll();
     /*
-        We are assigning the -run- function for this entire dit,
-        which can be referenced explicitly with -dit-.-run-()
+        We are assigning the Run function for this entire dit,
+        which can be referenced explicitly with -dit-.Run()
         It calls -runA
-    	This will activate the -run-() function of all objects in this dit
+    	This will activate the Run() function of all objects in this dit
     	They activate in parallel, so if you have a large number of similar objects
     	which all need to do something, -runAll-() is perfect.
     	It makes more sense to validate all objects at once, if you can wait,
@@ -149,36 +149,36 @@ func -run-() {{
         We'll call this function at the end of the dit.
     */
     print("dit is valid, no errors found");
-}}
+|}
 
 // Let's see a bit more complexity
-class FruitPref {{
-    func -make-(Fruit least, Fruit most) {{
+class FruitPref {|
+    func Make(Fruit least, Fruit most) {|
         // Attributes of another class type. 
         Fruit this.leastFav = least;
         Fruit this.mostFav = most;
         // Note the "no use before define." That's why Fruit is above.
         // Also note that the class name is available in this scope.
         // All variables in the outer scope will be available, recursively.
-    }}
+    |}
 
-    func -run-() {{
+    func Run() {|
         this.validate();
-    }}
+    |}
 
     sig JavaScript
-    func validate() {{
+    func validate() {|
         if (<|this.mostFav.myFruit|> === <|this.leastFav.myFruit|>) {
             <|throw (|"Your most and least favorite fruits cannot be the same."|)|>
         }
-    }}
+    |}
 
     sig Python String
-    func -str-() {{
+    func -str-() {|
         ret = f"I like {<|this.mostFav.value|>}, but hate {<|this.leastFav.value|>}."
         <|return (|ret|)|>
-    }}
-}}
+    |}
+|}
 
 FruitPref favorites = FruitPref(goodFruit, Fruit('apple'));
 
@@ -188,33 +188,33 @@ import NumberNamespace from
 "https://raw.githubusercontent.com/ditabase/dits/master/new-dits/Number.dit";
 
 // You can imagine lots of small utility classes like this.
-SomeDataLogger {{
-    func -make-() {{
+SomeDataLogger {|
+    func Make() {|
         ImportedNamespace.Number this.ops = ImportedNamespace.Number('0');
         listOf String opLog = [];
-    }}
+    |}
 
-    func log(String message) {{
+    func log(String message) {|
         this.operations.inc();
         this.opLog += message;
-    }}
+    |}
 
-    func log() {{
+    func log() {|
         this.log("anonymous");
-    }}
+    |}
 
     sig Python String
-    func -str-() {{
+    func -str-() {|
         output = ""
         for message, index in Enumerate(<|this.opLog|>):
             output += f'Op #{index:2} - {message}\n';
         return output[:-1] # strip trailing newline.
-    }}
-}}
+    |}
+|}
 
 // How about inheritance?
-class FoodSatisfaction {{
-    -parents- = [FruitPref, SomeDataLogger];
+class FoodSatisfaction {|
+    Parents = [FruitPref, SomeDataLogger];
     // Inheritance is just a list. The order of the list determines MRO precedence.
     // It's dynamic, meaning any script can add and remove parents as needed.
 
@@ -223,30 +223,30 @@ class FoodSatisfaction {{
     // I can imagine a class having 50 parent classes for utility or compliance,
     // none of which have any name conflicts.
 
-    func -make-(Fruit least, Fruit most) {{
-        this.FruitPref.-make-(least, most);
+    func Make(Fruit least, Fruit most) {|
+        this.FruitPref.Make(least, most);
         // Explicitly reference the parent class's constructor method.
 
-        // this.-make-(least, most); // This is just recursion
+        // this.Make(least, most); // This is just recursion
         // The local constructor hides the constructor of the parent
-        / /TODO: Explain this bit in more detail
+        // TODO: Explain this bit in more detail
 
-        SomeDataLogger.-make-();
+        SomeDataLogger.Make();
         Number this.satisfaction = Number('0');
-    }}
+    |}
 
-    // No -run- is needed. This class only responds to class functions
+    // No Run is needed. This class only responds to class functions
 
     sig Python
-    func eat(String food) {{
+    func eat(String food) {|
         least = <|this.leastFav|>
         most = <|this.mostFav|>
 
         # Creating another object on the fly and running it.
-        <|Fruit(food).-run-()|>
+        <|Fruit(food).Run()|>
 
         # This will call validate() for the food string,
-        # and anything else -run-() might do in the future.
+        # and anything else Run() might do in the future.
         # It's important to validate it since it might come from the command line.
 
         food = <|food|>
@@ -260,13 +260,13 @@ class FoodSatisfaction {{
         else:
             <|this.satisfaction.add('1')|>
             <|this.log("ate neutral")|>
-    }}
+    |}
 
-    func -str-() {{
+    func -str-() {|
         // Unsure about String concatenation syntax, but this is pretty uncontroversial.
         return "Satisfaction: " + this.satisfaction + "\nMeals: " + this.ops + "\n"; 
-    }}
-}}
+    |}
+|}
 
 FruitSatisfaction sat = FruitSatisfaction("pear", "banana");
 sat.eat("pear");
@@ -281,7 +281,7 @@ sat.eat("clementine"); // Note when this occurs, it will be important in a bit.
 // Top level function, demonstrating lack of privacy in dit.
 // Anything can mess with anything else, at any time.
 sig Python Fruit
-func aggressiveFruitSwitch(String newFruit, String oldFruit) {{
+func aggressiveFruitSwitch(String newFruit, String oldFruit) {|
     fruits = <|Fruit.knownFruits|>
     newFruit = <|newFruit|>
     oldFruit = <|oldFruit|>
@@ -311,14 +311,14 @@ func aggressiveFruitSwitch(String newFruit, String oldFruit) {{
     # that fixes all of the bugs and converting things to modern standards.
 
     return <|Fruit(newFruit)|>
-}}
+|}
 
 aggressiveFruitSwitch("clementine", "orange");
 sat.eat("orange"); // "clementine" was safe above, but now would cause an error.
 
-dit.-run-();
+dit.Run();
 // With this line in the file, the dit will run as soon as it parses to this point.
-// You could instead leave this out, and call -run-() from the command line.
+// You could instead leave this out, and call Run() from the command line.
 // If you have a huge dit which takes a long time to validate, but you already know
 // it is valid, there's no need to validate it again if you're just running
 // some sort of function or query.

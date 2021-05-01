@@ -15,62 +15,62 @@
     {
       "type": "fail",
       "title": "sig, duplicate lang",
-      "dit": "lang JavaScript {{}}\nsig Ditlang JavaScript",
+      "dit": "lang JavaScript {||}\nsig Ditlang JavaScript",
       "expected": "Line: 2 Col: 22 (tests/fail.dit)\nsig Ditlang JavaScript\n                     ^\n\nSyntaxError: Language was already assigned"
     },
     {
       "type": "fail",
-      "title": "sig, String var return type",
-      "dit": "String test = 'cat';\nsig Ditlang test func test2() {{}}",
-      "expected": "Line: 2 Col: 13 (tests/fail.dit)\nsig Ditlang test func test2() {{}}\n            ^\n\nSyntaxError: Expected Class or Lang, 'test' is of type 'String'"
+      "title": "sig, Str var return type",
+      "dit": "Str test = 'cat';\nsig Ditlang test func test2() {||}",
+      "expected": "Line: 2 Col: 13 (tests/fail.dit)\nsig Ditlang test func test2() {||}\n            ^\n\nSyntaxError: Expected Class or Lang, 'test' is of type 'Str'"
     },
     {
       "type": "fail",
       "title": "sig, Dit var return type",
-      "dit": "import classDit from 'tests/import2.dit';\nsig Ditlang classDit func test2() {{}}",
-      "expected": "Line: 2 Col: 13 (tests/fail.dit)\nsig Ditlang classDit func test2() {{}}\n            ^\n\nSyntaxError: Expected Class or Lang, 'classDit' is of type 'Dit'"
+      "dit": "import classDit from 'tests/import2.dit';\nsig Ditlang classDit func test2() {||}",
+      "expected": "Line: 2 Col: 13 (tests/fail.dit)\nsig Ditlang classDit func test2() {||}\n            ^\n\nSyntaxError: Expected Class or Lang, 'classDit' is of type 'Dit'"
     },
     {
       "type": "fail",
       "title": "sig, dotted return type, final was string",
-      "dit": "class Test {{String test1 = 'cat';}}\nsig Ditlang Test.test1 func test2() {{}}",
-      "expected": "Line: 2 Col: 18 (tests/fail.dit)\nsig Ditlang Test.test1 func test2() {{}}\n                 ^\n\nSyntaxError: Expected Class or Lang, 'test1' is of type 'String'"
+      "dit": "class Test {|Str test1 = 'cat';|}\nsig Ditlang Test.test1 func test2() {||}",
+      "expected": "Line: 2 Col: 18 (tests/fail.dit)\nsig Ditlang Test.test1 func test2() {||}\n                 ^\n\nSyntaxError: Expected Class or Lang, 'test1' is of type 'Str'"
     },
     {
       "type": "fail",
       "title": "sig, dotted return type, final was list",
-      "dit": "class Test {{listOf String test1 = ['cat'];}}\nsig Ditlang Test.test1 func test2() {{}}",
-      "expected": "Line: 2 Col: 18 (tests/fail.dit)\nsig Ditlang Test.test1 func test2() {{}}\n                 ^\n\nSyntaxError: Expected Class or Lang, 'test1' is of type 'List'"
+      "dit": "class Test {|listOf Str test1 = ['cat'];|}\nsig Ditlang Test.test1 func test2() {||}",
+      "expected": "Line: 2 Col: 18 (tests/fail.dit)\nsig Ditlang Test.test1 func test2() {||}\n                 ^\n\nSyntaxError: Expected Class or Lang, 'test1' is of type 'List'"
     },
     {
       "type": "fail",
       "title": "sig, listOf void",
-      "dit": "func listOf void test(String out) {{}}",
-      "expected": "Line: 1 Col: 6 (tests/fail.dit)\nfunc listOf void test(String out) {{}}\n     ^\n\nSyntaxError: Expected parameter list"
+      "dit": "func listOf void test(Str out) {||}",
+      "expected": "Line: 1 Col: 6 (tests/fail.dit)\nfunc listOf void test(Str out) {||}\n     ^\n\nSyntaxError: Expected parameter list"
     },
     {
       "type": "fail",
       "title": "sig, too many switches",
-      "dit": "sig Ditlang void String func test() {{}}",
-      "expected": "Line: 1 Col: 18 (tests/fail.dit)\nsig Ditlang void String func test() {{}}\n                 ^\n\nSyntaxError: Expected 'func' to follow sig"
+      "dit": "sig Ditlang void Str func test() {||}",
+      "expected": "Line: 1 Col: 18 (tests/fail.dit)\nsig Ditlang void Str func test() {||}\n                 ^\n\nSyntaxError: Expected 'func' to follow sig"
     },
     {
       "type": "fail",
       "title": "sig, listOf Ditlang",
-      "dit": "sig listOf Ditlang func test() {{}}",
-      "expected": "Line: 1 Col: 12 (tests/fail.dit)\nsig listOf Ditlang func test() {{}}\n           ^\n\nSyntaxError: Expected type to follow listOf"
+      "dit": "sig listOf Ditlang func test() {||}",
+      "expected": "Line: 1 Col: 12 (tests/fail.dit)\nsig listOf Ditlang func test() {||}\n           ^\n\nSyntaxError: Expected type to follow listOf"
     },
     {
       "type": "fail",
       "title": "sig, listOf func",
-      "dit": "sig listOf func test() {{}}",
-      "expected": "Line: 1 Col: 12 (tests/fail.dit)\nsig listOf func test() {{}}\n           ^\n\nSyntaxError: Expected type to follow listOf"
+      "dit": "sig listOf func test() {||}",
+      "expected": "Line: 1 Col: 12 (tests/fail.dit)\nsig listOf func test() {||}\n           ^\n\nSyntaxError: Expected type to follow listOf"
     },
     {
       "type": "fail",
-      "title": "sig, String listOf",
-      "dit": "sig String listOf func test() {{}}",
-      "expected": "Line: 1 Col: 12 (tests/fail.dit)\nsig String listOf func test() {{}}\n           ^\n\nSyntaxError: Unexpected 'listOf' after type"
+      "title": "sig, Str listOf",
+      "dit": "sig Str listOf func test() {||}",
+      "expected": "Line: 1 Col: 9 (tests/fail.dit)\nsig Str listOf func test() {||}\n        ^\n\nSyntaxError: Unexpected 'listOf' after type"
     },
     {
       "type": "fail",
@@ -87,151 +87,151 @@
     {
       "type": "fail",
       "title": "func, anon, no body",
-      "dit": "func () String test = 'cat';",
-      "expected": "Line: 1 Col: 9 (tests/fail.dit)\nfunc () String test = 'cat';\n        ^\n\nSyntaxError: Expected function body"
+      "dit": "func () Str test = 'cat';",
+      "expected": "Line: 1 Col: 9 (tests/fail.dit)\nfunc () Str test = 'cat';\n        ^\n\nSyntaxError: Expected function body"
     },
     {
       "type": "fail",
       "title": "func, no body",
-      "dit": "func test() String test2 = 'cat';",
-      "expected": "Line: 1 Col: 13 (tests/fail.dit)\nfunc test() String test2 = 'cat';\n            ^\n\nSyntaxError: Expected function body"
+      "dit": "func test() Str test2 = 'cat';",
+      "expected": "Line: 1 Col: 13 (tests/fail.dit)\nfunc test() Str test2 = 'cat';\n            ^\n\nSyntaxError: Expected function body"
     },
     {
       "type": "fail",
       "title": "func, dotted parameter type, final was string",
-      "dit": "class Test {{String test1 = 'cat';}}\nfunc test2(Test.test1 param) {{}}",
-      "expected": "Line: 2 Col: 17 (tests/fail.dit)\nfunc test2(Test.test1 param) {{}}\n                ^\n\nSyntaxError: Expected class for parameter type, 'test1' is of type 'String'"
+      "dit": "class Test {|Str test1 = 'cat';|}\nfunc test2(Test.test1 param) {||}",
+      "expected": "Line: 2 Col: 17 (tests/fail.dit)\nfunc test2(Test.test1 param) {||}\n                ^\n\nSyntaxError: Expected class for parameter type, 'test1' is of type 'Str'"
     },
     {
       "type": "fail",
       "title": "func, missing parameter type",
-      "dit": "func test(param) {{}}",
-      "expected": "Line: 1 Col: 11 (tests/fail.dit)\nfunc test(param) {{}}\n          ^\n\nSyntaxError: Expected parameter type"
+      "dit": "func test(param) {||}",
+      "expected": "Line: 1 Col: 11 (tests/fail.dit)\nfunc test(param) {||}\n          ^\n\nSyntaxError: Expected parameter type"
     },
     {
       "type": "fail",
       "title": "func, missing parameter name",
-      "dit": "func test(String, ) {{}}",
-      "expected": "Line: 1 Col: 17 (tests/fail.dit)\nfunc test(String, ) {{}}\n                ^\n\nSyntaxError: Expected parameter name"
+      "dit": "func test(Str, ) {||}",
+      "expected": "Line: 1 Col: 14 (tests/fail.dit)\nfunc test(Str, ) {||}\n             ^\n\nSyntaxError: Expected parameter name"
     },
     {
       "type": "fail",
       "title": "func, duplicate function name",
-      "dit": "func test() {{}}\nsig String func test() {{}}\nString test2 = 'cat';",
-      "expected": "Line: 2 Col: 17 (tests/fail.dit)\nsig String func test() {{}}\n                ^\n\nSyntaxError: 'test' has already been declared"
+      "dit": "func test() {||}\nsig Str func test() {||}\nStr test2 = 'cat';",
+      "expected": "Line: 2 Col: 14 (tests/fail.dit)\nsig Str func test() {||}\n             ^\n\nSyntaxError: 'test' has already been declared"
     },
     {
       "type": "fail",
       "title": "func, duplicate function name, class return",
-      "dit": "class Number {{class Decimal {{}}}}\nString test = 'cat';\nsig Number func test() {{}};",
-      "expected": "Line: 3 Col: 17 (tests/fail.dit)\nsig Number func test() {{}};\n                ^\n\nSyntaxError: 'test' has already been declared"
+      "dit": "class Number {|class Decimal {||}|}\nStr test = 'cat';\nsig Number func test() {||};",
+      "expected": "Line: 3 Col: 17 (tests/fail.dit)\nsig Number func test() {||};\n                ^\n\nSyntaxError: 'test' has already been declared"
     },
     {
       "type": "fail",
       "title": "func, duplicate function name, dotted class return",
-      "dit": "class Number {{class Decimal {{}}}}\nString test = 'cat';\nsig Number.Decimal func test() {{}};",
-      "expected": "Line: 3 Col: 25 (tests/fail.dit)\nsig Number.Decimal func test() {{}};\n                        ^\n\nSyntaxError: 'test' has already been declared"
+      "dit": "class Number {|class Decimal {||}|}\nStr test = 'cat';\nsig Number.Decimal func test() {||};",
+      "expected": "Line: 3 Col: 25 (tests/fail.dit)\nsig Number.Decimal func test() {||};\n                        ^\n\nSyntaxError: 'test' has already been declared"
     },
     {
       "type": "fail",
       "title": "func, duplicate parameter name",
-      "dit": "String test = 'cat';\nfunc test2(String test) {{}}",
-      "expected": "Line: 2 Col: 19 (tests/fail.dit)\nfunc test2(String test) {{}}\n                  ^\n\nSyntaxError: 'test' has already been declared"
+      "dit": "Str test = 'cat';\nfunc test2(Str test) {||}",
+      "expected": "Line: 2 Col: 16 (tests/fail.dit)\nfunc test2(Str test) {||}\n               ^\n\nSyntaxError: 'test' has already been declared"
     },
     {
       "type": "fail",
       "title": "func, duplicate parameter name/same as parameter",
-      "dit": "sig String func test(String param, String param) {{}}",
-      "expected": "Line: 1 Col: 43 (tests/fail.dit)\nsig String func test(String param, String param) {{}}\n                                          ^\n\nSyntaxError: 'param' is already a parameter name"
+      "dit": "sig Str func test(Str param, Str param) {||}",
+      "expected": "Line: 1 Col: 34 (tests/fail.dit)\nsig Str func test(Str param, Str param) {||}\n                                 ^\n\nSyntaxError: 'param' is already a parameter name"
     },
     {
       "type": "succeed",
       "title": "func, vanilla Ditlang void",
-      "dit": "func test() {{}}",
+      "dit": "func test() {||}",
       "expected": "Finished successfully\n"
     },
     {
       "type": "succeed",
-      "title": "func, String return",
-      "dit": "sig String func test() {{}}",
-      "expected": "Finished successfully\n"
-    },
-    {
-      "type": "succeed",
-      "title": "func, anon, vanilla Ditlang void",
-      "dit": "func () {{}};",
-      "expected": "Finished successfully\n"
-    },
-    {
-      "type": "succeed",
-      "title": "func, anon, String return",
-      "dit": "sig String func () {{}};",
+      "title": "func, Str return",
+      "dit": "sig Str func test() {||}",
       "expected": "Finished successfully\n"
     },
     {
       "type": "succeed",
       "title": "func, anon, vanilla Ditlang void",
-      "dit": "func () {{}};",
+      "dit": "func () {||};",
+      "expected": "Finished successfully\n"
+    },
+    {
+      "type": "succeed",
+      "title": "func, anon, Str return",
+      "dit": "sig Str func () {||};",
+      "expected": "Finished successfully\n"
+    },
+    {
+      "type": "succeed",
+      "title": "func, anon, vanilla Ditlang void",
+      "dit": "func () {||};",
       "expected": "Finished successfully\n"
     },
     {
       "type": "succeed",
       "title": "func, class return type",
-      "dit": "class A {{class B {{}}}}\nsig A func test() {{}}",
+      "dit": "class A {|class B {||}|}\nsig A func test() {||}",
       "expected": "Finished successfully\n"
     },
     {
       "type": "succeed",
       "title": "func, class return type, inner class",
-      "dit": "class A {{class B {{}}}}\nsig A.B func test() {{}}",
+      "dit": "class A {|class B {||}|}\nsig A.B func test() {||}",
       "expected": "Finished successfully\n"
     },
     {
       "type": "succeed",
       "title": "func, imported class return type",
-      "dit": "import classDit from 'tests/import2.dit';\nsig classDit.A func test2() {{}}",
+      "dit": "import classDit from 'tests/import2.dit';\nsig classDit.A func test2() {||}",
       "expected": "Finished successfully\n"
     },
     {
       "type": "succeed",
       "title": "func, imported class return type, inner class",
-      "dit": "import classDit from 'tests/import2.dit';\nsig classDit.A.B func test2() {{}}",
+      "dit": "import classDit from 'tests/import2.dit';\nsig classDit.A.B func test2() {||}",
       "expected": "Finished successfully\n"
     },
     {
       "type": "succeed",
       "title": "sig, Thing return",
-      "dit": "sig Thing func test() {{}}",
+      "dit": "sig Thing func test() {||}",
       "expected": "Finished successfully\n"
     },
     {
       "type": "succeed",
-      "title": "sig, String return",
-      "dit": "sig String func test() {{}}",
+      "title": "sig, Str return",
+      "dit": "sig Str func test() {||}",
       "expected": "Finished successfully\n"
     },
     {
       "type": "succeed",
       "title": "sig, Class return",
-      "dit": "sig Class func test() {{}}",
+      "dit": "sig Class func test() {||}",
       "expected": "Finished successfully\n"
     },
     {
       "type": "succeed",
       "title": "sig, listOf Thing return",
-      "dit": "sig listOf Thing func test() {{}}",
+      "dit": "sig listOf Thing func test() {||}",
       "expected": "Finished successfully\n"
     },
     {
       "type": "succeed",
-      "title": "sig, listOf String return",
-      "dit": "sig listOf String func test() {{}}",
+      "title": "sig, listOf Str return",
+      "dit": "sig listOf Str func test() {||}",
       "expected": "Finished successfully\n"
     },
     {
       "type": "succeed",
       "title": "sig, listOf Class return",
-      "dit": "sig listOf Class func test() {{}}",
+      "dit": "sig listOf Class func test() {||}",
       "expected": "Finished successfully\n"
     }
   ]

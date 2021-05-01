@@ -51,13 +51,13 @@
     {
       "type": "fail",
       "title": "pull, duplicate target",
-      "dit": "String JavaScript = 'cat';\npull JavaScript from",
+      "dit": "Str JavaScript = 'cat';\npull JavaScript from",
       "expected": "Line: 2 Col: 6 (tests/fail.dit)\npull JavaScript from\n     ^\n\nSyntaxError: 'JavaScript' has already been declared"
     },
     {
       "type": "fail",
       "title": "pull, duplicate replacement",
-      "dit": "String JS = 'cat';\npull JavaScript as JS from",
+      "dit": "Str JS = 'cat';\npull JavaScript as JS from",
       "expected": "Line: 2 Col: 20 (tests/fail.dit)\npull JavaScript as JS from\n                   ^\n\nSyntaxError: 'JS' has already been declared"
     },
     {
@@ -69,13 +69,13 @@
     {
       "type": "fail",
       "title": "pull, 2 targets, second one is dup",
-      "dit": "String test = 'cat';\npull JavaScript, test from",
+      "dit": "Str test = 'cat';\npull JavaScript, test from",
       "expected": "Line: 2 Col: 18 (tests/fail.dit)\npull JavaScript, test from\n                 ^\n\nSyntaxError: 'test' has already been declared"
     },
     {
       "type": "fail",
       "title": "pull, 2 targets w/ replacements, second one is dup",
-      "dit": "String test = 'cat';\npull JavaScript as JS, thing as test from",
+      "dit": "Str test = 'cat';\npull JavaScript as JS, thing as test from",
       "expected": "Line: 2 Col: 33 (tests/fail.dit)\npull JavaScript as JS, thing as test from\n                                ^\n\nSyntaxError: 'test' has already been declared"
     },
     {

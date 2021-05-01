@@ -1,6 +1,6 @@
 import copy
 from itertools import zip_longest
-from typing import List, NoReturn, Optional, Tuple, Type, Union
+from typing import List, NoReturn, Optional, Tuple, Union
 
 from dit_cli.built_in import b_Ditlang
 from dit_cli.exceptions import (
@@ -13,8 +13,20 @@ from dit_cli.exceptions import (
     d_SyntaxError,
     d_TypeMismatchError,
 )
-from dit_cli.grammar import d_Grammar, prim_to_value
-from dit_cli.interpret_context import InterpretContext
+from dit_cli.grammar import (
+    DOTABLES,
+    DUPLICABLES,
+    MAKE,
+    NAMEABLES,
+    PRIMITIVES,
+    STRINGABLES,
+    THIS,
+    TYPES,
+    VALUE_CLANG_ABLES,
+    d_Grammar,
+    prim_to_value,
+)
+from dit_cli.interpret_context import DIGIT, InterpretContext
 from dit_cli.lang_daemon import run_job
 from dit_cli.oop import (
     ArgumentLocation,
@@ -25,40 +37,22 @@ from dit_cli.oop import (
     Token,
     check_value,
     d_Body,
+    d_Bool,
     d_Class,
     d_Container,
     d_Dit,
     d_Func,
     d_Instance,
+    d_JSON,
     d_Lang,
     d_List,
-    d_String,
+    d_Num,
+    d_Str,
     d_Thing,
     d_Type,
 )
 from dit_cli.preprocessor import preprocess
 from dit_cli.settings import CodeLocation
-
-MAKE = "-make-"
-THIS = "this"
-
-PRIMITIVES = [
-    d_Grammar.PRIMITIVE_THING,
-    d_Grammar.PRIMITIVE_STRING,
-    d_Grammar.PRIMITIVE_CLASS,
-    d_Grammar.PRIMITIVE_INSTANCE,
-    d_Grammar.PRIMITIVE_FUNC,
-    d_Grammar.PRIMITIVE_DIT,
-    d_Grammar.PRIMITIVE_LANG,
-]
-
-DOTABLES = [
-    d_Grammar.VALUE_CLASS,
-    d_Grammar.VALUE_INSTANCE,
-    d_Grammar.VALUE_FUNC,
-    d_Grammar.VALUE_DIT,
-    d_Grammar.VALUE_LANG,
-]
 
 
 def interpret(body: d_Body) -> Optional[d_Thing]:
@@ -127,7 +121,7 @@ def _expression_dispatch(inter: InterpretContext) -> Optional[d_Thing]:
 
 
 def _listof(inter: InterpretContext) -> None:
-    # listOf String values;
+    # listOf Str values;
     inter.advance_tokens()
     inter.dec.listof = True
     if inter.next_tok.grammar in PRIMITIVES:
@@ -143,28 +137,18 @@ def _listof(inter: InterpretContext) -> None:
 
 
 def _primitive(inter: InterpretContext) -> None:
-    # String value;
+    # Str value;
     inter.advance_tokens()
     _type(inter)
 
 
-def _value_thing(inter: InterpretContext) -> Optional[d_Thing]:
+def _value_equalable(inter: InterpretContext) -> Optional[d_Thing]:
     # Thing test;
     # test = 'cat';
     # or, in an expression...
     # Thing test = 'cat';
     # someFunc(test);
-    # These code examples are generally applicable to most _value_X functions
-    inter.advance_tokens()
-    return _equalable(inter)
-
-
-def _value_string(inter: InterpretContext) -> Optional[d_Thing]:
-    inter.advance_tokens()
-    return _equalable(inter)
-
-
-def _value_list(inter: InterpretContext) -> Optional[d_Thing]:
+    # These code examples are applicable to most _value_X functions
     inter.advance_tokens()
     return _equalable(inter)
 
@@ -175,16 +159,6 @@ def _value_class(inter: InterpretContext) -> Optional[d_Thing]:
 
 def _value_lang(inter: InterpretContext) -> Optional[d_Thing]:
     return _value_clang(inter)
-
-
-VALUE_CLANG_ABLES = [
-    d_Grammar.DOT,
-    d_Grammar.EQUALS,
-    d_Grammar.COMMA,
-    d_Grammar.SEMI,
-    d_Grammar.BRACKET_RIGHT,
-    d_Grammar.EOF,  # to trigger _missing_terminal
-]
 
 
 def _value_clang(inter: InterpretContext) -> Optional[d_Thing]:
@@ -230,26 +204,10 @@ def _value_clang(inter: InterpretContext) -> Optional[d_Thing]:
         _type(inter)
 
 
-NAMEABLES = [
-    d_Grammar.VALUE_CLASS,
-    d_Grammar.VALUE_INSTANCE,
-    d_Grammar.VALUE_FUNC,
-    d_Grammar.VALUE_DIT,
-    d_Grammar.VALUE_LANG,
-    d_Grammar.NEW_NAME,
-]
-
-DUPLICABLES = [
-    d_Grammar.VALUE_THING,
-    d_Grammar.VALUE_STRING,
-    d_Grammar.VALUE_LIST,
-]
-
-
 def _type(inter: InterpretContext) -> None:
-    # String test ...
+    # Str test ...
     # someClass test ...
-    # String someDotable.monkeyPatch ...
+    # Str someDotable.monkeyPatch ...
     # This function is reused by _primitive and _value_class
     inter.dec.type_ = _token_to_type(inter.curr_tok)
     if inter.next_tok.grammar in DUPLICABLES:
@@ -354,18 +312,18 @@ def _equalable(inter: InterpretContext) -> Optional[d_Thing]:
         inter.dec.type_ = None  # type: ignore
     if inter.dec.type_ is not None and inter.dec.name is None:
         # _new_name should have been found, not an existing variable.
-        # String existingValue ...
+        # Str existingValue ...
         raise d_SyntaxError(
             f"'{inter.curr_tok.thing.name}' has already been declared", inter
         )
     elif inter.next_tok.grammar == d_Grammar.EQUALS:
         # Assign existing or new variables
-        # String value = ...
+        # Str value = ...
         _equals(inter)
         inter.dec.reset()
     elif inter.dec.type_ is not None and not inter.equaling:
         # create variable without assignment
-        # String count;
+        # Str count;
         _add_attr_wrap(inter)
         inter.dec.reset()
 
@@ -419,7 +377,7 @@ def _terminal(inter: InterpretContext) -> d_Thing:
         d_Grammar.BRACKET_RIGHT,
         d_Grammar.PAREN_RIGHT,
     ]:
-        if inter.declaring_func is not None:
+        if inter.declaring_func is not None or inter.in_json:
             pass
         elif inter.comma_depth == 0:
             _missing_terminal(inter, "Expected ';'")
@@ -458,14 +416,21 @@ def _new_name(inter: InterpretContext) -> None:
         _terminal(inter)
 
 
-def _string(inter: InterpretContext) -> d_String:
+def _str(inter: InterpretContext) -> d_Str:
+    # note that _str is reused for parsing JSON element names
     left = inter.next_tok.grammar.value
     data = ""
     if inter.char_feed.current() != left:
         while True:
-            if inter.char_feed.current() == d_Grammar.BACKSLASH.value:
-                # String test = "some\t"
-                # String test = 'Let\'s'
+            if inter.char_feed.current() == "\n":
+                lok = copy.deepcopy(inter.next_tok.loc)
+                length = len(data)
+                lok.pos += length
+                lok.col += length
+                raise d_SyntaxError("Unexpected EOL while reading string", inter, lok)
+            elif inter.char_feed.current() == d_Grammar.BACKSLASH.value:
+                # Str test = "some\t"
+                # Str test = 'Let\'s'
                 escape_char = inter.char_feed.pop()
                 inter.char_feed.pop()
                 if escape_char in [
@@ -486,20 +451,128 @@ def _string(inter: InterpretContext) -> d_String:
                 break
 
     inter.advance_tokens()  # next_tok is now ' "
-    inter.advance_tokens()  # next_tok is now ; , ] )
-    thing = d_String()
-    thing.string_value = data
+    inter.advance_tokens()  # next_tok is now ; , ] ) :
+    thing = d_Str()
+    thing.str_ = data
     thing.is_null = False
     return thing
 
 
+def _bool(inter: InterpretContext) -> d_Bool:
+    # b = true;
+    # doThing(false);
+    val = d_Bool()
+    val.is_null = False
+    val.bool_ = inter.next_tok.grammar == d_Grammar.TRUE
+    inter.advance_tokens()
+    return val
+
+
+def _plus(inter: InterpretContext) -> d_Num:
+    return _digit_sign(inter, False)
+
+
+def _minus(inter: InterpretContext) -> d_Num:
+    return _digit_sign(inter, True)
+
+
+def _digit_sign(inter: InterpretContext, neg: bool) -> d_Num:
+    # make sure the sign is being used as a positive or negative,
+    # not for arithmetic
+    if DIGIT.match(inter.char_feed.current()):
+        inter.advance_tokens()
+        return _digit(inter, neg)
+    else:
+        raise d_SyntaxError(
+            "Expected digit.\nOther arithmetic ops are not yet supported.",
+            inter,
+            inter.char_feed.loc,  # Default uses inter.next_tok.lok
+        )
+
+
+def _digit(inter: InterpretContext, neg: bool = False) -> d_Num:
+    num = inter.next_tok.word
+    num = "-" + num if neg else num
+    lead_zero = num == "0"
+    frac = False
+    exp = False
+    while True:
+        cur = inter.char_feed.current()
+        if DIGIT.match(cur):
+            if lead_zero and len(num) == 1:
+                raise d_SyntaxError("Leading zeros are not allowed", inter)
+            num += cur
+            inter.char_feed.pop()
+            lead_zero = False
+        elif cur == ".":
+            if frac == True:
+                raise d_SyntaxError("Invalid fraction syntax", inter)
+            num += cur
+            inter.char_feed.pop()
+            frac == True
+        elif cur == "e" or cur == "E":
+            if exp == True:
+                raise d_SyntaxError("Invalid exponent syntax", inter)
+            num += cur
+            inter.char_feed.pop()
+            exp == True
+        elif cur == "-" or cur == "+":
+            num += cur
+            inter.char_feed.pop()
+        else:
+            break
+    inter.advance_tokens()
+    fin_num = d_Num()
+    fin_num.is_null = False
+    fin_num.num = float(num)
+    try:
+        fin_num.num = int(num)
+    except ValueError:
+        fin_num.num = float(num)
+    return fin_num
+
+
 def _bracket_left(inter: InterpretContext) -> d_List:
     list_ = d_List()
-    list_.list_value = [
-        item.thing for item in _arg_list(inter, d_Grammar.BRACKET_RIGHT)
-    ]
+    list_.list_ = [item.thing for item in _arg_list(inter, d_Grammar.BRACKET_RIGHT)]
     list_.is_null = False
     return list_
+
+
+def _brace_left(inter: InterpretContext) -> d_JSON:
+    # JSON j = { ...
+    inter.in_json = True
+    js = d_JSON()
+    js.is_null = False
+    js.json_ = {}
+    inter.advance_tokens()
+
+    while True:
+        if inter.next_tok.grammar == d_Grammar.BRACE_RIGHT:
+            # JSON j = { ... }
+            inter.in_json = False
+            inter.advance_tokens()
+            return js
+        elif inter.next_tok.grammar == d_Grammar.QUOTE_DOUBLE:
+            # JSON j = { "item1": ...
+            if inter.curr_tok.grammar not in [d_Grammar.BRACE_LEFT, d_Grammar.COMMA]:
+                raise d_SyntaxError("Expected ','", inter, inter.curr_tok.loc)
+            name = _str(inter).str_
+            if inter.next_tok.grammar != d_Grammar.COLON:
+                raise d_SyntaxError("Expected ':'", inter, inter.next_tok.loc)
+            else:
+                inter.advance_tokens()
+            ele = _expression_dispatch(inter)
+            js.json_[name] = ele
+        elif inter.next_tok.grammar == d_Grammar.COMMA:
+            # JSON j = { "item1": 1, ...
+            inter.advance_tokens()
+            if inter.next_tok.grammar == d_Grammar.BRACE_RIGHT:
+                raise d_SyntaxError(
+                    "Trailing commas are not allowed", inter, inter.curr_tok.loc
+                )
+        else:
+            raise d_SyntaxError("Unexpected token for JSON", inter)
 
 
 def _paren_left(inter: InterpretContext) -> Optional[d_Thing]:
@@ -508,7 +581,7 @@ def _paren_left(inter: InterpretContext) -> Optional[d_Thing]:
     elif inter.call_tok is not None:
         func: d_Func = inter.call_tok.thing  #  type: ignore
     elif isinstance(inter.curr_tok.thing, d_Class):
-        # This means we must be instantiating, and need the -make- func
+        # This means we must be instantiating, and need the Make func
         # Number num = Number('3');
         func = _make(inter)
     else:
@@ -568,13 +641,13 @@ def _paren_left(inter: InterpretContext) -> Optional[d_Thing]:
                     job.type_ = JobType.DITLANG_CALLBACK
                     if value is None:
                         pass
-                    elif isinstance(value, d_String):
-                        job.result = value.string_value
+                    elif isinstance(value, d_Str):
+                        job.result = value.str_
                     elif isinstance(value, d_List):
                         final_list = []
-                        for item in value.list_value:
-                            if isinstance(item, d_String):
-                                final_list.append(item.string_value)
+                        for item in value.list_:
+                            if isinstance(item, d_Str):
+                                final_list.append(item.str_)
                         job.result = final_list
                     else:
                         raise NotImplementedError
@@ -636,7 +709,7 @@ def _make(inter: InterpretContext) -> d_Func:
     class_: d_Class = inter.curr_tok.thing  # type: ignore
     make = class_.find_attr(MAKE)
     if make is None:
-        raise d_SyntaxError(f"Class '{class_.name}' does not define a -make-", inter)
+        raise d_SyntaxError(f"Class '{class_.name}' does not define a Make", inter)
     elif isinstance(make, d_Func):
         func: d_Func = make
         inst = d_Instance()
@@ -677,7 +750,7 @@ def _trailing_comma(inter: InterpretContext, right: d_Grammar) -> Optional[NoRet
 
 def _arg_list(inter: InterpretContext, right: d_Grammar) -> List[ArgumentLocation]:
     # someFunc('arg1', 'arg2');
-    # listOf String = ['a', 'b', ['c'], 'd'];
+    # listOf Str = ['a', 'b', ['c'], 'd'];
     args: List[ArgumentLocation] = []
     inter.advance_tokens()
     inter.comma_depth += 1
@@ -692,19 +765,6 @@ def _arg_list(inter: InterpretContext, right: d_Grammar) -> List[ArgumentLocatio
             raise NotImplementedError
         args.append(ArgumentLocation(loc, arg))
         _trailing_comma(inter, right)
-
-
-STRINGABLES = [
-    d_Grammar.QUOTE_DOUBLE,
-    d_Grammar.QUOTE_SINGLE,
-    d_Grammar.VALUE_THING,
-    d_Grammar.VALUE_STRING,
-    d_Grammar.VALUE_CLASS,
-    d_Grammar.VALUE_INSTANCE,
-    d_Grammar.VALUE_FUNC,
-    d_Grammar.VALUE_DIT,
-    d_Grammar.VALUE_LANG,
-]
 
 
 def _import(inter: InterpretContext) -> Optional[d_Dit]:
@@ -798,7 +858,7 @@ def _pull(inter: InterpretContext) -> None:
             raise d_SyntaxError(f"'{target}' is not a valid member of this dit", inter)
         result.name = replacement if replacement is not None else target
         if lang is not None:
-            # explicit call to set_value, to activate -priority- comparisons
+            # explicit call to set_value, to activate Priority comparisons
             lang.set_value(result)
         else:
             inter.body.attrs[result.name] = result
@@ -822,10 +882,10 @@ def _import_or_pull(inter: InterpretContext, orig_loc: CodeLocation) -> d_Dit:
         inter.dec.name = None  # type: ignore
     elif value is None:
         raise NotImplementedError
-    elif isinstance(value, d_String):
-        dit.path = value.string_value
+    elif isinstance(value, d_Str):
+        dit.path = value.str_
     else:
-        raise d_SyntaxError(f"Expected string value, not {value.public_type}", inter)
+        raise d_SyntaxError(f"Expected str value, not {value.public_type}", inter)
 
     dit.finalize()
     try:
@@ -860,7 +920,7 @@ def _clang(
     clang_name = "class" if isinstance(clang, d_Class) else "lang"
 
     inter.advance_tokens(False)
-    if inter.next_tok.grammar not in [d_Grammar.WORD, d_Grammar.BRACE_LEFT]:
+    if inter.next_tok.grammar not in [d_Grammar.WORD, d_Grammar.BAR_BRACE_LEFT]:
         raise d_SyntaxError(f"Expected name or body to follow {clang_name}", inter)
 
     if inter.next_tok.grammar == d_Grammar.WORD:
@@ -877,10 +937,10 @@ def _clang(
                 )
         clang.name = inter.next_tok.word
         inter.advance_tokens()  # get {{
-        if inter.next_tok.grammar != d_Grammar.BRACE_LEFT:
+        if inter.next_tok.grammar != d_Grammar.BAR_BRACE_LEFT:
             raise d_SyntaxError(f"Expected a {clang_name} body", inter)
 
-    _brace_left(inter, clang)
+    _bar_brace_left(inter, clang)
     clang.finalize()
     try:
         interpret(clang)
@@ -889,20 +949,8 @@ def _clang(
     return _handle_anon(inter, clang, orig_loc, lang)  # type: ignore
 
 
-TYPES = [
-    d_Grammar.VALUE_CLASS,
-    d_Grammar.PRIMITIVE_THING,
-    d_Grammar.PRIMITIVE_STRING,
-    d_Grammar.PRIMITIVE_CLASS,
-    d_Grammar.PRIMITIVE_INSTANCE,
-    d_Grammar.PRIMITIVE_FUNC,
-    d_Grammar.PRIMITIVE_DIT,
-    d_Grammar.PRIMITIVE_LANG,
-]
-
-
 def _sig(inter: InterpretContext) -> Optional[d_Func]:
-    # sig JavaScript String ... \n func
+    # sig JavaScript Str ... \n func
     dotable_loc = None
     func = _sig_or_func(inter)
     did_dispatch = False
@@ -937,7 +985,7 @@ def _sig(inter: InterpretContext) -> Optional[d_Func]:
             _sig_thing_handler(inter, func)
             did_dispatch = True
         elif gra in TYPES or gra == d_Grammar.VOID:
-            # sig ... String ...
+            # sig ... Str ...
             # sig ... void ...
             _sig_assign_return(inter, func)
             func.return_ = prim_to_value(gra)
@@ -976,7 +1024,7 @@ def _sig_assign_return(inter: InterpretContext, func: d_Func) -> None:
 
 
 def _func(inter: InterpretContext) -> Optional[d_Func]:
-    # func test(String right, String left) {{}}
+    # func test(Str right, Str left) {{}}
     # func () {{}}
     orig_loc = copy.deepcopy(inter.next_tok.loc)
     func = _sig_or_func(inter)
@@ -1048,19 +1096,19 @@ def _func(inter: InterpretContext) -> Optional[d_Func]:
         inter.advance_tokens()
         _trailing_comma(inter, d_Grammar.PAREN_RIGHT)
 
-    if inter.next_tok.grammar != d_Grammar.BRACE_LEFT:
+    if inter.next_tok.grammar != d_Grammar.BAR_BRACE_LEFT:
         raise d_SyntaxError("Expected function body", inter)
 
-    _brace_left(inter, func)
+    _bar_brace_left(inter, func)
     func.finalize()
     inter.declaring_func = None  # type: ignore
     if func.lang is not b_Ditlang:
-        preprocess(inter, func)
+        preprocess(func)
     return _handle_anon(inter, func, orig_loc)  # type: ignore
 
 
 def _sig_or_func(inter: InterpretContext) -> d_Func:
-    # sig Python String ...
+    # sig Python Str ...
     # OR
     # func hello() {{}}
     if inter.declaring_func is None:
@@ -1072,15 +1120,15 @@ def _sig_or_func(inter: InterpretContext) -> d_Func:
     return inter.declaring_func
 
 
-def _brace_left(inter: InterpretContext, body: d_Body) -> None:
+def _bar_brace_left(inter: InterpretContext, body: d_Body) -> None:
     depth = 1
     body.start_loc = copy.deepcopy(inter.char_feed.loc)
     while depth > 0:
         cur = inter.char_feed.current() + inter.char_feed.peek()
-        if cur == d_Grammar.BRACE_LEFT.value:
+        if cur == d_Grammar.BAR_BRACE_LEFT.value:
             depth += 1
             inter.advance_tokens()
-        elif cur == d_Grammar.BRACE_RIGHT.value:
+        elif cur == d_Grammar.BAR_BRACE_RIGHT.value:
             depth -= 1
             body.end_loc = copy.deepcopy(inter.char_feed.loc)
             inter.advance_tokens()
@@ -1116,7 +1164,7 @@ def _missing_terminal(inter: InterpretContext, message: str) -> NoReturn:
     line = inter.char_feed.get_line(target)
 
     if isinstance(tok.grammar.value, str):
-        length = len(tok.grammar.value)  # class, String, =
+        length = len(tok.grammar.value)  # class, Str, =
     elif tok.thing is not None:
         length = len(tok.thing.name)  # Object names
     else:
@@ -1155,15 +1203,19 @@ STATEMENT_DISPATCH = {
     d_Grammar.QUOTE_SINGLE:           _illegal_statement,
     d_Grammar.DOT:                    _illegal_statement,
     d_Grammar.EQUALS:                 _illegal_statement,
-    d_Grammar.PLUS:                   _not_implemented,
+    d_Grammar.PLUS:                   _illegal_statement,
+    d_Grammar.MINUS:                  _illegal_statement,
     d_Grammar.COMMA:                  _illegal_statement,
     d_Grammar.SEMI:                   _illegal_statement,
+    d_Grammar.COLON:                  _illegal_statement,
     d_Grammar.PAREN_LEFT:             _illegal_statement,
     d_Grammar.PAREN_RIGHT:            _illegal_statement,
     d_Grammar.BRACKET_LEFT:           _illegal_statement,
     d_Grammar.BRACKET_RIGHT:          _illegal_statement,
     d_Grammar.BACKSLASH:              _illegal_statement,
     d_Grammar.COMMENT_START:          _illegal_statement,
+    d_Grammar.BAR_BRACE_LEFT:         _illegal_statement,
+    d_Grammar.BAR_BRACE_RIGHT:        _illegal_statement,
     d_Grammar.BRACE_LEFT:             _illegal_statement,
     d_Grammar.BRACE_RIGHT:            _illegal_statement,
     d_Grammar.CLASS:                  _class,
@@ -1182,8 +1234,13 @@ STATEMENT_DISPATCH = {
     d_Grammar.THROW:                  _throw,
     d_Grammar.RETURN:                 _return,
     d_Grammar.NULL:                   _illegal_statement,
+    d_Grammar.TRUE:                   _illegal_statement,
+    d_Grammar.FALSE:                  _illegal_statement,
     d_Grammar.PRIMITIVE_THING:        _primitive,
-    d_Grammar.PRIMITIVE_STRING:       _primitive,
+    d_Grammar.PRIMITIVE_STR:          _primitive,
+    d_Grammar.PRIMITIVE_BOOL:         _primitive,
+    d_Grammar.PRIMITIVE_NUM:          _primitive,
+    d_Grammar.PRIMITIVE_JSON:         _primitive,
     d_Grammar.PRIMITIVE_CLASS:        _primitive,
     d_Grammar.PRIMITIVE_INSTANCE:     _primitive,
     d_Grammar.PRIMITIVE_FUNC:         _primitive,
@@ -1191,9 +1248,13 @@ STATEMENT_DISPATCH = {
     d_Grammar.PRIMITIVE_LANG:         _primitive,
     d_Grammar.WORD:                   _illegal_statement,
     d_Grammar.NEW_NAME:               _new_name,
-    d_Grammar.VALUE_THING:            _value_thing,
-    d_Grammar.VALUE_STRING:           _value_string,
-    d_Grammar.VALUE_LIST:             _value_list,
+    d_Grammar.DIGIT:                  _illegal_statement,
+    d_Grammar.VALUE_THING:            _value_equalable,
+    d_Grammar.VALUE_STR:              _value_equalable,
+    d_Grammar.VALUE_BOOL:             _value_equalable,
+    d_Grammar.VALUE_NUM:              _value_equalable,
+    d_Grammar.VALUE_LIST:             _value_equalable,
+    d_Grammar.VALUE_JSON:             _value_equalable,
     d_Grammar.VALUE_CLASS:            _value_class,
     d_Grammar.VALUE_INSTANCE:         _value_instance,
     d_Grammar.VALUE_FUNC:             _value_function,
@@ -1204,21 +1265,25 @@ STATEMENT_DISPATCH = {
 
 
 EXPRESSION_DISPATCH = {
-    d_Grammar.QUOTE_DOUBLE:           _string,
-    d_Grammar.QUOTE_SINGLE:           _string,
+    d_Grammar.QUOTE_DOUBLE:           _str,
+    d_Grammar.QUOTE_SINGLE:           _str,
     d_Grammar.DOT:                    _illegal_expression,
     d_Grammar.EQUALS:                 _illegal_expression,
-    d_Grammar.PLUS:                   _not_implemented,
+    d_Grammar.PLUS:                   _plus,
+    d_Grammar.MINUS:                  _minus,
     d_Grammar.COMMA:                  _illegal_expression,
     d_Grammar.SEMI:                   _illegal_expression,
+    d_Grammar.COLON:                  _illegal_statement,
     d_Grammar.PAREN_LEFT:             _illegal_expression,
     d_Grammar.PAREN_RIGHT:            _illegal_expression,
     d_Grammar.BRACKET_LEFT:           _bracket_left,
     d_Grammar.BRACKET_RIGHT:          _illegal_expression,
     d_Grammar.BACKSLASH:              _illegal_expression,
     d_Grammar.COMMENT_START:          _illegal_expression,
-    d_Grammar.BRACE_LEFT:             _illegal_expression,
-    d_Grammar.BRACE_RIGHT:            _illegal_expression,
+    d_Grammar.BAR_BRACE_LEFT:         _illegal_expression,
+    d_Grammar.BAR_BRACE_RIGHT:        _illegal_expression,
+    d_Grammar.BRACE_LEFT:             _brace_left,
+    d_Grammar.BRACE_RIGHT:            _illegal_statement,
     d_Grammar.CLASS:                  _class,
     d_Grammar.LANG:                   _lang,
     d_Grammar.SIG:                    _sig,
@@ -1235,8 +1300,13 @@ EXPRESSION_DISPATCH = {
     d_Grammar.THROW:                  _illegal_expression,
     d_Grammar.RETURN:                 _illegal_expression,
     d_Grammar.NULL:                   _null,
+    d_Grammar.TRUE:                   _bool,
+    d_Grammar.FALSE:                  _bool,
     d_Grammar.PRIMITIVE_THING:        _illegal_expression,
-    d_Grammar.PRIMITIVE_STRING:       _illegal_expression,
+    d_Grammar.PRIMITIVE_STR:          _illegal_expression,
+    d_Grammar.PRIMITIVE_BOOL:         _illegal_expression,
+    d_Grammar.PRIMITIVE_NUM:          _illegal_expression,
+    d_Grammar.PRIMITIVE_JSON:         _illegal_expression,
     d_Grammar.PRIMITIVE_CLASS:        _illegal_expression,
     d_Grammar.PRIMITIVE_INSTANCE:     _illegal_expression,
     d_Grammar.PRIMITIVE_FUNC:         _illegal_expression,
@@ -1244,9 +1314,13 @@ EXPRESSION_DISPATCH = {
     d_Grammar.PRIMITIVE_LANG:         _illegal_expression,
     d_Grammar.WORD:                   _illegal_expression,
     d_Grammar.NEW_NAME:               _new_name,
-    d_Grammar.VALUE_THING:            _value_thing,
-    d_Grammar.VALUE_STRING:           _value_string,
-    d_Grammar.VALUE_LIST:             _value_list,
+    d_Grammar.DIGIT:                  _digit,
+    d_Grammar.VALUE_THING:            _value_equalable,
+    d_Grammar.VALUE_STR:              _value_equalable,
+    d_Grammar.VALUE_BOOL:             _value_equalable,
+    d_Grammar.VALUE_NUM:              _value_equalable,
+    d_Grammar.VALUE_LIST:             _value_equalable,
+    d_Grammar.VALUE_JSON:             _value_equalable,
     d_Grammar.VALUE_CLASS:            _value_class,
     d_Grammar.VALUE_INSTANCE:         _value_instance,
     d_Grammar.VALUE_FUNC:             _value_function,

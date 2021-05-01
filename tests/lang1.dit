@@ -1,6 +1,6 @@
-lang SomeLang {{
-    String value1 = 'cat';
+lang SomeLang {|
+    Str value1 = 'cat';
     value2 = 'dog';
-}}
-String message1 = 'quick';
-String message2 = 'brown';
+|}
+Str message1 = 'quick';
+Str message2 = 'brown';

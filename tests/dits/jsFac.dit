@@ -1,10 +1,10 @@
 getConfig();
 pull JavaScript from '/home/isaiah/general/dits/langs/commonLangs.dit';
-sig String JavaScript func jsFac(String fac) {{
+sig Str JavaScript func jsFac(Str fac) {|
     num = parseInt(<|fac;|>);
     if (num === 0) {
         <|return '1';|>
     }
     <|return (|`'${String(num * parseInt(<|jsFac((|`'${String(num - 1)}'`|))|>))}'`|)|>
-}}
+|}
 print(jsFac('6'));

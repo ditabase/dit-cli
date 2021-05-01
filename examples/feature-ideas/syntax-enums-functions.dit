@@ -10,35 +10,35 @@ multiline
 
 // comment with only newline
 //
-String test0;
-String test1 = "Dog";
+Str test0;
+Str test1 = "Dog";
 test0 = "hello world";
-listOf String test2 = ["Hello", "world"];
-listOf String empty = [];
-listOf String test3 = ["1", ["2", "3"], "4"];
+listOf Str test2 = ["Hello", "world"];
+listOf Str empty = [];
+listOf Str test3 = ["1", ["2", "3"], "4"];
 
 import dit from "/home/isaiah/general/dit-cli/examples/feature-ideas/import-functions.dit";
 
-class A {{
-    String value1 = "a value 1";
-    String value2 = "a value 2";
-    String value3 = dit.value;
-    String value4 = dit.dit.value;
-    String value5 = "a value 5";
+class A {|
+    Str value1 = "a value 1";
+    Str value2 = "a value 2";
+    Str value3 = dit.value;
+    Str value4 = dit.dit.value;
+    Str value5 = "a value 5";
     dit.dit.value = "Sphinx of black quartz, judge my vow";
-    String dit.new_value = "Aggressive change";
-}}
+    Str dit.new_value = "Aggressive change";
+|}
 
-Class B = class {{
+Class B = class {|
     Class myA = A;
     myA.value5 = "changed by B";
-    String myA.thing = "thing";
-    String value1 = A.value3;
+    Str myA.thing = "thing";
+    Str value1 = A.value3;
     A.value1 = "No longer from a";
-    String value2 = "b value 2";
-}};
+    Str value2 = "b value 2";
+|};
 
-String conflict = A.value1;
+Str conflict = A.value1;
 A.value1 = "a changed value1";
 
 conflict = A.value2;
@@ -57,22 +57,22 @@ listOf Any thing2 = [
     "Test", 
     [
         import "/home/isaiah/general/dit-cli/examples/feature-ideas/import-functions.dit", 
-        class {{String a = "hello";}},
-        class {{}}
+        class {|Str a = "hello";|},
+        class {||}
     ], 
-    class {{
-        String b = test0; 
-        Class D = class {{
-            String inner = test1;
-        }};
-    }}, 
+    class {|
+        Str b = test0; 
+        Class D = class {|
+            Str inner = test1;
+        |};
+    |}, 
     ["1", ["2", ["3"]]],
-    class {{String dummy = "This class only exists for this assignment";}}.dummy,
+    class {|Str dummy = "This class only exists for this assignment";|}.dummy,
     import "/home/isaiah/general/dit-cli/examples/feature-ideas/import-functions.dit".value
 ];
 
-class D {{
-    String class_var = 'This is a class var';
-}}
+class D {|
+    Str class_var = 'This is a class var';
+|}
 
 D d = D();

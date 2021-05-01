@@ -1,6 +1,6 @@
 from dit_cli.grammar import d_Grammar
 from dit_cli.interpret_context import CharFeed, InterpretContext
-from dit_cli.oop import d_Func, d_String
+from dit_cli.oop import d_Func
 from dit_cli.settings import CodeLocation
 
 SHAPES = [
@@ -29,7 +29,7 @@ class PreProcessContext:
         self.prev_loc: int = 0
 
 
-def preprocess(inter: InterpretContext, func: d_Func) -> None:
+def preprocess(func: d_Func) -> None:
     """Converts func.view into a prepared GuestLang function and writes it to a file."""
     # <|return (|parseFloat(<|num1;|>) + parseFloat(<|num2|>)|);|>
     # turns into...

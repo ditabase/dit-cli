@@ -1,6 +1,6 @@
-class A {{
-    String a = 'the letter a';
-    class B {{
-        String b = 'the letter b';
-    }}
-}}
+class A {|
+    Str a = 'the letter a';
+    class B {|
+        Str b = 'the letter b';
+    |}
+|}

@@ -1,0 +1,58 @@
+{
+  "dits": [
+    {
+      "type": "succeed",
+      "title": "JSON, {}",
+      "dit": "JSON j = {};",
+      "expected": "Finished successfully\n"
+    },
+    {
+      "type": "succeed",
+      "title": "JSON, full stack",
+      "dit": "JSON j = {\n    \"null\": null,\n    \"bool1\": true,\n    \"bool2\": false,\n    \"num1\": 1,\n    \"num2\": -1,\n    \"num3\": -1e-1,\n    \"str1\": \"hello\",\n    \"str2\": \"new\\nline\",\n    \"str3\": \"tab\t\",\n    \"list\": [null, true, 1, \"hello\", [], {}],\n    \"json\": {\n        \"null\": null,\n        \"bool1\": true,\n        \"bool2\": false,\n        \"num1\": 1,\n        \"num2\": -1,\n        \"num3\": -1e-1,\n        \"str1\": \"hello\",\n        \"str2\": \"new\\nline\",\n        \"str3\": \"tab\t\",\n        \"list\": [null, true, 1, \"hello\", [], {}]\n    }\n};",
+      "expected": "Finished successfully\n"
+    },
+    {
+      "type": "succeed",
+      "title": "print, json full stack var",
+      "dit": "JSON j = {\n    \"null\": null,\n    \"bool1\": true,\n    \"bool2\": false,\n    \"num1\": 1,\n    \"num2\": -1,\n    \"num3\": -1e-1,\n    \"str1\": \"hello\",\n    \"str2\": \"new\\nline\",\n    \"str3\": \"tab\t\",\n    \"list\": [null, true, 1, \"hello\", [], {}],\n    \"json\": {\n        \"null\": null,\n        \"bool1\": true,\n        \"bool2\": false,\n        \"num1\": 1,\n        \"num2\": -1,\n        \"num3\": -1e-1,\n        \"str1\": \"hello\",\n        \"str2\": \"new\\nline\",\n        \"str3\": \"tab\t\",\n        \"list\": [null, true, 1, \"hello\", [], {}]\n    }\n};\nprint(j);",
+      "expected": "{\"null\": null, \"bool1\": true, \"bool2\": false, \"num1\": 1, \"num2\": -1, \"num3\": -0.1, \"str1\": \"hello\", \"str2\": \"new\\nline\", \"str3\": \"tab\\t\", \"list\": [null, true, 1, \"hello\", [], {}], \"json\": {\"null\": null, \"bool1\": true, \"bool2\": false, \"num1\": 1, \"num2\": -1, \"num3\": -0.1, \"str1\": \"hello\", \"str2\": \"new\\nline\", \"str3\": \"tab\\t\", \"list\": [null, true, 1, \"hello\", [], {}]}}\n"
+    },
+    {
+      "type": "fail",
+      "title": "JSON, trailing comma",
+      "dit": "JSON j = {\n    \"item\": 1,\n};",
+      "expected": "Line: 2 Col: 14 (tests/fail.dit)\n    \"item\": 1,\n             ^\n\nSyntaxError: Trailing commas are not allowed"
+    },
+    {
+      "type": "fail",
+      "title": "JSON, missing comma",
+      "dit": "JSON j = {\n    \"item\": 1\n    \"item2\": 2\n};",
+      "expected": "Line: 2 Col: 13 (tests/fail.dit)\n    \"item\": 1\n            ^\n\nSyntaxError: Expected ','"
+    },
+    {
+      "type": "fail",
+      "title": "JSON, missing colon",
+      "dit": "JSON j = {\n    \"item\" 1\n};",
+      "expected": "Line: 2 Col: 12 (tests/fail.dit)\n    \"item\" 1\n           ^\n\nSyntaxError: Expected ':'"
+    },
+    {
+      "type": "fail",
+      "title": "JSON, missing opening quote",
+      "dit": "JSON j = {\n    item: 1\n};",
+      "expected": "Line: 2 Col: 5 (tests/fail.dit)\n    item: 1\n    ^\n\nSyntaxError: Unexpected token for JSON"
+    },
+    {
+      "type": "fail",
+      "title": "JSON, missing closing quote",
+      "dit": "JSON j = {\n    \"item: 1\n};",
+      "expected": "Line: 2 Col: 12 (tests/fail.dit)\n    \"item: 1\n           ^\n\nSyntaxError: Unexpected EOL while reading string"
+    },
+    {
+      "type": "fail",
+      "title": "JSON, missing closing brace",
+      "dit": "JSON j = {\n    \"item1\": 1\n\nStr test = 'cat';\n",
+      "expected": "Line: 4 Col: 1 (tests/fail.dit)\nStr test = 'cat';\n^\n\nSyntaxError: Unexpected token for JSON"
+    }
+  ]
+}

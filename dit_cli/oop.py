@@ -1,16 +1,15 @@
 from __future__ import annotations
 
+import json
 from dataclasses import dataclass
-from typing import Callable, Dict, Iterator, List, Optional, Tuple, Union
+from typing import Callable, Dict, Iterator, List, Optional, Union
 from urllib.error import HTTPError, URLError
 from urllib.request import urlopen
 
 from dit_cli.exceptions import (
-    d_AttributeError,
     d_CriticalError,
     d_FileError,
     d_MissingPropError,
-    d_NameError,
     d_TypeMismatchError,
 )
 from dit_cli.grammar import d_Grammar, prim_to_value, value_to_prim
@@ -41,6 +40,18 @@ class d_Thing(object):
             return True
         return False
 
+    def __str__(self):
+        if self.is_null:
+            return d_Grammar.NULL.value
+        else:
+            raise d_CriticalError("Thing __str__ called on non-null thing.")
+
+    def get_data(self) -> None:
+        if self.is_null:
+            return None
+        else:
+            raise d_CriticalError("Thing get_data called on non-null thing.")
+
     def set_value(self, new_value: d_Thing) -> None:
         # alter own class to *become* the type it is assigned to.
         # note that 'can_be_anything' is still True
@@ -60,7 +71,7 @@ class d_Thing(object):
         if cls.null_singleton is None:
             cls.null_singleton = d_Thing()
             cls.null_singleton.grammar = d_Grammar.NULL
-            cls.null_singleton.public_type = "null"
+            cls.null_singleton.public_type = d_Grammar.NULL.value
         return cls.null_singleton
 
     def get_thing(self) -> d_Thing:
@@ -91,34 +102,67 @@ class d_Ref(object):
 Ref_Thing = Union[d_Thing, d_Ref]
 
 
-class d_String(d_Thing):
+class d_Str(d_Thing):
     def __init__(self) -> None:
         super().__init__()
-        self.public_type = "String"
-        self.grammar = d_Grammar.VALUE_STRING
+        self.public_type = "Str"
+        self.grammar = d_Grammar.VALUE_STR
 
-        self.string_value: str = None  # type: ignore
+        self.str_: str = None  # type: ignore
+
+    def __str__(self) -> str:
+        return self.str_
+
+    def __repr__(self) -> str:
+        return f'"{self.str_}"'
+
+    def get_data(self) -> str:
+        return self.str_
 
     def set_value(self, new_value: d_Thing) -> None:
-        self.is_null = new_value.is_null
-        if isinstance(new_value, d_String):
-            # String test = 'cat';
-            # All normal string assignments to String or Thing
-            self.string_value = new_value.string_value
-        elif self.can_be_anything:
-            # Thing test = 'cat';
-            # test = ['dog', 'bird'];
-            super().set_value(new_value)
-        elif type(new_value) is d_Thing:
-            # Thing test1;
-            # String test2 = test1;
-            pass
-        elif isinstance(new_value, d_Thing):  # type: ignore
-            raise d_TypeMismatchError(
-                f"Cannot assign {new_value.public_type} to String"
-            )
-        else:
-            raise d_CriticalError("Unrecognized type for string assignment")
+        _simple_set_value(self, new_value)
+
+
+class d_Bool(d_Thing):
+    def __init__(self) -> None:
+        super().__init__()
+        self.public_type = "Bool"
+        self.grammar = d_Grammar.VALUE_BOOL
+
+        self.bool_: bool = None  # type: ignore
+
+    def __str__(self) -> str:
+        return d_Grammar.TRUE.value if self.bool_ else d_Grammar.FALSE.value
+
+    def __repr__(self) -> str:
+        return self.__str__()
+
+    def get_data(self) -> bool:
+        return self.bool_
+
+    def set_value(self, new_value: d_Thing) -> None:
+        _simple_set_value(self, new_value)
+
+
+class d_Num(d_Thing):
+    def __init__(self) -> None:
+        super().__init__()
+        self.public_type = "Num"
+        self.grammar = d_Grammar.VALUE_NUM
+
+        self.num: float = None  # type: ignore
+
+    def __str__(self) -> str:
+        return str(self.num)
+
+    def __repr__(self) -> str:
+        return self.__str__()
+
+    def get_data(self) -> float:
+        return self.num
+
+    def set_value(self, new_value: d_Thing) -> None:
+        _simple_set_value(self, new_value)
 
 
 class d_List(d_Thing):
@@ -128,19 +172,32 @@ class d_List(d_Thing):
         self.grammar = d_Grammar.VALUE_LIST
 
         self.contained_type: d_Type = None  # type: ignore
-        self.list_value: List[d_Thing] = None  # type: ignore
+        self.list_: List[d_Thing] = None  # type: ignore
+
+    def __str__(self) -> str:
+        return json.dumps(self.get_data())
+
+
+    def __repr__(self) -> str:
+        return self.__str__()
+
+    def get_data(self) -> list:
+        out = []
+        for item in self.list_:
+            out.append(item.get_data())
+        return out
 
     def set_value(self, new_value: d_Thing) -> None:
         self.is_null = new_value.is_null
         if isinstance(new_value, d_List):
-            # listOf String = ['1', '2'];
-            self.list_value = new_value.list_value
+            # listOf Str = ['1', '2'];
+            self.list_ = new_value.list_
             _check_list_type(self)
         elif self.can_be_anything:
             super().set_value(new_value)
         elif type(new_value) is d_Thing:
             # listof Thing test1;
-            # listOf String test2 = test1;
+            # listOf Str test2 = test1;
             pass
         elif isinstance(new_value, d_Thing):  # type: ignore
             raise d_TypeMismatchError(f"Cannot assign {new_value.public_type} to List")
@@ -156,7 +213,7 @@ def _check_list_type(list_: d_List) -> None:
         return
 
     err = False
-    for ele in _traverse(list_.list_value):
+    for ele in _traverse(list_.list_):
         ele: d_Thing
         if ele.is_null:
             continue
@@ -188,6 +245,64 @@ def _traverse(item: Union[list, d_Thing]) -> Iterator[d_Thing]:
         yield item
 
 
+class d_JSON(d_Thing):
+    def __init__(self) -> None:
+        super().__init__()
+        self.public_type = "JSON"
+        self.grammar = d_Grammar.VALUE_JSON
+
+        self.json_: dict = None  # type: ignore
+
+    def __str__(self) -> str:
+        di = self.get_data()
+        ji = json.dumps(di)
+        return ji
+
+    def __repr__(self) -> str:
+        return self.__str__()
+
+    def get_data(self) -> dict:
+        out = {}
+        for key, val in self.json_.items():
+            out[key] = val.get_data()
+        return out
+
+    def set_value(self, new_value: d_Thing) -> None:
+        _simple_set_value(self, new_value)
+
+
+simple_types = Union[d_Str, d_Bool, d_Num, d_JSON]
+
+
+def _simple_set_value(self: simple_types, val: d_Thing) -> None:
+    # Always set null, but still need to check that assignment was allowed
+    self.is_null = val.is_null
+
+    # Check if items match, then just assign
+    if isinstance(self, d_Str) and isinstance(val, d_Str):
+        self.str_ = val.str_
+    elif isinstance(self, d_Bool) and isinstance(val, d_Bool):
+        self.bool_ = val.bool_
+    elif isinstance(self, d_Num) and isinstance(val, d_Num):
+        self.num = val.num
+    elif isinstance(self, d_JSON) and isinstance(val, d_JSON):
+        self.json_ = val.json_
+    elif self.can_be_anything:
+        # maybe self was originally a Thing and is being reassigned
+        # Thing test = true;
+        # test = ['dog', 'bird'];
+        super(self.__class__, self).set_value(val)  # type: ignore
+    elif type(val) is d_Thing:
+        # Thing test1;
+        # Bool test2 = test1;
+        pass
+    else:
+        # elif isinstance(val, d_Thing):  # type: ignore
+        raise d_TypeMismatchError(
+            f"Cannot assign {val.public_type} to {self.public_type}"
+        )
+
+
 class d_Container(d_Thing):
     def __init__(self) -> None:
         super().__init__()
@@ -198,8 +313,8 @@ class d_Container(d_Thing):
             if not isinstance(self, d_Body):
                 raise d_CriticalError("A Container was given for scope mode")
             # We need to check for this name in upper scopes
-            # String someGlobal = 'cat';
-            # class someClass {{ String someInternal = someGlobal; }}
+            # Str someGlobal = 'cat';
+            # class someClass {{ Str someInternal = someGlobal; }}
             return _find_attr_in_scope(name, self)
         else:
             # We're dotting, so only 'self' counts, no upper scopes.
@@ -335,8 +450,8 @@ def _type_to_obj(dec: Declarable) -> d_Thing:
     elif dec.type_ == d_Grammar.PRIMITIVE_THING:
         thing = d_Thing()
         thing.can_be_anything = True
-    elif dec.type_ == d_Grammar.PRIMITIVE_STRING:
-        thing = d_String()
+    elif dec.type_ == d_Grammar.PRIMITIVE_STR:
+        thing = d_Str()
     elif dec.type_ == d_Grammar.PRIMITIVE_CLASS:
         thing = d_Class()
     elif dec.type_ == d_Grammar.PRIMITIVE_INSTANCE:
@@ -408,11 +523,11 @@ class d_Lang(d_Body):
         result = super().add_attr(dec, value=value)
         priority = 0
 
-        if "-priority-" in self.attrs:
-            item = self.attrs["-priority-"]
-            if not isinstance(item, d_String):
-                raise d_TypeMismatchError("-priority- must be of type String")
-            priority = int(item.string_value)
+        if "Priority" in self.attrs:
+            item = self.attrs["Priority"]
+            if not isinstance(item, d_Str):
+                raise d_TypeMismatchError("Priority must be of type Str")
+            priority = int(item.str_)
 
         if not hasattr(result, "priority_num"):
             result.priority = priority  # type: ignore
@@ -426,14 +541,14 @@ class d_Lang(d_Body):
 
     def get_prop(self, name: str) -> str:
         res = self.find_attr(name)
-        if res is None or not isinstance(res, d_String):
+        if res is None or not isinstance(res, d_Str):
             raise d_MissingPropError(self.name, name)
-        return res.string_value
+        return res.str_
 
 
 def _combine_langs(lang1: d_Lang, lang2: d_Lang) -> Dict[str, Ref_Thing]:
-    lang1.attrs.pop("-priority-", None)
-    lang2.attrs.pop("-priority-", None)
+    lang1.attrs.pop("Priority", None)
+    lang2.attrs.pop("Priority", None)
     set1, set2 = set(lang1.attrs), set(lang2.attrs)
     # Start by pulling all the items that don't have the same names into a list
     out: Dict[str, Ref_Thing] = {}
@@ -527,19 +642,19 @@ def check_value(thing: d_Thing, dec: Declarable) -> Optional[CheckResult]:
             return
     elif dec.listof != isinstance(thing, d_List):
         # non matching lists, obvious error
-        # listOf String test = 'cat';
-        # String test = ['cat'];
+        # listOf Str test = 'cat';
+        # Str test = ['cat'];
         return _get_check_result(thing, dec)
     elif dec.listof and isinstance(thing, d_List) and thing.contained_type is None:
         # a list doesn't know its own type when initially declared, so we'll check
-        # listOf String test = ['cat'];
+        # listOf Str test = ['cat'];
         thing.contained_type = _get_gram_or_class(prim_to_value, type_=dec.type_)
         _check_list_type(thing)
         return
     elif not isinstance(dec.type_, d_Class):
         if value_to_prim(dec.type_) != _get_gram_or_class(value_to_prim, thing=thing):
             # Not matching grammars
-            # String test = func (){{}};
+            # Str test = func (){{}};
             # listOf Class = ['cat'];
             return _get_check_result(thing, dec)
     elif not _is_subclass(thing, dec.type_):

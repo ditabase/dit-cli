@@ -15,7 +15,7 @@
     {
       "type": "succeed",
       "title": "comment, singleline after declare",
-      "dit": "String test;//This is the whole dit",
+      "dit": "Str test;//This is the whole dit",
       "expected": "Finished successfully\n"
     },
     {

@@ -3,19 +3,19 @@
     {
       "type": "succeed",
       "title": "empty string, single quote",
-      "dit": "String test = '';",
+      "dit": "Str test = '';",
       "expected": "Finished successfully\n"
     },
     {
       "type": "succeed",
       "title": "empty string, double quote",
-      "dit": "String test = \"\";",
+      "dit": "Str test = \"\";",
       "expected": "Finished successfully\n"
     },
     {
       "type": "succeed",
       "title": "string, string assigned to value string",
-      "dit": "String test = 'cat';\nString test2 = test;",
+      "dit": "Str test = 'cat';\nStr test2 = test;",
       "expected": "Finished successfully\n"
     },
     {
@@ -41,6 +41,18 @@
       "title": "escape, newline",
       "dit": "print('val1\\nval2\\nval3');",
       "expected": "val1\nval2\nval3\n"
+    },
+    {
+      "type": "succeed",
+      "title": "print, string var",
+      "dit": "Str s = 'cat';\nprint(s);",
+      "expected": "cat\n"
+    },
+    {
+      "type": "fail",
+      "title": "string, missing closing quote",
+      "dit": "Str test = 'multi-\nline';",
+      "expected": "Line: 1 Col: 18 (tests/fail.dit)\nStr test = 'multi-\n                 ^\n\nSyntaxError: Unexpected EOL while reading string"
     }
   ]
 }

@@ -1,5 +1,5 @@
-lang SomeLang {{
-    -priority- = '5';
-    String value2 = 'poodle';
+lang SomeLang {|
+    Priority = '5';
+    Str value2 = 'poodle';
     value3 = 'lion';
-}}
+|}

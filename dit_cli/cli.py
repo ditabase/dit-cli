@@ -21,7 +21,6 @@ def main():
     if sys.stdin.isatty() and args.filepath.name == "<stdin>":
         parser.error("must provide one of filepath or stdin pipe")
     code = args.filepath.read()
-    code = code.replace("\\n", "\n")
     start_daemon()
     run_string(code, args.filepath.name)
 
@@ -29,7 +28,7 @@ def main():
 def run_string(dit_string: str, path: str):
     try:
         dit_cli.settings.DIT_FILEPATH = path
-        dit = d_Dit.from_str("-main-", dit_string, path)
+        dit = d_Dit.from_str("Main", dit_string, path)
         dit.finalize()
         interpret(dit)
     except d_DitError as err:

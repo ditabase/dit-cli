@@ -3,74 +3,74 @@
     {
       "type": "fail",
       "title": "TypeMismatch, [] value assigned to String",
-      "dit": "String test = ['cat'];",
-      "expected": "Line: 1 Col: 22 (tests/fail.dit)\nString test = ['cat'];\n                     ^\n\nTypeMismatchError: Cannot assign listOf ? to String"
+      "dit": "Str test = ['cat'];",
+      "expected": "Line: 1 Col: 19 (tests/fail.dit)\nStr test = ['cat'];\n                  ^\n\nTypeMismatchError: Cannot assign listOf ? to Str"
     },
     {
       "type": "fail",
       "title": "TypeMismatch, '' value assigned to List",
-      "dit": "listOf String test = 'cat';",
-      "expected": "Line: 1 Col: 27 (tests/fail.dit)\nlistOf String test = 'cat';\n                          ^\n\nTypeMismatchError: Cannot assign String to listOf String"
+      "dit": "listOf Str test = 'cat';",
+      "expected": "Line: 1 Col: 24 (tests/fail.dit)\nlistOf Str test = 'cat';\n                       ^\n\nTypeMismatchError: Cannot assign Str to listOf Str"
     },
     {
       "type": "fail",
-      "title": "TypeMismatch, String var assigned to List",
-      "dit": "String test = 'cat';\nlistOf String test2 = test;",
-      "expected": "Line: 2 Col: 27 (tests/fail.dit)\nlistOf String test2 = test;\n                          ^\n\nTypeMismatchError: Cannot assign String to listOf String"
+      "title": "TypeMismatch, Str var assigned to List",
+      "dit": "Str test = 'cat';\nlistOf Str test2 = test;",
+      "expected": "Line: 2 Col: 24 (tests/fail.dit)\nlistOf Str test2 = test;\n                       ^\n\nTypeMismatchError: Cannot assign Str to listOf Str"
     },
     {
       "type": "fail",
       "title": "TypeMismatch, List var assigned to String",
-      "dit": "listOf String test = ['cat'];\nString test2 = test;",
-      "expected": "Line: 2 Col: 20 (tests/fail.dit)\nString test2 = test;\n                   ^\n\nTypeMismatchError: Cannot assign listOf String to String"
+      "dit": "listOf Str test = ['cat'];\nStr test2 = test;",
+      "expected": "Line: 2 Col: 17 (tests/fail.dit)\nStr test2 = test;\n                ^\n\nTypeMismatchError: Cannot assign listOf Str to Str"
     },
     {
       "type": "fail",
       "title": "TypeMismatch, '' assigned to class",
-      "dit": "class A {{}}\nA = 'dog';",
-      "expected": "Line: 2 Col: 10 (tests/fail.dit)\nA = 'dog';\n         ^\n\nTypeMismatchError: Cannot assign String to Class"
+      "dit": "class A {||}\nA = 'dog';",
+      "expected": "Line: 2 Col: 10 (tests/fail.dit)\nA = 'dog';\n         ^\n\nTypeMismatchError: Cannot assign Str to Class"
     },
     {
       "type": "fail",
-      "title": "TypeMismatch, String var assigned to class",
-      "dit": "class A {{}}\nString test = 'dog';\nA = test;",
-      "expected": "Line: 3 Col: 9 (tests/fail.dit)\nA = test;\n        ^\n\nTypeMismatchError: Cannot assign String to Class"
+      "title": "TypeMismatch, Str var assigned to class",
+      "dit": "class A {||}\nStr test = 'dog';\nA = test;",
+      "expected": "Line: 3 Col: 9 (tests/fail.dit)\nA = test;\n        ^\n\nTypeMismatchError: Cannot assign Str to Class"
     },
     {
       "type": "fail",
       "title": "TypeMismatch, '' assigned to dit",
       "dit": "import dit from 'tests/import.dit';\ndit = 'dog';",
-      "expected": "Line: 2 Col: 12 (tests/fail.dit)\ndit = 'dog';\n           ^\n\nTypeMismatchError: Cannot assign String to Dit"
+      "expected": "Line: 2 Col: 12 (tests/fail.dit)\ndit = 'dog';\n           ^\n\nTypeMismatchError: Cannot assign Str to Dit"
     },
     {
       "type": "fail",
-      "title": "TypeMismatch, String var assigned to dit",
-      "dit": "import dit from 'tests/import.dit';\nString test = 'dog';\ndit = test;",
-      "expected": "Line: 3 Col: 11 (tests/fail.dit)\ndit = test;\n          ^\n\nTypeMismatchError: Cannot assign String to Dit"
+      "title": "TypeMismatch, Str var assigned to dit",
+      "dit": "import dit from 'tests/import.dit';\nStr test = 'dog';\ndit = test;",
+      "expected": "Line: 3 Col: 11 (tests/fail.dit)\ndit = test;\n          ^\n\nTypeMismatchError: Cannot assign Str to Dit"
     },
     {
       "type": "fail",
-      "title": "TypeMismatch, listOf String had class",
-      "dit": "listOf String value = [class {{}}];",
-      "expected": "Line: 1 Col: 35 (tests/fail.dit)\nlistOf String value = [class {{}}];\n                                  ^\n\nTypeMismatchError: List of type 'String' contained 'Class'"
+      "title": "TypeMismatch, listOf Str had class",
+      "dit": "listOf Str value = [class {||}];",
+      "expected": "Line: 1 Col: 32 (tests/fail.dit)\nlistOf Str value = [class {||}];\n                               ^\n\nTypeMismatchError: List of type 'Str' contained 'Class'"
     },
     {
       "type": "fail",
       "title": "TypeMismatch, listOf Class had string",
       "dit": "listOf Class value = ['dog'];",
-      "expected": "Line: 1 Col: 29 (tests/fail.dit)\nlistOf Class value = ['dog'];\n                            ^\n\nTypeMismatchError: List of type 'Class' contained 'String'"
+      "expected": "Line: 1 Col: 29 (tests/fail.dit)\nlistOf Class value = ['dog'];\n                            ^\n\nTypeMismatchError: List of type 'Class' contained 'Str'"
     },
     {
       "type": "fail",
       "title": "TypeMismatch, func call, List instead of String",
-      "dit": "sig String func test1() {{\n    return ['cat'];\n}}\nString test2 = test1();",
-      "expected": "Line: 2 Col: 5 (tests/fail.dit)\n    return ['cat'];\n    ^\n\nTypeMismatchError: Expected 'String' for return, got 'listOf ?'\n\tat test1 (tests/fail.dit):4:16"
+      "dit": "sig Str func test1() {|\n    return ['cat'];\n|}\nStr test2 = test1();",
+      "expected": "Line: 2 Col: 5 (tests/fail.dit)\n    return ['cat'];\n    ^\n\nTypeMismatchError: Expected 'Str' for return, got 'listOf ?'\n\tat test1 (tests/fail.dit):4:13"
     },
     {
       "type": "fail",
       "title": "TypeMismatch, func call, Class instead of String",
-      "dit": "sig String func test1() {{\n    return class {{}};\n}}\nString test2 = test1();",
-      "expected": "Line: 2 Col: 5 (tests/fail.dit)\n    return class {{}};\n    ^\n\nTypeMismatchError: Expected 'String' for return, got 'Class'\n\tat test1 (tests/fail.dit):4:16"
+      "dit": "sig Str func test1() {|\n    return class {||};\n|}\nStr test2 = test1();",
+      "expected": "Line: 2 Col: 5 (tests/fail.dit)\n    return class {||};\n    ^\n\nTypeMismatchError: Expected 'Str' for return, got 'Class'\n\tat test1 (tests/fail.dit):4:13"
     }
   ]
 }

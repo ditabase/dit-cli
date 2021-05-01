@@ -3,7 +3,7 @@
 from dataclasses import dataclass
 from typing import Optional, TextIO
 
-DIT_FILEPATH: Optional[str] = None
+DIT_FILEPATH: str = None  # type: ignore
 TEST_OUTPUT: Optional[TextIO] = None
 
 

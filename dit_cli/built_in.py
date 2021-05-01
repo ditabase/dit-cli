@@ -2,31 +2,8 @@ import os
 from typing import List
 
 import dit_cli.settings
-from dit_cli.exceptions import d_CriticalError
 from dit_cli.grammar import d_Grammar
-from dit_cli.oop import (
-    Declarable,
-    d_Dit,
-    d_Func,
-    d_Lang,
-    d_List,
-    d_Ref,
-    d_String,
-    d_Thing,
-)
-
-
-def d_str(thing: d_Thing) -> str:
-    if thing.is_null:
-        return "null"
-    elif isinstance(thing, d_String):
-        return _ser_str(thing.string_value)
-    elif isinstance(thing, d_List):
-        return _ser_list(thing)
-    elif isinstance(thing, d_Thing):  # type: ignore
-        return _ser_obj(thing)
-    else:
-        raise d_CriticalError("Unrecognized argument for str()")
+from dit_cli.oop import Declarable, d_Dit, d_Func, d_Lang
 
 
 def d_print(func: d_Func) -> None:
@@ -34,7 +11,8 @@ def d_print(func: d_Func) -> None:
     # JSON serialization. We might just be able to use JSON.encode, or something similar
     # The first attribute is the parameter we want.
     key, val = next(iter(func.attrs.items()))
-    print(d_str(val.get_thing()))
+    val = val.get_thing()
+    print(val)
 
 
 b_print = d_Func()
@@ -43,36 +21,6 @@ b_print.parameters = [Declarable(d_Grammar.PRIMITIVE_THING, "value")]
 b_print.is_built_in = True
 b_print.py_func = d_print
 b_print.is_null = False
-
-
-def _ser_list(thing: d_Thing) -> str:
-    if thing.is_null:
-        return d_Grammar.NULL.value
-    elif isinstance(thing, d_List):
-        if len(thing.list_value) == 0:
-            return "[]"
-        value = "["
-        for i in thing.list_value:
-            # Serialize any depth of list by recursing
-            value += _ser_list(i)
-            value += ","
-        # Replace last comma with ]
-        value = value[:-1] + "]"
-        return value
-    elif isinstance(thing, d_String):
-        return _ser_str(thing.string_value)
-    elif isinstance(thing, d_Thing):  # type: ignore
-        return _ser_obj(thing)
-    else:
-        raise d_CriticalError("Unrecognized argument for _ser_list()")
-
-
-def _ser_str(str_: str) -> str:
-    return str_
-
-
-def _ser_obj(obj: d_Thing) -> str:
-    raise NotImplementedError
 
 
 def _get_config(func: d_Func) -> List[d_Dit]:

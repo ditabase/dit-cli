@@ -9,38 +9,50 @@
     {
       "type": "fail",
       "title": "list, missing comma",
-      "dit": "listOf String test = ['Hello' 'world'];",
-      "expected": "Line: 1 Col: 30 (tests/fail.dit)\nlistOf String test = ['Hello' 'world'];\n                             ^\n\nSyntaxError: Expected ']'"
+      "dit": "listOf Str test = ['Hello' 'world'];",
+      "expected": "Line: 1 Col: 27 (tests/fail.dit)\nlistOf Str test = ['Hello' 'world'];\n                          ^\n\nSyntaxError: Expected ']'"
     },
     {
       "type": "fail",
       "title": "list, missing right bracket",
-      "dit": "listOf String test = ['Hello'\nString test2;",
-      "expected": "Line: 1 Col: 30 (tests/fail.dit)\nlistOf String test = ['Hello'\n                             ^\n\nSyntaxError: Expected ']'"
+      "dit": "listOf Str test = ['Hello'\nStr test2;",
+      "expected": "Line: 1 Col: 27 (tests/fail.dit)\nlistOf Str test = ['Hello'\n                          ^\n\nSyntaxError: Expected ']'"
     },
     {
       "type": "succeed",
       "title": "list, 2 string elements",
-      "dit": "listOf String test = ['Hello', 'world'];",
+      "dit": "listOf Str test = ['Hello', 'world'];",
       "expected": "Finished successfully\n"
     },
     {
       "type": "succeed",
       "title": "list, empty",
-      "dit": "listOf String test = [];",
+      "dit": "listOf Str test = [];",
       "expected": "Finished successfully\n"
     },
     {
       "type": "succeed",
       "title": "list, VALUE_LIST assigned to new var",
-      "dit": "listOf String test = ['cat'];\nlistOf String test2 = test;",
+      "dit": "listOf Str test = ['cat'];\nlistOf Str test2 = test;",
       "expected": "Finished successfully\n"
     },
     {
       "type": "succeed",
       "title": "list, trailing comma",
-      "dit": "listOf String test = ['cat', 'dog',];",
+      "dit": "listOf Str test = ['cat', 'dog',];",
       "expected": "Finished successfully\n"
+    },
+    {
+      "type": "succeed",
+      "title": "print, list of everything",
+      "dit": "print([null, true, 1, 'cat']);",
+      "expected": "[null, true, 1, \"cat\"]\n"
+    },
+    {
+      "type": "succeed",
+      "title": "print, list var",
+      "dit": "listOf Thing l = [null, true, 1, 'cat'];\nprint(l);",
+      "expected": "[null, true, 1, \"cat\"]\n"
     }
   ]
 }

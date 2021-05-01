@@ -35,6 +35,8 @@ def pytest_generate_tests(metafunc: Metafunc):
 
 
 def test_dits(dit_json, capfd):
+    if "long" in dit_json and not pytest.all_val:  # type: ignore
+        pytest.skip("Long test")
     run_string(dit_json["dit"], "tests/fail.dit")
     output, err = capfd.readouterr()
 
