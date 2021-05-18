@@ -81,8 +81,15 @@
       "long": true,
       "type": "succeed",
       "title": "guest, hackathon",
-      "dit": "getConfig();\npull JavaScript, Lua, Python from 'https://raw.githubusercontent.com/ditabase/dits/master/langs/commonLangs.dit';\nsig JavaScript Str func add(Str num1, Str num2) {|\n    <|return (|'\"' + String(parseFloat(<|num1;|>) + parseFloat(<|num2;|>)) + '\"'|)|>;\n|}\nsig Python listOf Str func addNums(listOf Str num_pairs) {|\n    num_strings = <|num_pairs;|>\n    result = []\n    for num_string in num_strings:\n        num1 = num_string[:num_string.find('-')]\n        num2 = num_string[num_string.find('-') + 1:]\n        result.append(<|add((|'\"' + num1 + '\"'|), (|'\"' + num2 + '\"'|));|>)\n    <|return (|result|);|>\n|}\nsig Lua listOf Str func run() {|\n    json = require(\"rxi-json-lua\")\n    nums = {\"3-8\",\"9-1\",\"10-2\",\"3-5\",\"1-3\"}\n    final = json.encode(nums)\n    <|listOf Str sums = addNums((|final|));|>\n    <|return sums;|>\n|}\nlistOf Str finalNums = run();\nprint(finalNums);",
-      "expected": "[11,10,12,8,4]\n"
+      "dit": "getConfig();\npull JavaScript, Lua, Python from '/home/isaiah/general/dits/langs/commonLangs.dit';\nsig JavaScript Num func add(Num n1, Num n2) {|\n    <|return (|<|n1;|> + <|n2;|>|);|>;\n|}\nsig Python listOf Num func addNums(listOf Num num_pairs) {|\n    nums = <|num_pairs;|>\n    result = []\n    for pair in nums:\n        result.append(<|add((|pair[0]|), (|pair[1]|));|>)\n    <|return (|result|);|>\n|}\nsig Lua listOf Num func run() {|\n    json = require(\"rxi-json-lua\")\n    nums = {[1] = {[1] = 3, [2] = 8}, [2] = {[1] = 9, [2] = 1}, [3] = {[1] = 10, [2] = 2}, [4] = {[1] = 3, [2] = 5}, [5] = {[1] = 1, [2] = 3}}\n    final = json.encode(nums)\n    <|listOf Num sums = addNums((|final|));|>\n    <|return sums;|>\n|}\nlistOf Num finalNums = run();\nprint(finalNums);",
+      "expected": "[11, 10, 12, 8, 4]\n"
+    },
+    {
+      "long": true,
+      "type": "succeed",
+      "title": "guest, all param & return",
+      "dit": "getConfig();\npull JavaScript from '/home/isaiah/general/dits/langs/commonLangs.dit';\n\nsig JavaScript Bool func bool(Bool v1) {| <|return v1;|> |}\nsig JavaScript Num func num(Num v1) {| <|return v1;|> |}\nsig JavaScript Str func string(Str v1) {| <|return v1;|> |}\nsig JavaScript listOf Num func list(listOf Num v1) {| <|return v1;|> |}\nsig JavaScript JSON func json(JSON v1) {| <|return v1;|> |}\n\nprint(bool(true));\nprint(num(5));\nprint(string('cat'));\nprint(list([1,2,3]));\nprint(json({\"item1\": \"dog\"}));\n",
+      "expected": "true\n5\ncat\n[1, 2, 3]\n{\"item1\": \"dog\"}"
     }
   ]
 }

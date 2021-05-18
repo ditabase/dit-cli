@@ -641,16 +641,13 @@ def _paren_left(inter: InterpretContext) -> Optional[d_Thing]:
                     job.type_ = JobType.DITLANG_CALLBACK
                     if value is None:
                         pass
-                    elif isinstance(value, d_Str):
-                        job.result = value.str_
-                    elif isinstance(value, d_List):
-                        final_list = []
-                        for item in value.list_:
-                            if isinstance(item, d_Str):
-                                final_list.append(item.str_)
-                        job.result = final_list
+                    elif isinstance(
+                        value, (d_Thing, d_Bool, d_Num, d_Str, d_List, d_JSON)
+                    ):
+                        job.result = value.get_data()  # type: ignore
                     else:
                         raise NotImplementedError
+
     except d_CodeError as err:
         err.set_origin(
             inter.body.path, func.call_loc, inter.char_feed.get_line(func.call_loc)

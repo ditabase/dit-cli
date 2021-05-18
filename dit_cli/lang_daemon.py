@@ -149,6 +149,8 @@ def _get_client(lang: str) -> d_Client:
     # TODO: I have gotten this error with Lua, I assume it was a race condition.
     # It was only when purposely crashing lua in debug.
     # This may not ever happen in the CLI.
+    # It has now occurred twice in JavaScript, but only while debugging
+    # and when the job did not finish because of correctly handled dit error
 
 
 def _service_client(key: selectors.SelectorKey, mask: int):

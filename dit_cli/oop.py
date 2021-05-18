@@ -177,7 +177,6 @@ class d_List(d_Thing):
     def __str__(self) -> str:
         return json.dumps(self.get_data())
 
-
     def __repr__(self) -> str:
         return self.__str__()
 
@@ -224,9 +223,14 @@ def _check_list_type(list_: d_List) -> None:
             # listOf Number numbers= [Bool('3')];
             err = True
         elif ele.grammar != list_.contained_type:
-            # Mismatched grammars
-            # listOf Class classes = ['clearly not a class'];
-            err = True
+            if ele.grammar == d_Grammar.VALUE_LIST:
+                # Nested lists are okay
+                # listOf Num grid = [[2, 6], [7, 8], [-1, -7]];
+                continue
+            else:
+                # Mismatched grammars
+                # listOf Class classes = ['clearly not a class'];
+                err = True
 
         if err:
             expected = _type_to_str(list_.contained_type)
