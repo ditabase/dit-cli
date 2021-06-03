@@ -868,7 +868,7 @@ def _import_or_pull(inter: InterpretContext, orig_loc: CodeLocation) -> d_Dit:
     # pull ... from LINK
     dit = d_Dit()
     dit.is_null = False
-    if inter.next_tok.grammar == d_Grammar.NULL:
+    if inter.next_tok.grammar in [d_Grammar.NULL, d_Grammar.VALUE_NULL]:
         raise d_SyntaxError("Cannot import from null", inter)
     elif inter.next_tok.grammar not in STRINGABLES:
         raise d_SyntaxError("Expected a filepath string for import", inter)
@@ -1246,6 +1246,7 @@ STATEMENT_DISPATCH = {
     d_Grammar.WORD:                   _illegal_statement,
     d_Grammar.NEW_NAME:               _new_name,
     d_Grammar.DIGIT:                  _illegal_statement,
+    d_Grammar.VALUE_NULL:             _value_equalable,
     d_Grammar.VALUE_THING:            _value_equalable,
     d_Grammar.VALUE_STR:              _value_equalable,
     d_Grammar.VALUE_BOOL:             _value_equalable,
@@ -1312,6 +1313,7 @@ EXPRESSION_DISPATCH = {
     d_Grammar.WORD:                   _illegal_expression,
     d_Grammar.NEW_NAME:               _new_name,
     d_Grammar.DIGIT:                  _digit,
+    d_Grammar.VALUE_NULL:             _value_equalable,
     d_Grammar.VALUE_THING:            _value_equalable,
     d_Grammar.VALUE_STR:              _value_equalable,
     d_Grammar.VALUE_BOOL:             _value_equalable,

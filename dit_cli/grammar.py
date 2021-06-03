@@ -79,6 +79,7 @@ class d_Grammar(Enum):
     NEW_NAME = 1
     DIGIT = 14
 
+    VALUE_NULL = 15
     VALUE_THING = 2
     VALUE_STR = 3
     VALUE_BOOL = 11

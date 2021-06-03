@@ -15,13 +15,13 @@
     {
       "type": "succeed",
       "title": "Thing, value assignment",
-      "dit": "Thing test = 'cat';\ntest = ['dog', class {||}];\ntest = class {||};\ntest = import 'tests/import.dit';\ntest = func (){||};",
+      "dit": "Thing test;\ntest = true;\ntest = 1;\ntest = null;\ntest = 'cat';\ntest = ['dog', class {||}];\ntest = class {||};\nclass A {|func Make(Str someParam) {||}|}\ntest = A('banana');\ntest = lang {||};\ntest = import 'tests/import.dit';\ntest = func (){||};",
       "expected": "Finished successfully\n"
     },
     {
       "type": "succeed",
       "title": "Thing, var assignment",
-      "dit": "Thing thg;\nStr test1 = 'cat';\nlistOf Class test2 = [class {||}, class {||}];\nClass test3 = class {||};\nDit test4 = import 'tests/import.dit';\nFunc test5 = func (){||};\nthg = test1;\nthg = test2;\nthg = test3;\nthg = test4;\nthg = test5;",
+      "dit": "Thing thg;\nStr test1 = 'cat';\nlistOf Class test2 = [class {||}, class {||}];\nClass test3 = class {||};\nDit test4 = import 'tests/import.dit';\nFunc test5 = func (){||};\nclass A {|func Make(Str someParam) {||}|}\nInstance test6 = A('cat');\nthg = test1;\nthg = test2;\nthg = test3;\nthg = test4;\nthg = test5;\nthg = test6;",
       "expected": "Finished successfully\n"
     },
     {

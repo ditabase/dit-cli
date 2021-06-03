@@ -63,14 +63,15 @@ class d_Thing(object):
         else:
             raise d_CriticalError("Unrecognized type for thing assignment")
 
-        # After altering class, set the actual value using subclass set_value
-        self.set_value(new_value)
+        if not type(new_value) == d_Thing:
+            # After altering class, set the actual value using subclass set_value
+            self.set_value(new_value)
 
     @classmethod
     def get_null_thing(cls) -> d_Thing:
         if cls.null_singleton is None:
             cls.null_singleton = d_Thing()
-            cls.null_singleton.grammar = d_Grammar.NULL
+            cls.null_singleton.grammar = d_Grammar.VALUE_NULL
             cls.null_singleton.public_type = d_Grammar.NULL.value
         return cls.null_singleton
 
@@ -194,10 +195,6 @@ class d_List(d_Thing):
             _check_list_type(self)
         elif self.can_be_anything:
             super().set_value(new_value)
-        elif type(new_value) is d_Thing:
-            # listof Thing test1;
-            # listOf Str test2 = test1;
-            pass
         elif isinstance(new_value, d_Thing):  # type: ignore
             raise d_TypeMismatchError(f"Cannot assign {new_value.public_type} to List")
         else:
@@ -296,10 +293,6 @@ def _simple_set_value(self: simple_types, val: d_Thing) -> None:
         # Thing test = true;
         # test = ['dog', 'bird'];
         super(self.__class__, self).set_value(val)  # type: ignore
-    elif type(val) is d_Thing:
-        # Thing test1;
-        # Bool test2 = test1;
-        pass
     else:
         # elif isinstance(val, d_Thing):  # type: ignore
         raise d_TypeMismatchError(
@@ -326,24 +319,45 @@ class d_Container(d_Thing):
             # someInst.someMember = ...
             return _find_attr_in_self(name, self)
 
-    def set_value(self, new_value: d_Thing) -> None:
-        self.is_null = new_value.is_null
-        if isinstance(new_value, d_Container):
-            self.attrs = new_value.attrs
-        if isinstance(new_value, d_Body):
-            self.parent_scope = new_value.parent_scope
-            self.view = new_value.view
-            self.path = new_value.path
-        elif type(new_value) is d_Thing:
-            # Thing test;
-            # Func test2 = test;
-            pass
+    def set_value(self, val: d_Thing) -> None:
+        self.is_null = val.is_null
+
+        if isinstance(self, d_Instance) and isinstance(val, d_Instance):
+            self.attrs = val.attrs
+        elif type(self) == type(val):
+            self.attrs = val.attrs
+            self.parent_scope = val.parent_scope
+            self.view = val.view
+            self.path = val.path
         elif self.can_be_anything:
-            super().set_value(new_value)
-        else:  # isinstance(new_value, d_Thing):
+            super().set_value(val)
+        else:  # isinstance(val, d_Thing):
             raise d_TypeMismatchError(
-                f"Cannot assign {new_value.public_type} to {self.public_type}"  # type: ignore
+                f"Cannot assign {val.public_type} to {self.public_type}"  # type: ignore
             )
+        """
+        elif isinstance(self, d_Dit) and isinstance(val, d_Dit):
+            self.attrs = val.attrs
+            self.parent_scope = val.parent_scope
+            self.view = val.view
+            self.path = val.path
+        elif isinstance(self, d_Class) and isinstance(val, d_Class):
+            self.attrs = val.attrs
+            self.parent_scope = val.parent_scope
+            self.view = val.view
+            self.path = val.path
+        elif isinstance(self, d_Lang) and isinstance(val, d_Lang):
+            self.attrs = val.attrs
+            self.parent_scope = val.parent_scope
+            self.view = val.view
+            self.path = val.path
+        elif isinstance(self, d_Func) and isinstance(val, d_Func):
+            self.attrs = val.attrs
+            self.parent_scope = val.parent_scope
+            self.view = val.view
+            self.path = val.path
+        
+        """
 
     def add_attr(
         self, dec: Declarable, value: Optional[d_Thing] = None, use_ref: bool = False
