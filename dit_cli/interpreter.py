@@ -618,7 +618,8 @@ def _paren_left(inter: InterpretContext) -> Optional[d_Thing]:
                 )
 
         func.add_attr(param, arg_loc.thing, use_ref=True)
-
+    if func.code is None and func.lang is not b_Ditlang:
+        preprocess(func)
     try:
         if func.is_built_in:
             if func.name == "getConfig":
@@ -628,7 +629,7 @@ def _paren_left(inter: InterpretContext) -> Optional[d_Thing]:
         elif func.lang is b_Ditlang:
             interpret(func)
         else:
-            if not hasattr(func, "code"):
+            if func.code is None:
                 raise ReturnController(d_Thing.get_null_thing(), func, func.call_loc)
             job = GuestDaemonJob(JobType.CALL_FUNC, func)
             while True:
@@ -1099,8 +1100,6 @@ def _func(inter: InterpretContext) -> Optional[d_Func]:
     _bar_brace_left(inter, func)
     func.finalize()
     inter.declaring_func = None  # type: ignore
-    if func.lang is not b_Ditlang:
-        preprocess(func)
     return _handle_anon(inter, func, orig_loc)  # type: ignore
 
 

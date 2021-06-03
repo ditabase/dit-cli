@@ -597,8 +597,8 @@ class d_Func(d_Body):
         self.return_: d_Type = None  # type: ignore
         self.return_list: bool = None  # type: ignore
         self.parameters: List[Declarable] = []
-        self.code: bytearray
-        self.guest_func_path: str
+        self.code: bytearray = None  # type: ignore
+        self.guest_func_path: str = None  # type: ignore
 
     def get_mock(self, code: str) -> d_Func:
         mock_func: d_Func = d_Func.from_str("mock_exe_ditlang", code, self.guest_func_path)  # type: ignore
