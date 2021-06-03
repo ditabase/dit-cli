@@ -280,7 +280,9 @@ def _simple_set_value(self: simple_types, val: d_Thing) -> None:
     self.is_null = val.is_null
 
     # Check if items match, then just assign
-    if isinstance(self, d_Str) and isinstance(val, d_Str):
+    if val.grammar == d_Grammar.VALUE_NULL:
+        pass
+    elif isinstance(self, d_Str) and isinstance(val, d_Str):
         self.str_ = val.str_
     elif isinstance(self, d_Bool) and isinstance(val, d_Bool):
         self.bool_ = val.bool_
