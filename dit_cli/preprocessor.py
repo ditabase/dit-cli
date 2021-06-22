@@ -101,12 +101,32 @@ def _recurse_section(proc: PreProcessContext) -> None:
 
 
 def add_section(proc: PreProcessContext, prop: str):
-    prop_expr = proc.func.lang.get_prop(prop)
     proc.func.code += (
         bytes(proc.func.view[proc.prev_loc : proc.char_feed.loc.pos])
-        + prop_expr.encode()
+        + _get_dit_line_ender(proc, prop)
+        + proc.func.lang.get_prop(prop).encode()
+        + _get_lang_line_ender(proc, prop)
     )
     proc.prev_loc = proc.char_feed.loc.pos + 2
+
+
+def _get_dit_line_ender(proc: PreProcessContext, prop: str) -> bytes:
+    # The last statement in a triangle expression is not required to have a semicolon.
+    # This is so that short statements don't look overly cluttered.
+    # A ! will be treated as a correct line ender, whether or not a semi was present.
+    # <|counter|> --> counter!
+    # <|counter;|> --> counter;!
+    # Both are correct.
+    return d_Grammar.POINT.value.encode() if prop == "triangle_expr_right" else b""
+
+
+def _get_lang_line_ender(proc: PreProcessContext, prop: str) -> bytes:
+    # Some languages can have explicit line enders added after
+    if prop == "triangle_expr_right" and proc.depth == 1:
+        if proc.func.lang.get_prop("add_line_enders") == "true":
+            return proc.func.lang.get_prop("line_ender").encode()
+
+    return b""
 
 
 def _in_guest_lang(depth: int) -> bool:

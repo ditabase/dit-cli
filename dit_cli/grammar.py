@@ -24,6 +24,7 @@ class d_Grammar(Enum):
     QUOTE_DOUBLE = '"'
     QUOTE_SINGLE = "'"
     DOT = "."
+    POINT = "!"
     EQUALS = "="
     PLUS = "+"
     MINUS = "-"
@@ -233,6 +234,10 @@ TYPES = [
 ]
 
 DOUBLES = [
+    d_Grammar.TRI_LEFT,
+    d_Grammar.TRI_RIGHT,
+    d_Grammar.CIR_LEFT,
+    d_Grammar.CIR_RIGHT,
     d_Grammar.BAR_BRACE_LEFT,
     d_Grammar.BAR_BRACE_RIGHT,
 ]
@@ -241,6 +246,7 @@ SINGLES = [
     d_Grammar.QUOTE_DOUBLE,
     d_Grammar.QUOTE_SINGLE,
     d_Grammar.DOT,
+    d_Grammar.POINT,
     d_Grammar.EQUALS,
     d_Grammar.PLUS,
     d_Grammar.MINUS,

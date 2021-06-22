@@ -11,42 +11,42 @@
       "long": true,
       "type": "succeed",
       "title": "guest, js print",
-      "dit": "getConfig();\npull JavaScript from 'https://raw.githubusercontent.com/ditabase/dits/master/langs/commonLangs.dit';\nsig JavaScript\nfunc jsPrint() {|\n    <|print('message from JavaScript');|>\n|}\njsPrint();",
+      "dit": "getConfig();\npull JavaScript from 'https://raw.githubusercontent.com/ditabase/dits/master/langs/commonLangs.dit';\nsig JavaScript\nfunc jsPrint() {|\n    <|print('message from JavaScript')|>\n|}\njsPrint();",
       "expected": "message from JavaScript\n"
     },
     {
       "long": true,
       "type": "succeed",
       "title": "guest, py print",
-      "dit": "getConfig();\npull Python from 'https://raw.githubusercontent.com/ditabase/dits/master/langs/commonLangs.dit';\nsig Python func pyPrint() {|\n    <|print('message from Python');|>\n|}\npyPrint();",
+      "dit": "getConfig();\npull Python from 'https://raw.githubusercontent.com/ditabase/dits/master/langs/commonLangs.dit';\nsig Python func pyPrint() {|\n    <|print('message from Python')|>\n|}\npyPrint();",
       "expected": "message from Python\n"
     },
     {
       "long": true,
       "type": "succeed",
       "title": "guest, lua print",
-      "dit": "getConfig();\npull Lua from 'https://raw.githubusercontent.com/ditabase/dits/master/langs/commonLangs.dit';\nsig Lua func luaPrint() {|\n    <|print('message from Lua');|>\n|}\nluaPrint();",
+      "dit": "getConfig();\npull Lua from 'https://raw.githubusercontent.com/ditabase/dits/master/langs/commonLangs.dit';\nsig Lua func luaPrint() {|\n    <|print('message from Lua')|>\n|}\nluaPrint();",
       "expected": "message from Lua"
     },
     {
       "long": true,
       "type": "succeed",
       "title": "guest, js value",
-      "dit": "getConfig();\npull JavaScript from 'https://raw.githubusercontent.com/ditabase/dits/master/langs/commonLangs.dit';\nsig Str JavaScript func jsValue(Str value) {|\n    <| return (|'\"' + 'Value from JavaScript: ' + <|value;|> + '\"'|);|>\n|}\nprint(jsValue('dog'));",
+      "dit": "getConfig();\npull JavaScript from 'https://raw.githubusercontent.com/ditabase/dits/master/langs/commonLangs.dit';\nsig Str JavaScript func jsValue(Str value) {|\n    <| return (|'\"' + 'Value from JavaScript: ' + <|value|> + '\"'|)|>\n|}\nprint(jsValue('dog'));",
       "expected": "Value from JavaScript: dog\n"
     },
     {
       "long": true,
       "type": "succeed",
       "title": "guest, py value",
-      "dit": "getConfig();\npull Python from 'https://raw.githubusercontent.com/ditabase/dits/master/langs/commonLangs.dit';\nsig Str Python func pyValue(Str value) {|\n    <| return (|'\"' + 'Value from Python: ' + <|value;|> + '\"'|);|>\n|}\nprint(pyValue('cat'));",
+      "dit": "getConfig();\npull Python from 'https://raw.githubusercontent.com/ditabase/dits/master/langs/commonLangs.dit';\nsig Str Python func pyValue(Str value) {|\n    <| return (|'\"' + 'Value from Python: ' + <|value|> + '\"'|)|>\n|}\nprint(pyValue('cat'));",
       "expected": "Value from Python: cat\n"
     },
     {
       "long": true,
       "type": "succeed",
       "title": "guest, lua value",
-      "dit": "getConfig();\npull Lua from 'https://raw.githubusercontent.com/ditabase/dits/master/langs/commonLangs.dit';\nsig Str Lua func luaValue(Str value) {|\n    <| return (|'\"' .. 'Value from Lua: ' .. <|value;|> .. '\"'|);|>\n|}\nprint(luaValue('bird'));",
+      "dit": "getConfig();\npull Lua from 'https://raw.githubusercontent.com/ditabase/dits/master/langs/commonLangs.dit';\nsig Str Lua func luaValue(Str value) {|\n    <| return (|'\"' .. 'Value from Lua: ' .. <|value|> .. '\"'|)|>\n|}\nprint(luaValue('bird'));",
       "expected": "Value from Lua: bird\n"
     },
     {
@@ -74,14 +74,14 @@
       "long": true,
       "type": "succeed",
       "title": "guest, multi-add",
-      "dit": "getConfig();\npull Python, JavaScript, Lua from 'https://raw.githubusercontent.com/ditabase/dits/master/langs/commonLangs.dit';\nsig JavaScript Str func jsAdd(Str num1, Str num2) {|\n    <|return (|'\"' + String(parseFloat(<|num1;|>) + parseFloat(<|num2;|>)) + '\"'|)|>;\n|}\nsig Python Str func pyAdd(Str num1, Str num2) {|\n    <|return (|'\"' + str(float(<|num1;|>) + float(<|num2;|>)) + '\"'|)|>;\n|}\nsig Lua Str func luaAdd(Str num1, Str num2) {|\n    <|return (|'\"' .. tostring(tonumber(<|num1;|>) .. tonumber(<|num2;|>)) .. '\"'|)|>;\n|}\nprint(jsAdd('1', '2'));\nprint(pyAdd('5', '9'));\nprint(luaAdd('3.1415', '2390'));",
-      "expected": "3\n14.0\n3.14152390\n"
+      "dit": "getConfig();\npull Python, JavaScript, Lua from 'https://raw.githubusercontent.com/ditabase/dits/master/langs/commonLangs.dit';\nsig JavaScript Num func jsAdd(Num num1, Num num2) {|\n    <|return (|<|num1|> + <|num2|>|)|>\n|}\nsig Python Num func pyAdd(Num num1, Num num2) {|\n    <|return (|<|num1|> + <|num2|>|)|>\n|}\nsig Lua Num func luaAdd(Num num1, Num num2) {|\n    <|return (|<|num1|> + <|num2|>|)|>\n|}\nprint(jsAdd(1, 2));\nprint(pyAdd(5, 9));\nprint(luaAdd(3.1415, 2390));",
+      "expected": "3\n14\n2393.1415"
     },
     {
       "long": true,
       "type": "succeed",
       "title": "guest, hackathon",
-      "dit": "getConfig();\npull JavaScript, Lua, Python from '/home/isaiah/general/dits/langs/commonLangs.dit';\nsig JavaScript Num func add(Num n1, Num n2) {|\n    <|return (|<|n1;|> + <|n2;|>|);|>;\n|}\nsig Python listOf Num func addNums(listOf Num num_pairs) {|\n    nums = <|num_pairs;|>\n    result = []\n    for pair in nums:\n        result.append(<|add((|pair[0]|), (|pair[1]|));|>)\n    <|return (|result|);|>\n|}\nsig Lua listOf Num func run() {|\n    json = require(\"rxi-json-lua\")\n    nums = {[1] = {[1] = 3, [2] = 8}, [2] = {[1] = 9, [2] = 1}, [3] = {[1] = 10, [2] = 2}, [4] = {[1] = 3, [2] = 5}, [5] = {[1] = 1, [2] = 3}}\n    final = json.encode(nums)\n    <|listOf Num sums = addNums((|final|));|>\n    <|return sums;|>\n|}\nlistOf Num finalNums = run();\nprint(finalNums);",
+      "dit": "getConfig();\npull JavaScript, Lua, Python from '/home/isaiah/general/dits/langs/commonLangs.dit';\nsig JavaScript Num func add(Num n1, Num n2) {|\n    <|return (|<|n1|> + <|n2|>|)|>\n|}\nsig Python listOf Num func addNums(listOf Num num_pairs) {|\n    nums = <|num_pairs|>\n    result = []\n    for pair in nums:\n        result.append(<|add((|pair[0]|), (|pair[1]|))|>)\n    <|return (|result|)|>\n|}\nsig Lua listOf Num func run() {|\n    json = require(\"rxi-json-lua\")\n    nums = {[1] = {[1] = 3, [2] = 8}, [2] = {[1] = 9, [2] = 1}, [3] = {[1] = 10, [2] = 2}, [4] = {[1] = 3, [2] = 5}, [5] = {[1] = 1, [2] = 3}}\n    final = json.encode(nums)\n    <|listOf Num sums = addNums((|final|))|>\n    <|return sums|>\n|}\nlistOf Num finalNums = run();\nprint(finalNums);",
       "expected": "[11, 10, 12, 8, 4]\n"
     },
     {

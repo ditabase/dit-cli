@@ -10,6 +10,7 @@ from dit_cli.exceptions import (
     d_CriticalError,
     d_FileError,
     d_MissingPropError,
+    d_SyntaxError,
     d_TypeMismatchError,
 )
 from dit_cli.grammar import d_Grammar, prim_to_value, value_to_prim
@@ -561,8 +562,12 @@ class d_Lang(d_Body):
 
     def get_prop(self, name: str) -> str:
         res = self.find_attr(name)
-        if res is None or not isinstance(res, d_Str):
+        if res is None:
             raise d_MissingPropError(self.name, name)
+        elif not isinstance(res, d_Str):
+            raise d_SyntaxError(
+                f"All properties must be strings. Lang {self.name} with property {name}"
+            )
         return res.str_
 
 

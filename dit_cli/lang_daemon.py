@@ -151,6 +151,7 @@ def _get_client(lang: str) -> d_Client:
     # This may not ever happen in the CLI.
     # It has now occurred twice in JavaScript, but only while debugging
     # and when the job did not finish because of correctly handled dit error
+    # I just got this error to occur outside debug, in the CLI.
 
 
 def _service_client(key: selectors.SelectorKey, mask: int):

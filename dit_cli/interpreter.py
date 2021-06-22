@@ -371,11 +371,13 @@ def _terminal(inter: InterpretContext) -> d_Thing:
     # someListArg,
     # someListArg]
     # someFuncArg)
+    # someTriangleVar! (the exclamation point is inserted by the preprocessor)
     if inter.next_tok.grammar not in [
         d_Grammar.SEMI,
         d_Grammar.COMMA,
         d_Grammar.BRACKET_RIGHT,
         d_Grammar.PAREN_RIGHT,
+        d_Grammar.POINT,
     ]:
         if inter.declaring_func is not None or inter.in_json:
             pass
@@ -395,6 +397,15 @@ def _terminal(inter: InterpretContext) -> d_Thing:
     else:
         inter.terminal_loc = copy.deepcopy(inter.curr_tok.loc)
         return inter.curr_tok.thing
+
+
+def _point(inter: InterpretContext) -> None:
+    # If a semicolon and exclamation point are both present, this will allow
+    # the point to pass safely
+    # <|return 1|> -> return 1!
+    # <|return 1;|> -> return 1;!
+    # Notice the point is by itself, and will be run as a statement.
+    pass
 
 
 def _new_name(inter: InterpretContext) -> None:
@@ -1198,6 +1209,7 @@ STATEMENT_DISPATCH = {
     d_Grammar.QUOTE_DOUBLE:           _illegal_statement,
     d_Grammar.QUOTE_SINGLE:           _illegal_statement,
     d_Grammar.DOT:                    _illegal_statement,
+    d_Grammar.POINT:                  _point,
     d_Grammar.EQUALS:                 _illegal_statement,
     d_Grammar.PLUS:                   _illegal_statement,
     d_Grammar.MINUS:                  _illegal_statement,
@@ -1210,6 +1222,10 @@ STATEMENT_DISPATCH = {
     d_Grammar.BRACKET_RIGHT:          _illegal_statement,
     d_Grammar.BACKSLASH:              _illegal_statement,
     d_Grammar.COMMENT_START:          _illegal_statement,
+    d_Grammar.TRI_LEFT:               _illegal_statement,
+    d_Grammar.TRI_RIGHT:              _illegal_statement,
+    d_Grammar.CIR_LEFT:               _illegal_statement,
+    d_Grammar.CIR_RIGHT:              _illegal_statement,
     d_Grammar.BAR_BRACE_LEFT:         _illegal_statement,
     d_Grammar.BAR_BRACE_RIGHT:        _illegal_statement,
     d_Grammar.BRACE_LEFT:             _illegal_statement,
@@ -1265,22 +1281,27 @@ EXPRESSION_DISPATCH = {
     d_Grammar.QUOTE_DOUBLE:           _str,
     d_Grammar.QUOTE_SINGLE:           _str,
     d_Grammar.DOT:                    _illegal_expression,
+    d_Grammar.POINT:                  _illegal_expression,
     d_Grammar.EQUALS:                 _illegal_expression,
     d_Grammar.PLUS:                   _plus,
     d_Grammar.MINUS:                  _minus,
     d_Grammar.COMMA:                  _illegal_expression,
     d_Grammar.SEMI:                   _illegal_expression,
-    d_Grammar.COLON:                  _illegal_statement,
+    d_Grammar.COLON:                  _illegal_expression,
     d_Grammar.PAREN_LEFT:             _illegal_expression,
     d_Grammar.PAREN_RIGHT:            _illegal_expression,
     d_Grammar.BRACKET_LEFT:           _bracket_left,
     d_Grammar.BRACKET_RIGHT:          _illegal_expression,
     d_Grammar.BACKSLASH:              _illegal_expression,
     d_Grammar.COMMENT_START:          _illegal_expression,
+    d_Grammar.TRI_LEFT:               _illegal_expression,
+    d_Grammar.TRI_RIGHT:              _illegal_expression,
+    d_Grammar.CIR_LEFT:               _illegal_expression,
+    d_Grammar.CIR_RIGHT:              _illegal_expression,
     d_Grammar.BAR_BRACE_LEFT:         _illegal_expression,
     d_Grammar.BAR_BRACE_RIGHT:        _illegal_expression,
     d_Grammar.BRACE_LEFT:             _brace_left,
-    d_Grammar.BRACE_RIGHT:            _illegal_statement,
+    d_Grammar.BRACE_RIGHT:            _illegal_expression,
     d_Grammar.CLASS:                  _class,
     d_Grammar.LANG:                   _lang,
     d_Grammar.SIG:                    _sig,
