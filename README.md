@@ -20,7 +20,7 @@ An example of all dit features can be found in [examples/Tutorial.dit](https://g
 ## Kirby Langs
 Let's go over the most significant new feature in dit, and how it can rule other languages without succumbing to [XKCD 927](https://xkcd.com/927/): KirbyLang Functions. A KirbyLang is a new term for any language that can easily absorb the properties of any other language, just like Kirby, the Nintendo character.
 
-![Kirby sucking up food](https://github.com/ditabase/dit-cli/blob/functions/docs/gifs/kirby.gif)
+![Kirby sucking up food](https://github.com/ditabase/dit-cli/blob/master/docs/gifs/kirby.gif)
 
 Imagine Kirby sucking up other languages and technologies, really really fast.
 
