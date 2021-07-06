@@ -1,0 +1,75 @@
+/*
+    How to store binary data in dits? Most likely, a payload bay at the end of the file,
+    which is basically equivalent to a zip. Beyond that, I just need good syntax for
+    working with the payload bay in the rest of the file. And probably good CLI tools
+    for embedding files using the command line.
+*/
+
+getConfig();
+pull Lua from '/home/isaiah/general/dits/langs/commonLangs.dit';
+
+class Payload {|
+    // maybe all payload classes just inherit from the payload class?
+|}
+
+class JPEG {|
+    Parents += [Payload];
+    header = 'theslls'; // payload objects must have certain properties?
+
+    func Make(payload) {|
+        this.resolution = decode(payload.getBytes[20]); 
+        //maybe they're required to decode the payload bay themselves?
+    |}
+
+    sig Python
+    func show() {|
+        import graphics;
+        graphics.display(<|this|>) // using payload objects with kirbylangs
+    |}
+|}
+
+// store the binary payload inline, like this?
+// actually, since thinking about this, I already don't like it.
+// I think the payload bay should still be encapsulated, at the bottom of the file
+// A Payload construct can discuss and describe payloads in the payload bay seperately
+payload myImage JPEG 495034 {|
+    A8 D5 FF 00
+|}
+
+myMP4 = MP4(payload {||})
+
+// Other than perhaps text payloads? although I'm still not sure how I 
+// want to do this. some way that makes it easy to do syntax highlighting and formatting
+payload latex LaTeX {|
+    \documentclass{article} % Starts an article
+    \usepackage{amsmath} % Imports amsmath
+    \title{\LaTeX} % Title
+
+    \begin{document} % Begins a document
+    \maketitle
+    \LaTeX{} is a document preparation system for
+    the \TeX{} typesetting program. It offers
+    programmable desktop publishing features and
+    extensive facilities for automating most
+    aspects of typesetting and desktop publishing,
+    including numbering and  cross-referencing,
+    tables and figures, page layout,
+    bibliographies, and much more. \LaTeX{} was
+    originally written in 1984 by Leslie Lamport
+    and has become the  dominant method for using
+    \TeX; few people write in plain \TeX{} anymore.
+    The current version is \LaTeXe.
+
+    % This is a comment, not shown in final output.
+    % The following shows typesetting  power of LaTeX:
+    \begin{align}
+        E_0 &= mc^2 \\
+        E &= \frac{mc^2}{\sqrt{1-\frac{v^2}{c^2}}}
+    \end{align} 
+    \end{document}
+|}
+
+sig Lua func pyPrint() {|
+    myImage.show();
+    print(myImage.resolution)
+|}

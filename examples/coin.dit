@@ -1,0 +1,20 @@
+getConfig();
+pull JavaScript from 'https://raw.githubusercontent.com/ditabase/dits/master/langs/commonLangs.dit';
+sig JavaScript func flip() {|  
+    if (Math.floor(Math.random() * 2) == 0) {      
+        console.log('Heads!');  } 
+    else {      
+        console.log('Tails!');
+    }
+|}
+flip();
+flip();
+flip();
+flip();
+flip();
+flip();
+
+/*  Run one:   -> Heads! Heads! Heads! Tails! Heads! Heads!
+    Run two:   -> Tails! Tails! Heads! Tails! Heads! Heads!
+    Run three: -> Heads! Heads! Tails! Heads! Tails! Heads!
+*/

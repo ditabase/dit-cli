@@ -1,9 +1,0 @@
-B {
-    String value;
-}
-
-B A(v) {
-    value = v;
-}
-
-A {}

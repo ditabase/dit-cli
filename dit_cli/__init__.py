@@ -2,7 +2,7 @@
 
 from pathlib import Path
 
-from dit_cli.config import get_config
+import pkg_resources
 
-CONFIG = get_config()
-Path(CONFIG["general"]["tmp_dir"]).mkdir(parents=True, exist_ok=True)
+__version__ = pkg_resources.get_distribution("dit_cli").version
+Path("/tmp/dit/").mkdir(parents=True, exist_ok=True)

@@ -1,7 +1,0 @@
-A {
-    String value;
-}
-
-A a;
-
-a.value = [];

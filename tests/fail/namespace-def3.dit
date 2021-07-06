@@ -1,3 +1,0 @@
-import A from 'tests/dits/space1.dit';
-
-A {}

@@ -1,3 +1,0 @@
-A {
-    print does.not.exist;
-}

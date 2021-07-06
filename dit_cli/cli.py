@@ -1,78 +1,42 @@
 """The CLI for dit"""
-import click
+import argparse
+import sys
 
-from dit_cli.data_classes import EvalContext
-from dit_cli.evaler import serialize, validate_object
-from dit_cli.exceptions import DitError
-from dit_cli.lang_daemon import start_daemon
-from dit_cli.parser import parse
+import dit_cli.settings
+from dit_cli import __version__
+from dit_cli.exceptions import d_DitError
+from dit_cli.interpreter import interpret
+from dit_cli.lang_daemon import kill_all, start_daemon
+from dit_cli.oop import d_Dit
 
 
-@click.group()
 def main():
-    """Utility for dit files"""
+    """Run the dit_cli, via argparse"""
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-v", "--version", action="version", version=__version__)
+    parser.add_argument(
+        "filepath", nargs="?", type=argparse.FileType("r"), default=sys.stdin
+    )
+    args = parser.parse_args()
+    if sys.stdin.isatty() and args.filepath.name == "<stdin>":
+        parser.error("must provide one of filepath or stdin pipe")
+    code = args.filepath.read()
+    start_daemon()
+    run_string(code, args.filepath.name)
 
 
-@click.command()
-@click.argument("filepath", type=click.File("r"))
-def validate(filepath):
-    """Validate the file"""
-    click.echo(validate_dit(filepath.read()))
-
-
-@click.command()
-@click.argument("filepath", type=click.File("r"))
-@click.argument("query_string")
-def query(filepath, query_string):
-    """Return data from @@variable sequence"""
-    query_string = query_string.replace("'", "").replace('"', "")
-    if query_string[:2] == "@@":
-        query_string = query_string[2:]
-    click.echo(validate_dit(filepath.read(), query_string=query_string))
-
-
-def validate_dit(dit, query_string=None):
-    """Validates a string as a dit."""
-
-    # Catch all validation errors.
-    # The entire validation/query is done inside this try.
+def run_string(dit_string: str, path: str):
     try:
-        if not dit:
-            return "file is empty"
-        # Start the language daemon so that it's ready later
-        start_daemon()
+        dit_cli.settings.DIT_FILEPATH = path
+        dit = d_Dit.from_str("Main", dit_string, path)
+        dit.finalize()
+        interpret(dit)
+    except d_DitError as err:
+        final = err.get_cli_trace()
+        print(final)
+    finally:
+        kill_all()
 
-        # Discard dit and get the namespace
-        namespace = parse(dit)
-
-        # TODO: Add higherachy check, to restrict circular inheritance
-        # I might never do this, I'm not sure.
-        objects = False
-        for space in _all_namespaces(namespace):
-            for node in space.nodes:
-                if node.type_ == "object":
-                    objects = True
-                    validate_object(node)
-
-        if not objects:
-            return "dit is valid, no objects to check"
-        elif query_string is None:
-            return "dit is valid, no errors found"
-        else:
-            eva = EvalContext(None, None, namespace)
-            return serialize(eva, query_string)
-    except DitError as error:
-        return error
-
-
-def _all_namespaces(namespace):
-    for parent in namespace.parents:
-        yield parent["namespace"]
-    yield namespace
-
-
-main.add_command(validate)
-main.add_command(query)
 
 if __name__ == "__main__":
     main()

@@ -1,226 +1,95 @@
 *This readme and master branch are for a prototype of dit released in April 2020. All work since then has been in the 'functions' branch. This update is a total overhaul, turning 'assigners' into proper, first class citizen, [KirbyLang](https://www.reddit.com/r/ProgrammingLanguages/comments/km060w/thoughts_on_kirby_languages_a_lang_that_can/) functions. Stay tuned for updates.*
 
 # dit - The universal container file
-![Short Demo](https://raw.githubusercontent.com/isaiahshiner/dit-cli/master/docs/gifs/short.gif)
+Dit is a new container file, intended to be the "One File to Rule Them All". It's a cross between a data storage file and a scripting language, with features to handle every use case for managing data. Dit files can transport data across different formats and platforms, so sharing data is much easier.
 
-Dit is a new way of storing data, designed to be as generic as possible. It uses embedded scripts for validation, custom print functions, and more. Dits can be used to transport data across different formats and platforms, so sharing data is much easier. See more at [the official website.](https://www.ditabase.io/)
-
-## Install
+## Install and Usage
 
     pip install dit-cli
 
-Dit can be installed with [pip for python](https://pip.pypa.io/en/stable/installing/). Note that you will need Python 3.8 and Node.js (for JS scripts).
+Install dit with [pip for python](https://pip.pypa.io/en/stable/installing/). Note that you will need Python 3.8 and an installation of any guest languages you want to use, such as NodeJS, Lua, etc.
 
-## Usage
+    dit -h, -v [filename]
 
-    dit validate [filename]
-Validate a dit file. Returns either an error message, or 'dit is valid, no errors found'.
+    -h     : display help
+    -v     : display version
 
-    dit query [filename] [query_string]
-Validate a dit file, and then return a value based on a query string. A query should resemble a double at `@@` variable sequence found in dit code.
+Dit runs just like any source file: `dit someFile.dit`
 
-    '@@top_level_object' -> serialize the entire object
-    '@@top_level_object.some_value' -> serialize that value, whatever it is
-    '@@print(top_level_object)' -> Use the object's print function, if it has one.
+## Dit Tutorial
+An example of all dit features can be found in [examples/Tutorial.dit](https://github.com/ditabase/dit-cli/blob/master/examples/Tutorial.dit). Note that dit is a work in progress, and many more features are planned. You can see a rough roadmap [here](https://github.com/ditabase/dit-cli/blob/master/docs/FeatureRoadMap.md). If you have questions, please don't hesitate to shoot me a message on [Discord](https://discord.gg/7shhUxy) or email me at isaiah@ditabase.io.
 
-## dit quickstart
+## Kirby Langs
+Let's go over the most significant new feature in dit, and how it can rule other languages without succumbing to [XKCD 927](https://xkcd.com/927/): KirbyLang Functions. A KirbyLang is a new term for any language that can easily absorb the properties of any other language, just like Kirby, the Nintendo character.
 
-To start, you'll need a dit. You can see some examples [here](https://github.com/isaiahshiner/dit-cli/tree/master/examples). There is also a dedicated [repository](https://github.com/isaiahshiner/dits) for useful dit classes.
+![Kirby sucking up food](https://github.com/ditabase/dit-cli/blob/functions/docs/gifs/kirby.gif)
 
-Let's make a simple dit, `name.dit`:
+Imagine Kirby sucking up other languages and technologies, really really fast.
 
-```
-Name {
-    String value;
-}
-```
+A KirbyLang can go about managing the Guest languages however it wants to. Dit is just one implementation, and there may be better ones. However, all KirbyLangs must meet the following requirements.
 
-This is a dit class, with a single contained (instance) variable. String is the only primitive type. Everything is either a string, object, or list.
+- Adding a new language must be "easy". It should require less than 1000 lines of code, and take less than 100 man hours.
+- All Functions must be Kirbyish. That is, they act exactly like the normal functions in the KirbyLang, with no loss in functionality.
 
-Now that we have a class, we can make an object and assign it.
+For dit, a guest language is added by implementing a local socket server in that language. Dit will send a job to the socket server with the filepath of some code it needs the guest to run. The guest has to run it and return the results back to dit.
 
-```
-Name name;
-name.value = 'John';
-```
+Adding Lua took me about 12 hours and 76 lines, even though I was rusty and had never used sockets or JSON in Lua. I am sure compiled languages will be more complex, maybe 2 or 4 fold, but that's okay. You can see how languages are implemented [here](https://github.com/ditabase/dits/blob/master/langs/commonLangs.dit).
 
-Great! Now we can get the stored name by querying the file:
-
-    dit query name.dit '@@name.value'
-    "John"
-
-The double at symbol `@@` is the dit escape sequence, used to reference variables in code and query strings. Variables are always referenced as `.` operations.
-
-We can ask for the entire `name` object, rather than a specific part:
-
-    dit query name.dit '@@name'
-    {"class":"Name","value":"John"}
-
-This will serialize the object. The default serialization language is Javascript, which means JSON, but this is highly configurable. We would rather a `Name` object be represented by it's value. Let's add a print function for that:
+## Shape Expressions
+Dit currently communicates between the Guest langs and Dit using Shape Expressions. These are a little confusing, so let's go over them. Here's a simple "Hello World" function in dit syntax.
 
 ```
-Name {
-    String value;
-    print value;
-}
+func SayHello() {|
+    print("Hello World!");
+|}
 ```
 
-    dit query name.dit '@@print(name)'
-    "John"
-
-`print()` will try to use a print function before serializing. It will always return a useful value, never `null`/`None`.
-
-But we have a problem: There's nothing to stop something like this:
-
-    dit query name.dit '@@print(name)'
-    "4jZw3ef\n"
-
-We need to make sure it's really a name. Let's add a validator!
+ Now, lets see this in JavaScript.
 
 ```
-Name {
-    String value;
-    print value;
-    validator Javascript {{
-        // This is real Javascript (nodejs)
-        let name = @@value;
-        if (!/^[A-Z][A-z]+$/.test(name)) {
-            return `Not a valid name: "${name}"`
-        }
-        return true;
-    }}
-}
+sig JavaScript func SayHello() {|
+    <|print("Hello World!")|>
+|}
 ```
 
-Dit will interpret everything in the double brace `{{}}` section as Javascript code, and use it to build a .js file. `@@value` will be converted into a JS compatible string before running the code. You can see all the language configurations in ~/.dit-languages. This is how new languages will be added and customized.
-
-If a validator returns any value other than 'true' (case insensitive), that value is assumed to be an error message, and will cause a `ValidationError`.
-
-    dit query name.dit '@@print(name)'
-    ValidationError<name>: Not a valid name: "4jZw3ef\n"
-
-Now let's make this a little more interesting. How about a `FullName` class?
+What you see is called a *triangle expression*. It uses `<|` and `|>` as its braces, since they won't conflict with GuestLangs. Everything within the triangle expression is executed as dit code. This allows a GuestLang to use it's flow control. Now let's see a slightly more complicated function, which should be fairly self-explanatory.
 
 ```
-FullName {
-    Name givenName;
-    list Name middleNames;
-    Name familyName;
-    print Python {{
-        # Python and Javascript are supported out of the box
-        full = @@givenName
-        for mid in @@middleNames: # Returns a list of Python dictionaries
-            full += ' ' + mid
-        full += ' ' + @@familyName
-        return full
-    }}
-}
-```
-
-A full name contains several Name objects. `middleNames` is a list, since people can have multiple middle names. Note that a list can be any shape of list: 2D, 3D, jagged, etc, they're all just `list ClassName varName`;
-
-The print script nicely puts everything together. There's not really any need for a validator, since all the `Names` will be validated before ever reaching this class.
-
-For assigning a `FullName` object, we still have the `name` variable from before, but we don't want to manually create a different variable for each object.
-
-```
-Name firstName;
-Name middleName1;
-Name middleName2;
-```
-
-So, we can use an assigner, which will create an anonymous object for us. Assigners are somewhere in between a constructor and a function. They can only have assignment statements currently, but they will probably look more like arbitrary functions in the future, with scripts to validate and transform parameters before assignment. You could have a large object defined by a single JSON, just by peeling it apart and assigning values. Then print it back as a JSON, JSON in a different schema, XML, CSV... ah, but I digress.
-
-```
-// It's okay for assigners to have single letter names.
-Name n(nameParam) {
-    value = nameParam;
-    // We could have more parameters and assignments if needed
-}
-
-FullName myName;
-
-// Assign an existing object
-myName.givenName = name;
-
-// Use the 'n' assigner inside a list
-myName.middleNames = [n('Leopold'), n('Koser')];
-
-// Assign the string directly
-myName.familyName.value = 'Shiner';
-```
-
-Cool! Let's give it a try:
-
-    dit query name.dit '@@print(myName)'
-    "Hi! My name is Isaiah Leopold Koser Shiner"
-    dit query name.dit '@@myName' | python -m json.tool > output.json
-    cat output.json
-    {
-        "class": "FullName",
-        "print": "Hi! My name is Isaiah Leopold Koser Shiner",
-        "givenName": {
-            "class": "Name",
-            "print": "Isaiah",
-            "value": "Isaiah"
-        },
-        "middleNames": [
-            {
-                "class": "Name",
-                "print": "Leopold",
-                "value": "Leopold"
-            },
-            {
-                "class": "Name",
-                "print": "Koser",
-                "value": "Koser"
-            }
-        ],
-        "familyName": {
-            "class": "Name",
-            "print": "Shiner",
-            "value": "Shiner"
-        }
+sig JavaScript Bool func isEven(Num n) {|
+    if (<|n|> % 2 == 0) {      // JS doesn't know what n is, dit will send it to us.
+        <|return true|>        // dit understands all JSON types
     }
-
-
-Finally, let's take a quick look at inheritance.
-
-```
-OtherName {
-    extends Name;
-    validator Python {{
-        if @@value == 'Tom':
-            return "I don't like the name Tom."
-        return True
-    }}
-}
-```
-Child classes have all the fields of their parents, so `value` exists in `OtherName` implicitly. All the `Names` are validated by the parent, then the child. Print functions must be explicitly inherited by type, like `print Name;`.
-
-
-`extends` must be the first thing in a class, if it is to appear at all. To inherit from multiple classes, just separate with commas, like `extends Name, AndSomeOtherObject;`. If there are name conflicts, the first extended class takes precedence, then the second class must explicitly be called out:
-
-```
-C {
-    extends A, B;
-    print name; // gets name from A
-    print B.name; // gets name from B
-    // Remember that this is only if both A and B have a variable called 'name'
-}
+    else {
+        <|return false|>
+    }
+|}
 ```
 
-The real documentation is entirely WIP right now, so if you have questions, please don't hesitate to shoot me a message on [Discord](https://discord.gg/7shhUxy) or email me at isaiah@ditabase.io. You can also make issues on the [issues tracker.](https://github.com/isaiahshiner/dit-cli/issues)
+One more, this time in Python, just to keep you on your toes. This code is going to look very odd at first, but it's not too hard to follow.
 
-## Why? What's the point?
+```
+sig Python Num func lowestValue(listOf Num nums) {|
+    <|return (|min(<|nums|>)|)|>
+|}
+```
+
+Here we have a *circle expression* within a triangle. Circle expressions allow use of the GuestLang again, for sending data back to dit. There is another triangle for getting the `nums` array into the `min` function. Shape expressions can be nested infinitely, if you need to.
+
+Review:
+- Triangle expression: Pull info from dit, execute dit commands.
+- Circle expression: Send info back to dit, arguments for dit commands.
+
+The purpose of this syntax is to be as generic as possible, and allow near normal use of any GuestLang. Converting code to dit is just wrapping the function differently and adding the correct shape expressions. There are no libraries or other things that would require rewriting a function entirely. However, this syntax is still subject to change, so if you have ideas, let me know! Also remember the complete tutorial is [here](https://github.com/ditabase/dit-cli/blob/master/examples/Tutorial.dit), KirbyLangs are the only thing I'm going over for now.
+
+## Why? What's the point of this?
 
 The long answer is written [here.](https://github.com/isaiahshiner/dit-cli/blob/master/docs/whats-the-point.md)
 
 The short answer is that there's nothing out there that does everything.
 
-* You can write your own custom validation code for each project, each situation, but that is a huge violation of [DRY](https://en.wikipedia.org/wiki/Don%27t_repeat_yourself). Not that *you're* repeating yourself, but that everyone else is repeating each other.
+* You can write your own custom validation code for each project, each situation, but that is a huge violation of [DRY](https://en.wikipedia.org/wiki/Don%27t_repeat_yourself). Not that *you* are repeating yourself, but that everyone else is repeating each other.
   
-* Schema.org has a wonderful set of schemas, for almost every situation imaginable, but that's all they are, just schemas. I know where I would start if I were laying out a [Person Schema](https://schema.org/Person), but validation is still my problem. And furthermore, Schema.org is a relatively closed system. I can't just whip up a child of another schema if I want to, the way I can with dit.
+* Schema.org has a wonderful set of schemas, for almost every situation imaginable, but that's all they are, just schemas. I know where I would start if I were laying out a [Person Schema](https://schema.org/Person), but validation is still my problem. And furthermore, Schema.org is a relatively closed system. I can't just whip up another child class, the way I can with dit.
 
 * JSON-Schema, JSON-LD, IPLD, all suffer from the general problem that they choose a specific way to implement things, which makes them wonderful, but not universal. Dit is [not trying to replace](https://xkcd.com/927/) every other way to write down data, only be a bridge between them. Dit relies heavily on JSON because it's so good, but in the edge cases, you can use CSV, or something else custom. Even if one format can cover 60%, the network effect of including the other 40% is incredibly valuable.
 

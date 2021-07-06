@@ -1,0 +1,94 @@
+{
+  "dits": [
+    {
+      "type": "fail",
+      "title": "class, bare class",
+      "dit": "class",
+      "expected": "Line: 1 Col: 5 (tests/fail.dit)\nclass\n    ^\n\nSyntaxError: Expected name or body to follow class"
+    },
+    {
+      "type": "fail",
+      "title": "class, no body",
+      "dit": "class A;",
+      "expected": "Line: 1 Col: 8 (tests/fail.dit)\nclass A;\n       ^\n\nSyntaxError: Expected a class body"
+    },
+    {
+      "type": "fail",
+      "title": "class, bad opening brace",
+      "dit": "class {|}",
+      "expected": "Line: 1 Col: 9 (tests/fail.dit)\nclass {|}\n        ^\n\nEndOfFileError: Unexpected end of file"
+    },
+    {
+      "type": "fail",
+      "title": "class, bad closing brace",
+      "dit": "class {|}",
+      "expected": "Line: 1 Col: 9 (tests/fail.dit)\nclass {|}\n        ^\n\nEndOfFileError: Unexpected end of file"
+    },
+    {
+      "type": "fail",
+      "title": "class, prevent anon classes used as types",
+      "dit": "class {||} new_name = 'dog';",
+      "expected": "Line: 1 Col: 11 (tests/fail.dit)\nclass {||} new_name = 'dog';\n          ^\n\nSyntaxError: Expected ';'"
+    },
+    {
+      "type": "fail",
+      "title": "class, missing new name in monkey patch",
+      "dit": "class A {||}\nStr A = 'dog';",
+      "expected": "Line: 2 Col: 7 (tests/fail.dit)\nStr A = 'dog';\n      ^\n\nSyntaxError: 'A' has already been declared"
+    },
+    {
+      "type": "fail",
+      "title": "class, monkey patch already declared",
+      "dit": "class A {|Str test = 'cat';|}\nStr A.test = 'dog';",
+      "expected": "Line: 2 Col: 12 (tests/fail.dit)\nStr A.test = 'dog';\n           ^\n\nSyntaxError: 'test' has already been declared"
+    },
+    {
+      "type": "fail",
+      "title": "class, full class already declared",
+      "dit": "Str test = 'dog';\nclass test {||}",
+      "expected": "Line: 2 Col: 7 (tests/fail.dit)\nclass test {||}\n      ^\n\nSyntaxError: 'test' has already been declared"
+    },
+    {
+      "type": "fail",
+      "title": "class, monkey patch NOT applied to dit",
+      "dit": "class A {||}\nStr A.patch = 'monkey';\nprint(patch);",
+      "expected": "Line: 3 Col: 7 (tests/fail.dit)\nprint(patch);\n      ^\n\nNameError: Undefined variable 'patch'"
+    },
+    {
+      "type": "succeed",
+      "title": "class, empty named class",
+      "dit": "class A {||}",
+      "expected": "Finished successfully\n"
+    },
+    {
+      "type": "succeed",
+      "title": "class, empty anon class",
+      "dit": "class {||};",
+      "expected": "Finished successfully\n"
+    },
+    {
+      "type": "succeed",
+      "title": "class, var assigned",
+      "dit": "class A {|Str test = 'cat';|}\nA.test = 'dog';",
+      "expected": "Finished successfully\n"
+    },
+    {
+      "type": "succeed",
+      "title": "class, triple inner class",
+      "dit": "class A {|\n    Str testA = 'cat';\n    class B {|\n        Str testB = 'dog';\n        class C {|\n            Str testC = 'bird';\n        |}\n    |}\n|}\n\nStr outA = A.testA;\nStr outB = A.B.testB;\nStr outC = A.B.C.testC;",
+      "expected": "Finished successfully\n"
+    },
+    {
+      "type": "succeed",
+      "title": "class, VALUE_CLASS monkey patched",
+      "dit": "class A {||}\nStr A.patch = 'monkey';\nprint(A.patch);",
+      "expected": "monkey\n"
+    },
+    {
+      "type": "succeed",
+      "title": "class, inner VALUE_CLASS monkey patched",
+      "dit": "class A {|class B  {||}|}\nStr A.B.patch = 'monkey';\nprint(A.B.patch);",
+      "expected": "monkey\n"
+    }
+  ]
+}

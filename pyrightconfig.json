@@ -1,0 +1,10 @@
+{
+  "include": ["dit_cli"],
+
+  "exclude": ["**/__pycache__"],
+
+  "reportOptionalMemberAccess": true,
+  "reportUnnecessaryIsInstance": true,
+
+  "pythonVersion": "3.8"
+}

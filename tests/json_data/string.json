@@ -1,0 +1,58 @@
+{
+  "dits": [
+    {
+      "type": "succeed",
+      "title": "empty string, single quote",
+      "dit": "Str test = '';",
+      "expected": "Finished successfully\n"
+    },
+    {
+      "type": "succeed",
+      "title": "empty string, double quote",
+      "dit": "Str test = \"\";",
+      "expected": "Finished successfully\n"
+    },
+    {
+      "type": "succeed",
+      "title": "string, string assigned to value string",
+      "dit": "Str test = 'cat';\nStr test2 = test;",
+      "expected": "Finished successfully\n"
+    },
+    {
+      "type": "succeed",
+      "title": "escape, single quote",
+      "dit": "print('let\\'s do');",
+      "expected": "let's do\n"
+    },
+    {
+      "type": "succeed",
+      "title": "escape, double quote",
+      "dit": "print(\"I said \\\"Go!\\\"\");",
+      "expected": "I said \"Go!\"\n"
+    },
+    {
+      "type": "succeed",
+      "title": "escape, tab",
+      "dit": "print('val1\\tval2\\tval3');",
+      "expected": "val1\tval2\tval3\n"
+    },
+    {
+      "type": "succeed",
+      "title": "escape, newline",
+      "dit": "print('val1\\nval2\\nval3');",
+      "expected": "val1\nval2\nval3\n"
+    },
+    {
+      "type": "succeed",
+      "title": "print, string var",
+      "dit": "Str s = 'cat';\nprint(s);",
+      "expected": "cat\n"
+    },
+    {
+      "type": "fail",
+      "title": "string, missing closing quote",
+      "dit": "Str test = 'multi-\nline';",
+      "expected": "Line: 1 Col: 18 (tests/fail.dit)\nStr test = 'multi-\n                 ^\n\nSyntaxError: Unexpected EOL while reading string"
+    }
+  ]
+}

@@ -1,0 +1,404 @@
+// A series of dits to demonstrate dit syntax.
+// Inheritance, throw/catch, and some other features have not been implemented.
+// That means this file is only a guide: some features may change, 
+// and this may contain bugs since it has never been run.
+
+// import language definitions, which we can use later.
+// that file also serves as a tutorial for the 'Lang' keyword
+// and implementation of KirbyLangs.
+pull Java, JavaScript, Python from 'https://github.com/ditabase/dits/blob/master/langs/commonLangs.dit';
+
+// other import styles:
+import CommonLangs from '/home/isaiah/general/dits/langs/commonLangs.dit';
+Dit CommonLangs = import '/home/isaiah/general/dits/langs/commonLangs.dit';
+Lang Python = CommonLangs.Python;
+
+// Full list of primitives, identical to JSON.
+Bool someBoolean = true;
+someBoolean = false;
+
+Num otherNum = -10;
+otherNum = 2539.294e-10; // JSON style numbers
+
+Str hello = 'Hello world!';
+Str escapes = "I said \"Hello!\"\nHe said\"Hi,\" and waved.";
+
+Thing untypedVar = true;
+untypedVar = "anything";
+class A {|func Make(Str someParam) {||}|}
+untypedVar = A('banana');
+
+anonymousThing = 'This assumes you want a Thing';
+anonymousThing = 'so you can skip typing checking entirely';
+
+someBoolean = null;
+hello = null;
+Str unassignedString; // starts as `null`
+
+// Lists are not checked for shape (1D, 2D, jagged), just that they are lists.
+listOf Thing items = ['item1', 4, true, null]
+listOf Num grid = [[1, 3],[3, 9, ]];
+listOf Str jagged = [[[], "oak", ['maple', "cedar"]], null];
+
+// A dit class
+// The {| is used as the bracket to prevent collision with other bracket syntax.
+// It does not appear in most popular languages (besides ruby), based on this source:
+// http://rigaux.org/language-study/syntax-across-languages.html
+class Fruit {|
+    // A class attribute.
+    listOf Str knownFruits = ['apple', 'banana', 'pear', 'clementine', 'kiwi'];
+
+    /*  
+        Short function signature. 'func', then name, then params.
+        `Make` is the current reserved name for constructors, subject to change
+    */
+    func Make(Str val) {|
+        // Instance attribute.
+        Str this.myFruit = val;
+        /* 
+            Ditlang has no ifs, loops, or complex concepts of any kind.
+            It can assign values and call functions and nothing else.
+            All the real work is done by other languages.
+
+            This way, I don't have to develop new lang features and you don't
+            have to learn them. ditlang stays lean and simple, and you can use
+            any other language to do whatever you like!
+        */
+    |}
+
+    // Built-in method for telling this instance to do whatever it needs to do.
+    // Since fruit is just a data class, it should validate itself on run.
+    func Run() {|
+        this.validate();
+    |}
+
+    // Language agnostic scripting.
+    // sig defines switches, which can be very long.
+    // "sig LANG RETURN_TYPE STATIC/INSTANCE ...""
+    // switches can come in any order
+    // by default, lang is DitLang, return is void, and function is Instance
+    // sig can be on the same line as func if you prefer.
+    sig Python
+    func validate() {|
+        # A "Triangle Expression"
+        value = <|this.myFruit|>
+        fruits = <|this.knownFruits|>
+
+        # Triangle Expressions are for communicating with dit inside of other languages.
+        # In this case, it will provide the literal value of "myFruit"
+        # to the Python, just like variable assignment (value = 'kiwi')
+        # This is based on JSON. All languages must have a JSON library
+        # to interpret messages from dit.
+
+        # Adding a language only requires a configuration file
+        # to explain syntax and the code for the socket server.
+        # See language definitions here: 
+        # https://github.com/ditabase/dits/blob/master/langs/commonLangs.dit
+
+        if len(fruits) != len(set(fruits)):
+            <|throw "The list of fruits must be unique"|>
+            # Another Triangle Expression, executing a 'throw' command.
+            # Exceptions have not yet been implemented, this is a WIP.
+
+        if value not in fruits:
+            <|throw (|f'"{value}" is not a valid fruit.'|)|>
+            # This Triangle expression is a little different
+            # It contains a Circle Expression where you can use the guest language.
+            # Dit will execute the code and use it as an argument for the command.
+            
+        # Review:
+        # Triangle Expression: Pull info from dit, execute dit commands.
+        # Circle Expression: Send info back to dit, arguments for dit commands.
+        # This syntax is subject to change (if you have ideas, let me know!)
+    |}
+
+    // Language overloading, this could be run in a browser or other non-Python context.
+    sig JavaScript
+    func validate() {|
+        const value = <|this.myFruit|>; // Notice the Shape Expressions look the same,
+        const fruits = <|this.knownFruits|>; // except for the semicolon.
+
+        if (fruits.length !== new Set(fruits).size) {
+            <|throw "The list of fruits must be unique"|>
+            // Triangle Expressions with commands do not need to end in a semicolon
+            // or otherwise conform to the surrounding code. Think of them as
+            // though they represent several lines of normal language code.
+        }
+
+        if (fruits.indexOf(value) === -1) { 
+            <|throw (|`"${value}" is not a valid fruit.`;|)|>
+        }
+    |}
+
+    // Compiled languages are not implemented yet, but will work fine in the future.
+    sig Java
+    func validate() {|
+        // pre will blindly place whatever you want at the top of the file.
+        // This is just an idea, I might work out something better.
+        <|pre (|import java.util.Arrays;|)|>
+
+        String value = <|this.myFruit|>;
+        String[] fruits = <|this.knownFruits|>;
+
+        if (!Arrays.asList(fruits).contains(value)) {
+            <|throw (|"\"" + value + "\" is not a valid fruit.";|)|>
+        }
+
+        List<String> fruits = Arrays.asList(new String[]<|this.myFruits|>);
+        String value = <|this.value|>;
+
+        if(fruits.size() != new HashSet<String>(fruits).size()) {
+            <|throw "The list of fruits must be unique"|>
+        }
+
+        if (!fruits.contains(value)) {
+            <|throw (|"\"" + value + "\" is not a valid fruit.";|)|>
+        }
+    |}
+
+    // If multiple languages are available, there will be options to choose
+    // a specific one, a preference hierarchy, or just the fastest one.
+    // If no implementation is compatible (in a browser, but no JavaScript/Webasm),
+    // then dit can request a server to execute the code remotely (RPC), or fail.
+    
+    // I also might try automatic transpiling, by adding transpiler libraries 
+    // and building unit tests directly into classes. If the unit tests pass, then
+    // you can assume the transpiling was successful.
+    // This might be important for creating fully offline code.
+    // Either every function needs an implementation for the target platform,
+    // or the missing elements need to be auto transpiled.
+
+    // Guest langs currently can only use socket servers to 
+    // execute code, which is somewhat slow. 
+    // In the future, I want to add formal polyglot/Foriegn Function Interface
+    // This would require specially configuring a certain guestLang to have tighter
+    // coupling to the dit HostLang (which is currently Python).
+    // If you can tell python how to natively execute your language, 
+    // you can keep native speed.
+
+    // I also expect shortcuts to be a thing. Essentially, the dit serves
+    // just as the documentation and unit testing for your solution.
+    // Skip the dit technical ecosystem and code a custom solution.
+    // Think, multithreaded C meant for a specific supercomputer,
+    // that performs all the same tasks as dit, but does it much more efficiently.
+
+    sig Str func ToString() {|
+        return this.value;
+    |}
+|}
+
+// Declaration/instantiation.
+Fruit goodFruit = Fruit('kiwi');
+
+// Would throw an error if validated.
+Fruit badFruit = Fruit('Clearly not a fruit');
+
+// Note, we aren't validating these instances yet, 
+// or putting `this.validate()` at the end of Make,
+// because of `Run` at the end of the file.
+
+// Let's see a bit more complexity
+class FruitPref {|
+    func Make(Fruit least, Fruit most) {|
+        // Attributes of another class type. 
+        Fruit this.leastFav = least;
+        Fruit this.mostFav = most;
+        // Note the "no use before define." That's why Fruit is above.
+    |}
+
+    func Run() {|
+        this.validate();
+    |}
+
+    sig JavaScript func validate() {|
+        if (<|this.mostFav.myFruit|> === <|this.leastFav.myFruit|>) {
+            <|throw (|"Your most and least favorite fruits cannot be the same."|)|>
+        }
+    |}
+
+    sig Python Str func str() {|
+        ret = f"I like {<|this.mostFav.value|>}, but hate {<|this.leastFav.value|>}."
+        <|return (|ret|)|>
+    |}
+|}
+
+FruitPref favorites = FruitPref(goodFruit, Fruit('apple'));
+
+// You can imagine lots of small utility classes like this.
+SomeDataLogger {|
+    func Make() {|
+        Num this.opCount = 0;
+        listOf Str opLog = [];
+    |}
+
+    func log(Str message) {|
+        // Same with concatenation syntax, I'm unsure about adding arithmetic to dit.
+        // This could also be a guestlang function, showed next
+        this.opCount++;
+        this.opLog += message;
+    |}
+
+    sig Python func log(Str message) {|
+        # This is why I'm worried about the shape expression syntax.
+        # Its very flexible, but it looks *awful*
+        <|this.opCount = (|<|this.opCount|> + 1|)|>
+        temp = <|this.opLog|>
+        temp.append(<|message|>)
+        <|this.opLog = (|temp|)|>
+        # yea, clearly this needs work. 
+        # I just have no idea how to approach making it better.
+        # All things in time though. Two steps forward, one step back.
+        
+        # EDIT: I have now spent a few more months with the shape expressions and
+        # I think they're going on me. 
+        # Removing semicolons (you used to need them inside expressions)
+        # also helped immensely.
+    |}
+
+    func log() {|
+        this.log("anonymous");
+    |}
+
+    sig Python Str func ToString() {|
+        output = ""
+        for message, index in Enumerate(<|this.opLog|>):
+            output += f'Op #{index:2} - {message}\n';
+        <|return (|output[:-1]|)|> # strip trailing newline.
+
+        # This is a great example of healthy guestLang interaction.
+        # I would be happy if most guestLang jobs were this easy.
+    |}
+|}
+
+// How about inheritance?
+class FoodSatisfaction {|
+    Parents = [FruitPref, SomeDataLogger];
+    // Dit has Dynamic Multiple Inheritance
+    // Inheritance is just a list. The order of the list determines MRO precedence.
+    // Any script can add and remove parents as needed.
+
+    // The intention is that a class can inherit from many unrelated
+    // and non-conflicting classes, and scripts can easily tack on extra classes.
+    // I can imagine a class having 50 parent classes for utility or compliance,
+    // none of which have any name conflicts.
+
+    func Make(Fruit least, Fruit most) {|
+        // Explicitly reference the parent class's constructor method.
+        this.FruitPref.Make(least, most);
+
+        // this.Make(least, most); // This is just recursion
+        // The local constructor hides the constructor of the parent
+        // I will probably add `Super` eventually
+        // TODO: Explain this bit in more detail
+
+        SomeDataLogger.Make();
+        Num this.satisfaction = 0;
+    |}
+
+    // No Run is needed. This class only responds to class functions
+
+    sig Python func eat(Str food) {|
+        least = <|this.leastFav|>
+        most = <|this.mostFav|>
+
+        # Creating another object on the fly and running it.
+        <|Fruit(food).Run()|>
+
+        # This will call validate() for the food string,
+        # and anything else Run() might do in the future.
+        # It's important to validate it since it might come from the command line.
+        # Nothing will be added to this python context, but validate will throw
+        # if anything is wrong.
+
+        food = <|food|>
+
+        if food == least:
+            <|this.satisfaction.sub('3')|>
+            <|this.log("ate least")|>
+        elif food == most:
+            <|this.satisfaction.add('3')|>
+            <|this.log("ate most")|>
+        else:
+            <|this.satisfaction.add('1')|>
+            <|this.log("ate neutral")|>
+    |}
+    sig Str func ToString() {|
+        // Unsure about String concatenation syntax, but this is pretty uncontroversial.
+        return "Satisfaction: " + this.satisfaction + "\nMeals: " + this.ops + "\n"; 
+    |}
+|}
+
+FruitSatisfaction sat = FruitSatisfaction("pear", "banana");
+sat.eat("pear");
+sat.eat("apple");
+sat.eat("banana");
+sat.eat("clementine"); // Note when this occurs, it will be important in a bit.
+
+// Also note, I'm mixing data classes that do nothing but store and validate data
+// and more functional classes that can have state mutations and perform actions.
+// They probably would normally be separated.
+
+// Top level function, demonstrating lack of privacy in dit.
+// Anything can mess with anything else, at any time.
+sig Python Fruit
+func aggressiveFruitSwitch(Str newFruit, Str oldFruit) {|
+    fruits = <|Fruit.knownFruits|>
+    newFruit = <|newFruit|>
+    oldFruit = <|oldFruit|>
+
+    if newFruit == oldFruit:
+        <|throw "The new and old fruits should be different."|>
+
+    # Now let's add newFruit to the list and remove the old one.
+    if not newFruit in fruits:
+        fruits.append(newFruit)
+
+    if oldFruit in fruits:
+        fruits.remove(oldFruit):
+
+    <|Fruit.knownFruits = (|fruits|)|> # Editing class attribute! Yikes!
+    
+    # This could obviously lead to bugs, race conditions, and confusing code,
+    # but that is for the programmer to figure out. If someone really needs
+    # to modify other dits and code, even given the risks and costs, they can.
+
+    # Remember, however, that so far, this is all local to the current dit.
+    # You can also do this:
+    Str Java.SomeImportantValue = 'Very Aggressive Change';
+
+    # This basically let's anyone "fork" an imported dit, directly in dit syntax.
+    # This could also be used for backwards compatibility and modernizing old dits.
+    # A 15 year old dit could be kept working just by running a script ahead of it
+    # that fixes all of the bugs and converting things to modern standards.
+
+    return <|Fruit(newFruit)|>
+|}
+
+aggressiveFruitSwitch("clementine", "orange");
+sat.eat("orange"); // "clementine" was safe above, but now would cause an error.
+
+func Run() {|
+    print("Running all instances, please wait...");
+    RunAll();
+    // RunAll will activate - in parallel - the Run function of all
+    // instances in this dit, or perhaps a list of specific ones.
+    // Its worth doing RunAll instead of Run individually because of the parallelism.
+|}
+
+Run();
+// With this line in the file, the dit will run as soon as it parses to this point.
+// You could instead leave this out, and call Run() from the command line.
+// If you have a huge dit which takes a long time to validate, but you already know
+// it is valid, there's no need to validate it again if you're just running
+// some sort of function or query from the repl.
+
+// The whole point here is that it's entirely up to you how to solve problems with
+// this, just like normal code. But because dit can be repurposed and reused for any
+// problem, with any language, people can write dits intended for sharing.
+
+// A serious data storage dit in the future might start with 50 lines of just import
+// statements, then have 10,000 lines of JSON data. Then another 20,000 lines of 
+// RDF. No source code at all, just using the imported dits to work with the data.
+
+// Of course, dit is not just for data. There's no reason you couldn't code a database,
+// a game, application, compiler, etc. directly within dit.

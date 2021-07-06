@@ -1,0 +1,22 @@
+{
+  "dits": [
+    {
+      "type": "succeed",
+      "title": "priority, 2 basic langs",
+      "dit": "lang JavaScript {|\n    Priority = '3';\n    a = 'a';\n    b = 'b';\n    c = 'c';\n    d = 'd';\n    e = 'e';\n|}\n\nlang JavaScript {|\n    Priority = '5';\n    b = 'B';\n    d = 'D';\n|}\n\nprint(JavaScript.a);\nprint(JavaScript.b);\nprint(JavaScript.c);\nprint(JavaScript.d);\nprint(JavaScript.e);",
+      "expected": "a\nB\nc\nD\ne\n"
+    },
+    {
+      "type": "succeed",
+      "title": "priority, anon lang assignment",
+      "dit": "lang JavaScript {|\n    Priority = '2';\n    value1 = 'kitten';\n|}\n\nLang JavaScript = lang {|\n    Priority = '1';\n    value1 = 'cat';\n    value2 = 'giraffe';\n|};\n\nprint(JavaScript.value1);\nprint(JavaScript.value2);",
+      "expected": "kitten\ngiraffe\n"
+    },
+    {
+      "type": "succeed",
+      "title": "priority, multiples pulls",
+      "dit": "lang SomeLang {|\n    Priority = '10';\n    value3 = 'giraffe';\n|}\n\npull SomeLang from 'tests/lang1.dit';\nprint(SomeLang.value1);\nprint(SomeLang.value2);\nprint(SomeLang.value3);\npull SomeLang from 'tests/lang2.dit';\n\nlang SomeLang {|\n    Priority = '3';\n    value1 = 'kitten';\n    value2 = 'collie';\n    value3 = 'tiger';\n|}\n\nprint(SomeLang.value1);\nprint(SomeLang.value2);\nprint(SomeLang.value3);",
+      "expected": "cat\ndog\ngiraffe\nkitten\npoodle\ngiraffe\n"
+    }
+  ]
+}
