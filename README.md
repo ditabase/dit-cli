@@ -15,7 +15,7 @@ Install dit with [pip for python](https://pip.pypa.io/en/stable/installing/). No
 Dit runs just like any source file: `dit someFile.dit`
 
 ## Dit Tutorial
-An example of all dit features can be found in [examples/Tutorial.dit](https://github.com/ditabase/dit-cli/blob/master/examples/Tutorial.dit). Note that dit is a work in progress, and many more features are planned. You can see a rough roadmap [here](https://github.com/ditabase/dit-cli/blob/master/docs/FeatureRoadMap.md). If you have questions, please don't hesitate to shoot me a message on [Discord](https://discord.gg/7shhUxy) or email me at isaiah@ditabase.io.
+An example of all dit features can be found in [examples/Tutorial.dit](https://github.com/ditabase/dit-cli/blob/master/examples/Tutorial.dit). Note that dit is a work in progress, and many more features are planned. You can see a rough roadmap [here](https://github.com/ditabase/dit-cli/blob/master/docs/FeatureRoadmap.md). If you have questions, please don't hesitate to shoot me a message on [Discord](https://discord.gg/7shhUxy) or email me at isaiah@ditabase.io.
 
 ## Kirby Langs
 Let's go over the most significant new feature in dit, and how it can rule other languages without succumbing to [XKCD 927](https://xkcd.com/927/): KirbyLang Functions. A KirbyLang is a new term for any language that can easily absorb the properties of any other language, just like Kirby, the Nintendo character.
