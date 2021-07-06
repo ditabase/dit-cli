@@ -69,14 +69,14 @@
     {
       "type": "fail",
       "title": "import, remote file 404 error",
-      "dit": "import 'https://raw.githubusercontent.com/ditabase/dits/master/new-dits/DNE.dit';",
-      "expected": "Line: 1 Col: 81 (tests/fail.dit)\nimport 'https://raw.githubusercontent.com/ditabase/dits/master/new-dits/DNE.dit';\n                                                                                ^\n\nFileError: Import failed, HTTP Error 404: Not Found"
+      "dit": "import 'https://raw.githubusercontent.com/ditabase/dits/master/dits/DNE.dit';",
+      "expected": "Line: 1 Col: 77 (tests/fail.dit)\nimport 'https://raw.githubusercontent.com/ditabase/dits/master/dits/DNE.dit';\n                                                                            ^\n\nFileError: Import failed, HTTP Error 404: Not Found"
     },
     {
       "type": "fail",
       "title": "import, failure in remote dit",
-      "dit": "import 'https://raw.githubusercontent.com/ditabase/dits/master/new-dits/Fail.dit';",
-      "expected": "Line: 1 Col: 31 (https://raw.githubusercontent.com/ditabase/dits/master/new-dits/Fail.dit)\nStr test = 'Missing Semicolon'\n                              ^\n\nSyntaxError: Expected ';'\n\tat import (https://raw.githubusercontent.com/ditabase/dits/master/new-dits/Fail.dit):1:1"
+      "dit": "import 'https://raw.githubusercontent.com/ditabase/dits/master/dits/Fail.dit';",
+      "expected": "Line: 1 Col: 31 (https://raw.githubusercontent.com/ditabase/dits/master/dits/Fail.dit)\nStr test = 'Missing Semicolon'\n                              ^\n\nSyntaxError: Expected ';'\n\tat import (https://raw.githubusercontent.com/ditabase/dits/master/dits/Fail.dit):1:1"
     },
     {
       "type": "fail",
@@ -105,13 +105,13 @@
     {
       "type": "succeed",
       "title": "import, github anon",
-      "dit": "Dit dit = import 'https://raw.githubusercontent.com/ditabase/dits/master/new-dits/Test.dit';",
+      "dit": "Dit dit = import 'https://raw.githubusercontent.com/ditabase/dits/master/dits/Test.dit';",
       "expected": "Finished successfully\n"
     },
     {
       "type": "succeed",
       "title": "import, github full",
-      "dit": "import dit from 'https://raw.githubusercontent.com/ditabase/dits/master/new-dits/Test.dit';",
+      "dit": "import dit from 'https://raw.githubusercontent.com/ditabase/dits/master/dits/Test.dit';",
       "expected": "Finished successfully\n"
     },
     {

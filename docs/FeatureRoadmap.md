@@ -1,0 +1,23 @@
+# Feature Roadmap
+This is a general overview of features that may be added to dit. These are generally in chronological order, but this will certainly vary.
+
+## Upcoming Features
+- Inheritance: multiple dynamic inheritance. All later features are OOP based, so this is important.
+- Exceptions: throw and catch exceptions, including both built-in and user generated.
+- Highlighter blocks: `highlight XML {|<someXML><data>in here</data></someXML>|}` These would be code blocks to allow for highlighting and other functionality of any content language, like XML, YAML, TOML, Markdown, LaTeX, etc. The data itself would still just be treated as a string. OOP integration eventually.
+- Compiled Languages: Currently, the KirbyLang system only supports languages which can load code files on the fly. Most compiled languages cannot do this, and would need a slightly different system. The code would still be executed over a socket server.
+
+## Non-Dit Features
+- Syntax Highlighter: VSCode Extension based highlighter, using a TextMate Grammar. I have already started this [here](https://github.com/ditabase/vscode-dit) but it needs a *ton* of work. This would also support sub-highlighting, so that KirbyLangs and Highlighter blocks would get their own language specific highlighting. I have no plans to support anything other than VSCode right now.
+- Excel and G-Sheet integration: Native add-on for each Spreadsheet tool. With a way to convert a spreadsheet into a dit object, this would allow for easy validation and conversion of any data in any spreadsheet. This is exactly how I expect dit to expand and be more useful in general. As dit code is written for spreadsheets, it also becomes useful more generally.
+
+## Later Features
+- Payload bay: binary storage. Store images, music, other files, entire databases, or any other generic binary. Should connect with OOP system to allow for scripting and other obvious features.
+- Pseudo-native code execution: Currently, KirbyLangs use socket servers, which are easy to setup, but slow. This feature would open some kind of system to explicitly connect a GuestLang to the HostLang. The HostLang would be able to execute code in the GuestLang at native speed. Although much more complex, this would eventually allow the most important languages to run with no performance loss. There are many ways to do this, and they all differ by language. Probably all of them will be pursued to some extent, but those details will be worked out later.
+- Native testing: allow for tests to be attached to classes and functions, and run automatically in certain cases.
+- On the Fly transpiling: Dit functions will be written in many languages, but it will be common that some languages are left out, or an obscure function was written in a single, uncommon language. When code is requested to be run, but an implementation is not available (Code is in MATLAB, you don't have MATLAB installed), dit will try to use a transpiler to convert the code to another language you do have installed. Since transpilers can be very buggy and inconsistent, it can use the native tests available to check whether the transpile was successful. Configuration should allow you to never transpile, or never use the tests.
+
+## Reach Features
+- Dedicated dit code sharing website: Similar to GitHub, but sharing is based on individual functions/classes, rather than entire projects. Should support dit only features, like searching the entire repository for functions that return a certain class, filtered by their implementation language. Also a way of having some code be explicitly open source and not owned by anyone. Probably managed similar to sub-reddits. 
+- Dit database protocol: Should allow anyone to reveal a database to the internet (or authorized users) based on dit standards. Could be SQL database, with REST for communication, returning JSON objects that represent dit classes, or any other configuration, so long as it is described in a way that conforms to dit. The data and format can always just be converted.
+- General purpose search engine: Search all dit databases for anything. You can search for any class, filter by any parameter, down to any level of specificity. You know the data is accurate, without mistakes because there are validators all up and down the chain. You can combine secure, private data you have authorization for with public, non secure data. Ideally a high quality graphing tool should be integrated into the search engine, so you can create [OWID](https://ourworldindata.org/) quality graphs automatically. This is kinda the entire point of dit.
