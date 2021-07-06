@@ -801,15 +801,7 @@ def _import(inter: InterpretContext) -> Optional[d_Dit]:
 
     dit = _import_or_pull(inter, orig_loc)
     dit.name = name  # type: ignore
-
-    # handled slightly differently from other bodies.
-    # import always ends with a semicolon, even with a name.
-    anon = _handle_anon(inter, dit, orig_loc)
-    if anon is not None:
-        return anon  # type: ignore
-    else:
-        # Thus, this explicit call to _terminal.
-        _terminal(inter)
+    return _import_or_pull_end(inter, dit, orig_loc)
 
 
 def _pull(inter: InterpretContext) -> None:
@@ -871,6 +863,7 @@ def _pull(inter: InterpretContext) -> None:
             lang.set_value(result)
         else:
             inter.body.attrs[result.name] = result
+    _import_or_pull_end(inter, dit, orig_loc)
 
 
 def _import_or_pull(inter: InterpretContext, orig_loc: CodeLocation) -> d_Dit:
@@ -903,6 +896,19 @@ def _import_or_pull(inter: InterpretContext, orig_loc: CodeLocation) -> d_Dit:
         err.add_trace(dit.path, orig_loc, "import")
         raise
     return dit
+
+
+def _import_or_pull_end(
+    inter: InterpretContext, dit: d_Dit, orig_loc: CodeLocation
+) -> None:
+    # handled slightly differently from other bodies.
+    # import always ends with a semicolon, even with a name.
+    anon = _handle_anon(inter, dit, orig_loc)
+    if anon is not None:
+        return anon  # type: ignore
+    else:
+        # Thus, this explicit call to _terminal.
+        _terminal(inter)
 
 
 def _class(inter: InterpretContext) -> Optional[d_Class]:
