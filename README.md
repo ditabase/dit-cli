@@ -1,5 +1,3 @@
-*This readme and master branch are for a prototype of dit released in April 2020. All work since then has been in the 'functions' branch. This update is a total overhaul, turning 'assigners' into proper, first class citizen, [KirbyLang](https://www.reddit.com/r/ProgrammingLanguages/comments/km060w/thoughts_on_kirby_languages_a_lang_that_can/) functions. Stay tuned for updates.*
-
 # dit - The universal container file
 Dit is a new container file, intended to be the "One File to Rule Them All". It's a cross between a data storage file and a scripting language, with features to handle every use case for managing data. Dit files can transport data across different formats and platforms, so sharing data is much easier.
 
