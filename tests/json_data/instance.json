@@ -29,6 +29,18 @@
       "title": "instance, whole shebang",
       "dit": "class A {|\n    func Make(Str custom) {|\n        Str this.hello = 'hello world!';\n        Str this.otherValue = custom;\n    |}\n\n    func out(){|\n        print(this.hello);\n        print(this.otherValue);\n        print(this.yes());\n    |}\n\n    sig Str func yes(){|\n        return 'Oh yes, it certainly is!';\n    |}\n|}\n\nA a = A(\"And isn't it beautiful?\");\na.out();\n",
       "expected": "hello world!\nAnd isn't it beautiful?\nOh yes, it certainly is!\n"
+    },
+    {
+      "type": "succeed",
+      "title": "instance, used as argument",
+      "dit": "class A {|\n    func Make() {|\n        Str this.value = 'cat';\n    |}\n|}\nfunc test(A a) {|\n    print(a.value);\n|}\ntest(A());",
+      "expected": "cat\n"
+    },
+    {
+      "type": "succeed",
+      "title": "instance, used for return",
+      "dit": "class A {|\n    func Make() {|\n        Str this.value = 'cat';\n    |}\n|}\nsig A func test() {|\n    return A();\n|}\nprint(test().value)",
+      "expected": "cat\n"
     }
   ]
 }

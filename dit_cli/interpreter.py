@@ -510,32 +510,41 @@ def _digit(inter: InterpretContext, neg: bool = False) -> d_Num:
     while True:
         cur = inter.char_feed.current()
         if DIGIT.match(cur):
+            # 3
             if lead_zero and len(num) == 1:
                 raise d_SyntaxError("Leading zeros are not allowed", inter)
             num += cur
             inter.char_feed.pop()
             lead_zero = False
         elif cur == ".":
+            # 3.
             if frac == True:
                 raise d_SyntaxError("Invalid fraction syntax", inter)
             num += cur
             inter.char_feed.pop()
             frac == True
         elif cur == "e" or cur == "E":
+            # 3e ... 10
             if exp == True:
                 raise d_SyntaxError("Invalid exponent syntax", inter)
             num += cur
             inter.char_feed.pop()
             exp == True
         elif cur == "-" or cur == "+":
+            # -3
             num += cur
             inter.char_feed.pop()
         else:
             break
+    return _finalize_num(inter, num)
+
+
+def _finalize_num(inter: InterpretContext, num: str) -> d_Num:
+    # advance to terminal
+    # num = 3.14;
     inter.advance_tokens()
     fin_num = d_Num()
     fin_num.is_null = False
-    fin_num.num = float(num)
     try:
         fin_num.num = int(num)
     except ValueError:
@@ -1080,7 +1089,7 @@ def _func(inter: InterpretContext) -> Optional[d_Func]:
             # someName(numLib.Number
             result: d_Thing = _expression_dispatch(inter)  # type: ignore
             if result.grammar == d_Grammar.VALUE_CLASS:
-                param_type = _token_to_type(inter.next_tok)
+                param_type = _token_to_type(inter.curr_tok)
             else:
                 mes = (
                     "Expected class for parameter type, "
@@ -1090,10 +1099,10 @@ def _func(inter: InterpretContext) -> Optional[d_Func]:
         elif inter.next_tok.grammar in PRIMITIVES:
             # someName(d_String
             param_type = _token_to_type(inter.next_tok)
+            inter.advance_tokens(False)
         else:
             raise d_SyntaxError("Expected parameter type", inter)
 
-        inter.advance_tokens(False)
         if inter.next_tok.grammar != d_Grammar.WORD:
             raise d_SyntaxError("Expected parameter name", inter)
         else:
