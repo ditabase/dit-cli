@@ -1,27 +1,30 @@
 getConfig();
 pull JavaScript, Python, Lua from 'https://raw.githubusercontent.com/ditabase/dits/master/langs/commonLangs.dit';
 
-sig JavaScript func loop1(Num counter){|
+sig JavaScript func jsLoop(Num counter){|
     for(let i=0; i<2; i++) {
-        <|counter = (|<|counter;|> + 1|);|>;
+        <|counter = (|<|counter|> + 1|)|>;
         <|print(counter)|>;
     }
-    <|loop2(counter);|>;
+    <|pyLoop(counter)|>;
+    if(<|counter|> === 8) {
+        <|print('Functions in any language!')|>;
+    }
 |}
 
-sig Python func loop2(Num counter){|
+sig Python func pyLoop(Num counter){|
     for i in range(2):
-        <|counter = (|<|counter;|> + 1|);|>;
-        <|print(counter)|>;
+        <|counter = (|<|counter|> + 1|)|>
+        <|print(counter)|>
     
-    <|loop3(counter);|>;
+    <|luaLoop(counter)|>
 |}
 
-sig Lua func loop3(Num counter){|
+sig Lua func luaLoop(Num counter){|
     for i = 0, 2 do
-        <|counter = (|<|counter;|> + 1|);|>;
-        <|print(counter)|>;
+        <|counter = (|<|counter|> + 1|)|>
+        <|print(counter)|>
     end
 |}
 
-loop1(1)
+jsLoop(1);
