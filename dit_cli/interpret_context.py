@@ -61,6 +61,9 @@ class CharFeed:
     def _dev(self) -> str:
         return bytes(self.view[self.loc.pos : self.loc.pos + 30]).decode()
 
+    def _starts_with(self, value: str) -> bool:
+        return self._dev().lstrip().startswith(value)
+
 
 class InterpretContext:
     def __init__(self, body: d_Body) -> None:
@@ -189,21 +192,12 @@ def _find_digit(inter: InterpretContext) -> Optional[Token]:
         return Token(d_Grammar.DIGIT, lok, cur)
 
 
-FIRST_LETTER = re.compile(r"[A-Za-z_]")
 LETTER = re.compile(r"[A-Za-z0-9_-]")
 
 
 def _find_words(inter: InterpretContext, find_word: bool) -> Optional[Token]:
     token_loc = copy.deepcopy(inter.char_feed.loc)
-    word = ""
-    while LETTER.match(inter.char_feed.current()):
-        word += inter.char_feed.current()
-        if inter.char_feed.eof():
-            inter.eof = True
-            break
-        else:
-            inter.char_feed.pop()
-
+    word = _get_word(inter)
     if word:
         # Keywords first
         for grammar in KEYWORDS:
@@ -224,6 +218,18 @@ def _find_words(inter: InterpretContext, find_word: bool) -> Optional[Token]:
             return Token(d_Grammar.NEW_NAME, token_loc, word=word)
     else:
         return None
+
+
+def _get_word(inter: InterpretContext) -> Optional[str]:
+    word = ""
+    while LETTER.match(inter.char_feed.current()):
+        word += inter.char_feed.current()
+        if inter.char_feed.eof():
+            inter.eof = True
+            break
+        else:
+            inter.char_feed.pop()
+    return word
 
 
 def _handle_eof(inter: InterpretContext) -> Token:
