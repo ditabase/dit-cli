@@ -46,7 +46,7 @@ class d_DitError(Exception):
         """Combines the origin and all stacktraces into a single error
         message which can be printed to the terminal.
         Includes ANSI text coloring."""
-        if self.origin is None:
+        if not self.origin:
             # For some reason, the context was not filled in
             # This is correct for some errors.
             return self.warning
@@ -194,9 +194,9 @@ class d_CriticalError(d_DitError):
 def _set_origin(
     err: d_DitError, inter: InterpretContext = None, loc: Optional[CodeLocation] = None
 ):
-    if inter is None:
+    if not inter:
         return
-    loc = loc if loc is not None else inter.next_tok.loc
+    loc = loc or inter.next_tok.loc
     err.set_origin(inter.body.path, loc, inter.char_feed.get_line(loc))
 
 

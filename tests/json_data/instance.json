@@ -39,7 +39,7 @@
     {
       "type": "succeed",
       "title": "instance, used for return",
-      "dit": "class A {|\n    func Make() {|\n        Str this.value = 'cat';\n    |}\n|}\nsig A func test() {|\n    return A();\n|}\nprint(test().value)",
+      "dit": "class A {|\n    func Make() {|\n        Str this.value = 'cat';\n    |}\n|}\nsig A func test() {|\n    return A();\n|}\nprint(test().value);",
       "expected": "cat\n"
     }
   ]

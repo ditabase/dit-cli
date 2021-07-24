@@ -98,6 +98,8 @@ class d_Grammar(Enum):
 
 MAKE = "Make"
 THIS = "this"
+PRIORITY = "Priority"
+PARENTS = "Parents"
 
 
 def prim_to_value(grammar: d_Grammar) -> d_Grammar:

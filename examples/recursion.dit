@@ -1,0 +1,68 @@
+/* 
+    This demos the KirbyLang's recursion ability. 
+    It can happily handle direct and indirect recusion.
+    You should avoid recursion like this, since it's slow, but it does work.
+    The last example is a better way to do it.
+*/
+
+getConfig();
+
+pull JavaScript, Python, Lua from 'https://raw.githubusercontent.com/ditabase/dits/master/langs/commonLangs.dit';
+
+sig JavaScript Num func jsFibonacci(Num n) {|
+    let n = <|n|>;
+    if (n <= 0) {
+        <|return 0|>;
+    } else if (n < 3) {
+        <|return 1|>;
+    }
+    let p1 = <|jsFibonacci((|n-1|))|>;
+    let p2 = <|pyFibonacci((|n-2|))|>;
+    <|return (|p1 + p2|)|>;
+|}
+
+sig Python Num func pyFibonacci(Num n) {|
+    n = <|n|>
+    if n <= 0:
+        <|return 0|>
+    elif n < 3:
+        <|return 1|>
+    p1 = <|pyFibonacci((|n-1|))|>
+    p2 = <|luaFibonacci((|n-2|))|>
+    <|return (|p1 + p2|)|>
+|}
+
+sig Lua Num func luaFibonacci(Num n) {|
+    local n = <|n|>
+    if n <= 0 then
+        <|return 0|>
+    elseif n < 3 then
+        <|return 1|>
+    end
+    local p1 = <|luaFibonacci((|n-1|))|>
+    local p2 = <|jsFibonacci((|n-2|))|>
+    <|return (|p1 + p2|)|>
+|}
+
+// 0, 1, 2, 3, 4, 5, 6, 7,  8,  9,  10, 11, 12,  13,  14,  15,  16
+// 0, 1, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89, 144, 233, 377, 610, 987
+
+print(jsFibonacci(0));
+print(pyFibonacci(4));
+
+// Here we just create an internal function, and call that.
+// Python never needs to call back to dit, and so runs at native speed.
+// You should only do DitLang recursion if you need it,
+// or as a consequence of long library calls.
+sig Python Num func fastFibonacci(Num n) {|
+    def fib(n):
+        if n <= 0:
+            return 0
+        elif n < 3:
+            return 1
+        else:
+            return fib(n - 1) + fib(n - 2)
+    <|return (|fib(<|n|>)|)|>
+|}
+
+print(fastFibonacci(10));

@@ -1,0 +1,151 @@
+/*
+    This file demonstrates a complex and ridiculous duplicate name situation.
+    Ideally, most attribute names will be unique.
+    When they are not, this is how it will be resolved.
+
+    In many languages, if two different classes assign the attribute `value`,
+    the attribute is considered to be the same value, and the second assignment
+    will overwrite the first.
+
+    In Dit, this is not the case. We want to keep the attributes separate,
+    so that you can inherit from parents without needing to carefully check
+    what attributes are already defined. We do this by hiding attribute assignments
+    behind their parent names. Note that this only applies to attributes and not
+    functions, which always live in the classes where they were declared.
+    Take a look a look at the code and I'll explain more at the end.
+
+    Also see the visual inheritance chart at one of these links:
+    https://cdn.discordapp.com/attachments/662412932058972180/868275986192556062/wBVCU81aAzWGwAAAABJRU5ErkJggg.png
+    https://drive.google.com/file/d/1zaB3pvkSOwIbdBr5l6uR2S3Ek-YIeEN4/view
+
+*/
+
+class Z {|
+    func Make() {|
+        this.value = 'z';
+    |}
+|}
+
+class I {|
+    Parents = [Z];
+    func Make() {|
+        this.value = 'i';
+        this.Z.Make();
+        this.Z.value = 'zi';
+    |}
+|}
+
+class H {|
+    Parents = [Z];
+    func Make() {|
+        this.value = 'h';
+        this.Z.Make();
+        this.Z.value = 'zh';
+    |}
+|}
+
+class G {|
+    Parents = [Z];
+    func Make() {|
+        this.value = 'g';
+        this.Z.Make();
+        this.Z.value = 'zg';
+    |}
+|}
+
+class F {|
+    Parents = [Z];
+    func Make() {|
+        this.value = 'f';
+        this.Z.Make();
+        this.Z.value = 'zf';
+    |}
+|}
+
+class E {|
+    Parents = [H, I];
+    func Make() {|
+        this.value = 'e';
+        this.H.Make();
+        this.I.Make();
+    |}
+|}
+
+class D {|
+    Parents = [F, G];
+    func Make() {|
+        this.value = 'd';
+        this.F.Make();
+        this.G.Make();
+    |}
+|}
+
+class C {|
+    Parents = [E];
+    func Make() {|
+        this.value = 'c';
+        this.E.Make();  
+    |}
+|}
+
+class B {|
+    Parents = [D];
+    func Make() {|
+        this.value = 'b';
+        this.D.Make();
+    |}
+|}
+
+class A {|
+    Parents = [B, C];
+    func Make() {|
+        this.value = 'a';
+        this.B.Make();
+        this.C.Make();
+    |}
+|}
+
+A a = A();
+
+
+print(a.value); // prints 'a'
+
+print(a.B.value); // prints 'b'
+print(a.D.value); // prints 'd'
+print(a.F.value); // prints 'f'
+print(a.G.value); // prints 'g'
+
+print(a.C.value); // prints 'c'
+print(a.E.value); // prints 'e'
+print(a.H.value); // prints 'h'
+print(a.I.value); // prints 'i'
+
+print(a.Z.value); // prints 'zf'
+print(a.G.Z.value); // prints 'zg'
+print(a.H.Z.value); // prints 'zh'
+print(a.I.Z.value); // prints 'zi'
+
+/*
+    As you can see, the single `value` name refers to 13 different attributes.
+    Each attribute is stored behind a prefix that includes each of the names
+    of the classes that were traversed before the assignment occurred.
+    for example, `a.I.Z.value` finds the attribute whose prefix is actually
+    [A, C, E, I, Z]. We choose the closes match to the prefix based on
+    inheritance order. This is why a.Z.value gets 'zf'. Adding 'F' to the search
+    would be redundant, as F is already the highest priority parent.
+
+    Also note that this solves the diamond problem in a clever way: it just keeps
+    each branch of the diamond separated. There are essentially 4 different versions
+    of Z stored in the same attribute.
+
+    This solution is very tedious to code for, since working with parents
+    will often require carefully disambiguating exactly which parent you want.
+    However, in Dit, it is certainly worth it, because it allows you to manage
+    extremely complex and distributee class inheritance graphs.
+
+    Remember, the expectation with dit classes is that each class in a complex
+    graph like this was written by different people, in different organizations,
+    at different times and with different goals. Whoever is writing the A class
+    is going to have some tedious work, but its at least possible to reuse all
+    that distributed code.
+*/

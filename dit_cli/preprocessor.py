@@ -60,7 +60,14 @@ def preprocess(func: d_Func) -> None:
     )
     file_extension = func.lang.get_prop("file_extension")
     func.guest_func_path = (
-        "/tmp/dit/" + func.lang.name + "_func_" + func.name + "." + file_extension
+        "/tmp/dit/"
+        + func.lang.name
+        + "_func_"
+        + func.parent_scope.name
+        + "_"
+        + func.name
+        + "."
+        + file_extension
     )
     open(func.guest_func_path, "w").write(output)
 

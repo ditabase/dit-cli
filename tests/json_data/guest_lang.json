@@ -54,21 +54,21 @@
       "type": "fail",
       "title": "guest, js crash",
       "dit": "getConfig();\npull JavaScript from 'https://raw.githubusercontent.com/ditabase/dits/master/langs/commonLangs.dit';\nsig JavaScript func jsCrash(Str value) {|\n    const a = 1;const a = 1;\n|}\njsCrash('cat');",
-      "expected": "Line: 6 Col: 1 (tests/fail.dit)\njsCrash('cat');\n^\n\nCodeError: Crash from JavaScript in file /tmp/dit/JavaScript_func_jsCrash.js\nError message follows:\n\n/tmp/dit/JavaScript_func_jsCrash.js:2\n    const a = 1;const a = 1;\n                      ^\n\nSyntaxError: Identifier 'a' has already been declared\n    at wrapSafe (internal/modules/cjs/loader.js:1101:16)\n    at Module._compile (internal/modules/cjs/loader.js:1149:27)\n    at Object.Module._extensions..js (internal/modules/cjs/loader.js:1205:10)\n    at Module.load (internal/modules/cjs/loader.js:1034:32)\n    at Function.Module._load (internal/modules/cjs/loader.js:923:14)\n    at Module.require (internal/modules/cjs/loader.js:1074:19)\n    at require (internal/modules/cjs/helpers.js:72:18)\n    at Socket.<anonymous> (/tmp/dit/JavaScript_guest_daemon.js:18:26)\n    at Socket.emit (events.js:315:20)\n    at addChunk (_stream_readable.js:296:12)"
+      "expected": "Line: 6 Col: 1 (tests/fail.dit)\njsCrash('cat');\n^\n\nCodeError: Crash from JavaScript in file /tmp/dit/JavaScript_func_Main_jsCrash.js\nError message follows:\n\n/tmp/dit/JavaScript_func_Main_jsCrash.js:2\n    const a = 1;const a = 1;\n                      ^\n\nSyntaxError: Identifier 'a' has already been declared\n    at wrapSafe (internal/modules/cjs/loader.js:1101:16)\n    at Module._compile (internal/modules/cjs/loader.js:1149:27)\n    at Object.Module._extensions..js (internal/modules/cjs/loader.js:1205:10)\n    at Module.load (internal/modules/cjs/loader.js:1034:32)\n    at Function.Module._load (internal/modules/cjs/loader.js:923:14)\n    at Module.require (internal/modules/cjs/loader.js:1074:19)\n    at require (internal/modules/cjs/helpers.js:72:18)\n    at Socket.<anonymous> (/tmp/dit/JavaScript_guest_daemon.js:18:20)\n    at Socket.emit (events.js:315:20)\n    at addChunk (_stream_readable.js:296:12)"
     },
     {
       "long": true,
       "type": "fail",
       "title": "guest, py crash",
       "dit": "getConfig();\npull Python from 'https://raw.githubusercontent.com/ditabase/dits/master/langs/commonLangs.dit';\nsig Python func pyCrash(Str value) {|\n    test1 = test2\n|}\npyCrash('cat');",
-      "expected": "Line: 6 Col: 1 (tests/fail.dit)\npyCrash('cat');\n^\n\nCodeError: Crash from Python in file /tmp/dit/Python_func_pyCrash.py\nError message follows:\n\nTraceback (most recent call last):\n  File \"/tmp/dit/Python_guest_daemon.py\", line 53, in _exe_ditlang_loop\n    res = script.reserved_name(exe_ditlang)\n  File \"/tmp/dit/Python_func_pyCrash.py\", line 2, in reserved_name\n    test1 = test2\nNameError: name 'test2' is not defined\n"
+      "expected": "Line: 6 Col: 1 (tests/fail.dit)\npyCrash('cat');\n^\n\nCodeError: Crash from Python in file /tmp/dit/Python_func_Main_pyCrash.py\nError message follows:\n\nTraceback (most recent call last):\n  File \"/tmp/dit/Python_guest_daemon.py\", line 21, in run_client\n    _daemon_loop()\n  File \"/tmp/dit/Python_guest_daemon.py\", line 39, in _daemon_loop\n    gen = script.reserved_name()  # type: ignore\n  File \"/tmp/dit/Python_func_Main_pyCrash.py\", line 2, in reserved_name\n    test1 = test2\nNameError: name 'test2' is not defined\n"
     },
     {
       "long": true,
       "type": "fail",
       "title": "guest, lua crash",
       "dit": "getConfig();\npull Lua from 'https://raw.githubusercontent.com/ditabase/dits/master/langs/commonLangs.dit';\nsig Lua func luaCrash(Str value) {|\n    test1;\n|}\nluaCrash('cat');",
-      "expected": "Line: 6 Col: 1 (tests/fail.dit)\nluaCrash('cat');\n^\n\nCodeError: Crash from Lua in file /tmp/dit/Lua_func_luaCrash.lua\nError message follows:\n\nerror loading module 'Lua_func_luaCrash' from file '/tmp/dit/Lua_func_luaCrash.lua':\n\t/tmp/dit/Lua_func_luaCrash.lua:2: '=' expected near ';'"
+      "expected": "Line: 6 Col: 1 (tests/fail.dit)\nluaCrash('cat');\n^\n\nCodeError: Crash from Lua in file /tmp/dit/Lua_func_Main_luaCrash.lua\nError message follows:\n\nerror loading module 'Lua_func_Main_luaCrash' from file '/tmp/dit/Lua_func_Main_luaCrash.lua':\n\t/tmp/dit/Lua_func_Main_luaCrash.lua:2: '=' expected near ';'"
     },
     {
       "long": true,

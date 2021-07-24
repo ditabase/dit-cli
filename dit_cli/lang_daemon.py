@@ -7,12 +7,19 @@ import json
 import selectors
 import socket
 import subprocess
+import time
 from dataclasses import dataclass
 from threading import Thread
 from typing import List, Optional
 
-from dit_cli.exceptions import d_CodeError, d_MissingPropError
-from dit_cli.oop import GuestDaemonJob, JobType, d_Func, d_Lang
+from dit_cli.exceptions import d_CodeError, d_CriticalError, d_MissingPropError
+from dit_cli.oop import (
+    GuestDaemonJob,
+    JobType,
+    ReturnController,
+    d_Func,
+    d_Lang,
+)
 
 """Dev note: much of this is copied from https://realpython.com/python-sockets/
 It's a little crude, and was intended for working with many clients that
@@ -66,12 +73,18 @@ def kill_all():
 
 def run_job(job: GuestDaemonJob) -> GuestDaemonJob:
     global CLIENTS, PORT, JOB
-    if job.type_ == JobType.CALL_FUNC or job.type_ == JobType.DITLANG_CALLBACK:
+    if job.type_ in (
+        JobType.CALL_FUNC,
+        JobType.DITLANG_CALLBACK,
+        JobType.RETURN_KEYWORD,
+    ):
         if job.func.lang not in [client.lang for client in CLIENTS]:
             while True:
                 if PORT is not None:
                     _start_guest(job.func.lang)
                     break
+                else:
+                    time.sleep(0.001)
         JOB = job
         while True:
             if JOB.type_ == JobType.FINISH_FUNC or JOB.type_ == JobType.EXE_DITLANG:
@@ -79,8 +92,10 @@ def run_job(job: GuestDaemonJob) -> GuestDaemonJob:
                 job.active = False
                 JOB = None
                 return job
-            elif JOB.crash is not None:
+            elif JOB.crash:
                 raise JOB.crash
+            else:
+                time.sleep(0.001)
     raise NotImplementedError
 
 
@@ -89,7 +104,7 @@ def _start_guest(lang: d_Lang):
     file_extension = lang.get_prop("file_extension")
     daemon_path = "/tmp/dit/" + lang.name + "_guest_daemon." + file_extension
     daemon_body = lang.find_attr("guest_daemon")
-    if daemon_body is None or not isinstance(daemon_body, d_Func):
+    if not daemon_body or not isinstance(daemon_body, d_Func):
         raise d_MissingPropError(lang.name, "guest_daemon")
     open(daemon_path, "w").write(bytes(daemon_body.view).decode())
     path = lang.get_prop("executable_path")
@@ -121,6 +136,7 @@ def _daemon_loop():
                     _accept_client(key.fileobj)  # type: ignore
                 else:
                     _service_client(key, mask)
+            time.sleep(0.001)
 
 
 def _accept_client(sock: socket.socket):
@@ -134,18 +150,20 @@ def _accept_client(sock: socket.socket):
             raise NotImplementedError
         conn.setblocking(False)
         client = _get_client(recv_data["lang"])
+        if client is None:
+            return
         events = selectors.EVENT_READ | selectors.EVENT_WRITE
         key = SELECTOR.register(conn, events, data=client.lang.name)
         client.addr = addr
         client.key = key
 
 
-def _get_client(lang: str) -> d_Client:
+def _get_client(lang: str) -> Optional[d_Client]:
     global CLIENTS
     for client in CLIENTS:
         if client.lang.name == lang:
             return client
-    raise NotImplementedError
+    return None
     # TODO: I have gotten this error with Lua, I assume it was a race condition.
     # It was only when purposely crashing lua in debug.
     # This may not ever happen in the CLI.
@@ -158,7 +176,9 @@ def _service_client(key: selectors.SelectorKey, mask: int):
     """Send or receive message from a guest lang."""
     global JOB
     conn: socket.socket = key.fileobj  # type: ignore
-    client: d_Client = _get_client(key.data)
+    client = _get_client(key.data)
+    if client is None:
+        return
     if JOB and mask & selectors.EVENT_READ:
         recv_data = conn.recv(1024)
         if recv_data:
@@ -175,14 +195,21 @@ def _service_client(key: selectors.SelectorKey, mask: int):
             elif data["type"] == JobType.FINISH_FUNC.value:
                 JOB.type_ = JobType.FINISH_FUNC
                 JOB.active = False
+            else:
+                raise d_CriticalError("Unrecognized job type")
 
     elif mask & selectors.EVENT_WRITE:
         if (
-            JOB is not None
+            JOB
             and not JOB.active
             and JOB.func.lang == client.lang
             and JOB.type_
-            in [JobType.CALL_FUNC, JobType.DITLANG_CALLBACK, JobType.CLOSE]
+            in (
+                JobType.CALL_FUNC,
+                JobType.DITLANG_CALLBACK,
+                JobType.RETURN_KEYWORD,
+                JobType.CLOSE,
+            )
         ):
             global PORT
             mes = JOB.get_json()

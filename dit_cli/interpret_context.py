@@ -22,7 +22,7 @@ class CharFeed:
         self.loc: CodeLocation = loc
 
     def eof(self, target: Optional[int] = None) -> bool:
-        if target is None:
+        if not target:
             target = self.loc.pos + 1
         return target >= len(self.view)
 
@@ -110,23 +110,23 @@ class InterpretContext:
             return _handle_eof(self)
 
         res = _clear_whitespace_and_comments(self)
-        if res is not None:
+        if res:
             return res
 
         res = _find_double_chars(self)
-        if res is not None:
+        if res:
             return res
 
         res = _find_single_chars(self)
-        if res is not None:
+        if res:
             return res
 
         res = _find_digit(self)
-        if res is not None:
+        if res:
             return res
 
         res = _find_words(self, find_word)
-        if res is not None:
+        if res:
             return res
 
         raise d_SyntaxError(f"Unrecognized token '{self.char_feed.current()}'")
