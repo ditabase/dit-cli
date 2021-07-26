@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import copy
 import json
 from dataclasses import dataclass
 from enum import Enum
@@ -352,14 +353,14 @@ class d_Container(d_Thing):
 
     def find_attr(self, name: str, scope_mode: bool = False) -> Optional[d_Thing]:
         var = d_Variable(name)
-        if isinstance(self, d_Instance):
+        if isinstance(self, d_Inst):
             var = self.compose_prefix(name)
         if scope_mode:
             if not isinstance(self, d_Body):
                 raise d_CriticalError("A Container was given for scope mode")
             # We need to check for this name in upper scopes
             # Str someGlobal = 'cat';
-            # class someClass {{ Str someInternal = someGlobal; }}
+            # class someClass {| Str someInternal = someGlobal; |}
             return _find_attr_in_scope(var, self)
         else:
             # We're dotting, so only 'self' counts, no upper scopes.
@@ -370,7 +371,7 @@ class d_Container(d_Thing):
     def set_value(self, val: d_Thing) -> None:
         self.is_null = val.is_null
 
-        if isinstance(self, d_Instance) and isinstance(val, d_Instance):
+        if isinstance(self, d_Inst) and isinstance(val, d_Inst):
             self.attrs = val.attrs
         elif type(self) == type(val):
             self.attrs = val.attrs  # type: ignore
@@ -397,7 +398,7 @@ class d_Container(d_Thing):
             res = check_value(value, dec)
             if res:
                 raise d_TypeMismatchError(
-                    f"Cannot assign {res.actual} to {res.expected}"
+                    f"Cannot assign {res.actual} to {res.expected}{res.extra}"
                 )
 
             if dec.type_ == d_Grammar.PRIMITIVE_THING:
@@ -413,7 +414,7 @@ class d_Container(d_Thing):
 
         fin_val = ref or value
         fin_var = d_Variable(fin_val.name)
-        if isinstance(self, d_Instance):
+        if isinstance(self, d_Inst):
             fin_var = self.compose_prefix(fin_val.name)
 
         self.attrs[fin_var] = fin_val
@@ -421,7 +422,7 @@ class d_Container(d_Thing):
 
 
 def _check_for_duplicates(thing: d_Container, name: str) -> None:
-    if isinstance(thing, d_Instance):
+    if isinstance(thing, d_Inst):
         var = thing.compose_prefix(name)
     else:
         var = d_Variable(name)
@@ -441,7 +442,7 @@ def _find_attr_in_scope(var: d_Variable, body: d_Body) -> Optional[d_Thing]:
 def _find_attr_in_self(
     var: d_Variable,
     con: d_Container,
-    orig_inst: d_Instance = None,
+    orig_inst: d_Inst = None,
     search_record: d_Variable = None,
 ) -> Optional[d_Thing]:
     """
@@ -462,7 +463,7 @@ def _find_attr_in_self(
             if search_record in orig_inst.attrs:
                 # the prefixes might match, but the variable might not actually exist
                 return orig_inst.attrs[search_record].get_thing()
-    if isinstance(con, d_Instance):
+    if isinstance(con, d_Inst):
         # If we're an instance, we only have one parent, recurse on that parent
         return _find_attr_in_self(var, con.parent, con)
     if isinstance(con, d_Class) and orig_inst:
@@ -509,7 +510,7 @@ def _do_prefixes_match(given_var: d_Variable, search_record: d_Variable) -> bool
 def _search_inherited_parents(
     var: d_Variable,
     class_: d_Class,
-    orig_inst: d_Instance,
+    orig_inst: d_Inst,
     search_record: d_Variable = None,
 ) -> Optional[d_Thing]:
     """
@@ -547,11 +548,11 @@ class PrefixSeperator(Enum):
     CLASS_SEP = 1
 
 
-class d_Instance(d_Container):
+class d_Inst(d_Container):
     def __init__(self) -> None:
         super().__init__()
-        self.public_type = "Instance"
-        self.grammar = d_Grammar.VALUE_INSTANCE
+        self.public_type = "Inst"
+        self.grammar = d_Grammar.VALUE_INST
         self.parent: d_Class = None  # type: ignore
 
         self.cur_prefix: List[prefix_item] = []
@@ -621,7 +622,7 @@ class d_Instance(d_Container):
         return var
 
 
-def _clear_prefix_to_sep(inst: d_Instance, seperators: List[PrefixSeperator]):
+def _clear_prefix_to_sep(inst: d_Inst, seperators: List[PrefixSeperator]):
     while True:
         if not inst.cur_prefix:
             break
@@ -668,7 +669,7 @@ def _type_to_obj(dec: Declarable) -> d_Thing:
     if not dec.type_:
         raise d_CriticalError("A declarable had no type")
     elif isinstance(dec.type_, d_Class):
-        thing = d_Instance()
+        thing = d_Inst()
         thing.parent = dec.type_
     elif dec.listof:
         thing = d_List()
@@ -824,8 +825,13 @@ class d_Func(d_Body):
         self.code: bytearray = None  # type: ignore
         self.guest_func_path: str = None  # type: ignore
 
+    def pub_name(self) -> str:
+        return f"{self.name}()" if self.name else "<anonymous function>()"
+
     def new_call(self) -> None:
-        if not self.attr_stack:
+        if self.is_built_in:
+            return
+        elif not self.attr_stack:
             # We only have the original attrs, we just need to put that on the stack
             self.attr_stack.append(self.attrs)
         else:
@@ -834,7 +840,9 @@ class d_Func(d_Body):
             self.attrs = self.attr_stack[-1]
 
     def end_call(self) -> None:
-        if len(self.attr_stack) == 1:
+        if self.is_built_in:
+            self.attrs.clear()
+        elif len(self.attr_stack) == 1:
             # We don't want to destroy the original attrs, just pop and clear it
             self.attr_stack.pop()
             self.attrs.clear()
@@ -874,12 +882,12 @@ class ReturnController(FlowControlException):
         res = check_value(value, return_declarable)
         if res:
             raise d_TypeMismatchError(
-                f"Expected '{res.expected}' for return, got '{res.actual}'"
+                f"Expected '{res.expected}' for return, got '{res.actual}'{res.extra}"
             )
         if isinstance(value, d_List):
             super().__init__(Token(d_Grammar.VALUE_LIST, orig_loc, thing=value))
         elif isinstance(func.return_, d_Class):
-            super().__init__(Token(d_Grammar.VALUE_INSTANCE, orig_loc, thing=value))
+            super().__init__(Token(d_Grammar.VALUE_INST, orig_loc, thing=value))
         elif isinstance(value, d_Thing):  # type: ignore
             super().__init__(Token(func.return_, func.call_loc, thing=value))
 
@@ -888,6 +896,7 @@ class ReturnController(FlowControlException):
 class CheckResult:
     expected: str
     actual: str
+    extra: str = ""
 
 
 def check_value(thing: d_Thing, dec: Declarable) -> Optional[CheckResult]:
@@ -911,40 +920,43 @@ def check_value(thing: d_Thing, dec: Declarable) -> Optional[CheckResult]:
     elif dec.listof and isinstance(thing, d_List) and not thing.contained_type:
         # a list doesn't know its own type when initially declared, so we'll check
         # listOf Str test = ['cat'];
+        # sig listOf Person func test() {|return [Person("bob")];|}
         thing.contained_type = _get_gram_or_class(prim_to_value, type_=dec.type_)
         _check_list_type(thing)
         return
     elif not isinstance(dec.type_, d_Class):
         if value_to_prim(dec.type_) != _get_gram_or_class(value_to_prim, thing=thing):
             # Not matching grammars
-            # Str test = func (){{}};
+            # Str test = func (){||};
             # listOf Class = ['cat'];
             return _get_check_result(thing, dec)
-    elif not _is_subclass(thing, dec.type_):
+    elif isinstance(thing, d_Inst) and not _is_subclass(thing, dec.type_):
         # not matching class types
-        # sig listOf Bool func test() {{return [Bool('true')];}}
-        # listOf Number numbers = test();
-        # Number count = Bool('true');
-        # Number count = 'cat';
-        return _get_check_result(thing, dec)
+        # sig Person func getPerson() {|return Shape("bob");|}
+        # Person per = Shape();
+        # setPerson(Shape());
+        exp = f"Inst<{dec.type_.name}>"
+        act = f"Inst<{thing.parent.name}>"
+        extra = f"\n'{thing.parent.name}' is not a subclass of '{dec.type_.name}'"
+        return CheckResult(exp, act, extra)
 
 
 def _get_check_result(thing: d_Thing, dec: Declarable) -> CheckResult:
     return CheckResult(expected=_dec_to_str(dec), actual=_thing_to_str(thing))
 
 
-def _is_subclass(thing: d_Thing, target: d_Class) -> bool:
-    if isinstance(thing, d_List):
-        sub = thing.contained_type
-    elif not isinstance(thing, d_Instance):
+def _is_subclass(inst: d_Thing, class_: d_Class) -> bool:
+    if not isinstance(inst, d_Inst):
         return False
-    else:
-        sub = thing.parent
-
-    if sub is target:
+    if inst.parent is class_:
         return True
-    else:
-        raise NotImplementedError
+
+    # I'm not sure there are any cases where cur_prefix would be assigned,
+    # but just in case, I'm saving and reassigning it.
+    stored_prefix = copy.deepcopy(inst.cur_prefix)
+    res = inst.find_attr(class_.name)
+    inst.cur_prefix = stored_prefix
+    return bool(res)
 
 
 def _dec_to_str(dec: Declarable) -> str:
@@ -1069,7 +1081,7 @@ OBJECT_DISPATCH = {
     d_Grammar.PRIMITIVE_NUM: d_Num,
     d_Grammar.PRIMITIVE_JSON: d_JSON,
     d_Grammar.PRIMITIVE_CLASS: d_Class,
-    d_Grammar.PRIMITIVE_INSTANCE: d_Instance,
+    d_Grammar.PRIMITIVE_INST: d_Inst,
     d_Grammar.PRIMITIVE_FUNC: d_Func,
     d_Grammar.PRIMITIVE_DIT: d_Dit,
     d_Grammar.PRIMITIVE_LANG: d_Lang,

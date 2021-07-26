@@ -15,14 +15,14 @@
     {
       "type": "fail",
       "title": "class, bad opening brace",
-      "dit": "class {|}",
-      "expected": "Line: 1 Col: 9 (tests/fail.dit)\nclass {|}\n        ^\n\nEndOfFileError: Unexpected end of file"
+      "dit": "class {\n|}",
+      "expected": "Line: 1 Col: 7 (tests/fail.dit)\nclass {\n      ^\n\nSyntaxError: Expected name or body to follow class"
     },
     {
       "type": "fail",
       "title": "class, bad closing brace",
-      "dit": "class {|}",
-      "expected": "Line: 1 Col: 9 (tests/fail.dit)\nclass {|}\n        ^\n\nEndOfFileError: Unexpected end of file"
+      "dit": "class {|\n}",
+      "expected": "Line: 1 Col: 7 (tests/fail.dit)\nclass {|\n      ^\n\nEndOfFileError: Unexpected end of file"
     },
     {
       "type": "fail",

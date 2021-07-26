@@ -76,7 +76,7 @@ class Fruit {|
     // sig defines switches, which can be very long.
     // "sig LANG RETURN_TYPE STATIC/INSTANCE ...""
     // switches can come in any order
-    // by default, lang is DitLang, return is void, and function is Instance
+    // by default, lang is DitLang, return is void, and function is inst
     // sig can be on the same line as func if you prefer.
     sig Python
     func validate() {|

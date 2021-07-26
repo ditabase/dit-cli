@@ -1,0 +1,16 @@
+{
+  "dits": [
+    {
+      "type": "succeed",
+      "title": "inheritance, B a = A(), parent",
+      "dit": "class B {||}\nclass A {|\n    Parents = [B];\n    func Make() {||}\n|}\nB a = A();",
+      "expected": "Finished successfully\n"
+    },
+    {
+      "type": "succeed",
+      "title": "inheritance, B a = A(), non-parent",
+      "dit": "class B {||}\nclass A {|\n    func Make() {||}\n|}\nB a = A();",
+      "expected": "Line: 5 Col: 5 (tests/fail.dit)\nB a = A();\n    ^\n\nTypeMismatchError: Cannot assign Inst<A> to Inst<B>\n'A' is not a subclass of 'B'"
+    }
+  ]
+}
