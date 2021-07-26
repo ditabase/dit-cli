@@ -56,7 +56,7 @@ class d_Grammar(Enum):
     PULL = "pull"
     USE = "use"
     STATIC = "static"
-    INSTANCE = "instance"
+    INST = "inst"
     THROW = "throw"
     RETURN = "return"
     NULL = "null"
@@ -70,7 +70,7 @@ class d_Grammar(Enum):
     PRIMITIVE_NUM = "Num"
     PRIMITIVE_JSON = "JSON"
     PRIMITIVE_CLASS = "Class"
-    PRIMITIVE_INSTANCE = "Instance"
+    PRIMITIVE_INST = "Inst"
     PRIMITIVE_FUNC = "Func"
     PRIMITIVE_DIT = "Dit"
     PRIMITIVE_LANG = "Lang"
@@ -88,7 +88,7 @@ class d_Grammar(Enum):
     VALUE_LIST = 4
     VALUE_JSON = 13
     VALUE_CLASS = 5
-    VALUE_INSTANCE = 6
+    VALUE_INST = 6
     VALUE_FUNC = 7
     VALUE_DIT = 8
     VALUE_LANG = 10
@@ -113,7 +113,7 @@ PRIM_TO_VALUE_DISPATCH = {
     d_Grammar.PRIMITIVE_NUM: d_Grammar.VALUE_NUM,
     d_Grammar.PRIMITIVE_JSON: d_Grammar.VALUE_JSON,
     d_Grammar.PRIMITIVE_CLASS: d_Grammar.VALUE_CLASS,
-    d_Grammar.PRIMITIVE_INSTANCE: d_Grammar.VALUE_INSTANCE,
+    d_Grammar.PRIMITIVE_INST: d_Grammar.VALUE_INST,
     d_Grammar.PRIMITIVE_FUNC: d_Grammar.VALUE_FUNC,
     d_Grammar.PRIMITIVE_DIT: d_Grammar.VALUE_DIT,
     d_Grammar.PRIMITIVE_LANG: d_Grammar.VALUE_LANG,
@@ -124,7 +124,7 @@ PRIM_TO_VALUE_DISPATCH = {
     d_Grammar.VALUE_LIST: d_Grammar.VALUE_LIST,
     d_Grammar.VALUE_JSON: d_Grammar.VALUE_JSON,
     d_Grammar.VALUE_CLASS: d_Grammar.VALUE_CLASS,
-    d_Grammar.VALUE_INSTANCE: d_Grammar.VALUE_INSTANCE,
+    d_Grammar.VALUE_INST: d_Grammar.VALUE_INST,
     d_Grammar.VALUE_FUNC: d_Grammar.VALUE_FUNC,
     d_Grammar.VALUE_DIT: d_Grammar.VALUE_DIT,
     d_Grammar.VALUE_LANG: d_Grammar.VALUE_LANG,
@@ -145,7 +145,7 @@ VALUE_TO_PRIM_DISPATCH = {
     d_Grammar.VALUE_JSON: d_Grammar.PRIMITIVE_JSON,
     d_Grammar.VALUE_LIST: d_Grammar.LISTOF,
     d_Grammar.VALUE_CLASS: d_Grammar.PRIMITIVE_CLASS,
-    d_Grammar.VALUE_INSTANCE: d_Grammar.PRIMITIVE_INSTANCE,
+    d_Grammar.VALUE_INST: d_Grammar.PRIMITIVE_INST,
     d_Grammar.VALUE_FUNC: d_Grammar.PRIMITIVE_FUNC,
     d_Grammar.VALUE_DIT: d_Grammar.PRIMITIVE_DIT,
     d_Grammar.VALUE_LANG: d_Grammar.PRIMITIVE_LANG,
@@ -155,7 +155,7 @@ VALUE_TO_PRIM_DISPATCH = {
     d_Grammar.PRIMITIVE_NUM: d_Grammar.PRIMITIVE_NUM,
     d_Grammar.PRIMITIVE_JSON: d_Grammar.PRIMITIVE_JSON,
     d_Grammar.PRIMITIVE_CLASS: d_Grammar.PRIMITIVE_CLASS,
-    d_Grammar.PRIMITIVE_INSTANCE: d_Grammar.PRIMITIVE_INSTANCE,
+    d_Grammar.PRIMITIVE_INST: d_Grammar.PRIMITIVE_INST,
     d_Grammar.PRIMITIVE_FUNC: d_Grammar.PRIMITIVE_FUNC,
     d_Grammar.PRIMITIVE_DIT: d_Grammar.PRIMITIVE_DIT,
     d_Grammar.PRIMITIVE_LANG: d_Grammar.PRIMITIVE_LANG,
@@ -165,7 +165,7 @@ VALUE_TO_PRIM_DISPATCH = {
 
 NAMEABLES = [
     d_Grammar.VALUE_CLASS,
-    d_Grammar.VALUE_INSTANCE,
+    d_Grammar.VALUE_INST,
     d_Grammar.VALUE_FUNC,
     d_Grammar.VALUE_DIT,
     d_Grammar.VALUE_LANG,
@@ -195,7 +195,7 @@ PRIMITIVES = [
     d_Grammar.PRIMITIVE_NUM,
     d_Grammar.PRIMITIVE_JSON,
     d_Grammar.PRIMITIVE_CLASS,
-    d_Grammar.PRIMITIVE_INSTANCE,
+    d_Grammar.PRIMITIVE_INST,
     d_Grammar.PRIMITIVE_FUNC,
     d_Grammar.PRIMITIVE_DIT,
     d_Grammar.PRIMITIVE_LANG,
@@ -203,7 +203,7 @@ PRIMITIVES = [
 
 DOTABLES = [
     d_Grammar.VALUE_CLASS,
-    d_Grammar.VALUE_INSTANCE,
+    d_Grammar.VALUE_INST,
     d_Grammar.VALUE_FUNC,
     d_Grammar.VALUE_DIT,
     d_Grammar.VALUE_LANG,
@@ -215,7 +215,7 @@ STRINGABLES = [
     d_Grammar.VALUE_THING,
     d_Grammar.VALUE_STR,
     d_Grammar.VALUE_CLASS,
-    d_Grammar.VALUE_INSTANCE,
+    d_Grammar.VALUE_INST,
     d_Grammar.VALUE_FUNC,
     d_Grammar.VALUE_DIT,
     d_Grammar.VALUE_LANG,
@@ -229,7 +229,7 @@ TYPES = [
     d_Grammar.PRIMITIVE_NUM,
     d_Grammar.PRIMITIVE_JSON,
     d_Grammar.PRIMITIVE_CLASS,
-    d_Grammar.PRIMITIVE_INSTANCE,
+    d_Grammar.PRIMITIVE_INST,
     d_Grammar.PRIMITIVE_FUNC,
     d_Grammar.PRIMITIVE_DIT,
     d_Grammar.PRIMITIVE_LANG,
@@ -277,7 +277,7 @@ KEYWORDS = [
     d_Grammar.PULL,
     d_Grammar.USE,
     d_Grammar.STATIC,
-    d_Grammar.INSTANCE,
+    d_Grammar.INST,
     d_Grammar.THROW,
     d_Grammar.RETURN,
     d_Grammar.NULL,
@@ -289,7 +289,7 @@ KEYWORDS = [
     d_Grammar.PRIMITIVE_NUM,
     d_Grammar.PRIMITIVE_JSON,
     d_Grammar.PRIMITIVE_CLASS,
-    d_Grammar.PRIMITIVE_INSTANCE,
+    d_Grammar.PRIMITIVE_INST,
     d_Grammar.PRIMITIVE_FUNC,
     d_Grammar.PRIMITIVE_DIT,
     d_Grammar.PRIMITIVE_LANG,

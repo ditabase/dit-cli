@@ -5,14 +5,7 @@ from typing import Optional
 from dit_cli.built_in import BUILT_INS
 from dit_cli.exceptions import d_EndOfFileError, d_SyntaxError
 from dit_cli.grammar import DOUBLES, KEYWORDS, SINGLES, d_Grammar
-from dit_cli.oop import (
-    Declarable,
-    Token,
-    d_Body,
-    d_Container,
-    d_Func,
-    d_Instance,
-)
+from dit_cli.oop import Declarable, Token, d_Body, d_Container, d_Func, d_Inst
 from dit_cli.settings import CodeLocation
 
 
@@ -83,7 +76,7 @@ class InterpretContext:
         self.dec: Declarable = Declarable()
         self.equaling: bool = False
         self.dotted_body: d_Container = None  # type: ignore
-        self.dotted_inst: d_Instance = None  # type: ignore
+        self.dotted_inst: d_Inst = None  # type: ignore
         self.comma_depth: int = 0
         self.declaring_func: d_Func = None  # type: ignore
         self.terminal_loc: CodeLocation = None  # type: ignore
