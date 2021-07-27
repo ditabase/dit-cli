@@ -186,16 +186,5 @@ class d_CriticalError(d_DitError):
         super().__init__(_concat("CriticalError", message), loc)
 
 
-"""
-def _set_origin(
-    err: d_DitError, inter: InterpretContext = None, loc: Optional[CodeLocation] = None
-):
-    if not inter:
-        return
-    loc = loc or inter.next_tok.loc
-    err.set_origin(inter.body.path, loc, inter.char_feed.get_line(loc))
-"""
-
-
 def _concat(prepend: str, message: str) -> str:
     return color(prepend + ": ", Color.RED) + message

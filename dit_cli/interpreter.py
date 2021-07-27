@@ -916,9 +916,10 @@ def _pull(inter: InterpretContext) -> None:
         if not result:
             raise d_SyntaxError(f"'{tar}' is not a valid member of this dit")
         result.name = rep or tar
-        if lang:
+        if lang and isinstance(result, d_Lang):
             # explicit call to set_value, to activate Priority comparisons
             lang.set_value(result)
+            result.attrs = lang.attrs  # TODO: proper unassigned lang logic
         else:
             inter.body.attrs[d_Variable(result.name)] = result
     _import_or_pull_end(inter, dit, orig_loc)
@@ -1066,6 +1067,8 @@ def _sig(inter: InterpretContext) -> Optional[d_Func]:
                 raise d_SyntaxError("Unexpected 'listOf' after type")
             func.return_list = True
         elif inter.next_tok.grammar == d_Grammar.NEW_NAME:
+            raise NotImplementedError
+            # TODO: finish unassigned langs feature, issue #14
             # We allow langs to be declared on the fly. This lets library dits
             # specify a language without having to import it, which would be annoying.
             # The lang must be more fully assigned in the dit where it will be called.

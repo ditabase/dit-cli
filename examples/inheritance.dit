@@ -1,7 +1,7 @@
 getConfig();
 
 pull Python, JavaScript from 'https://raw.githubusercontent.com/ditabase/dits/master/langs/commonLangs.dit';
-pull StringCompare from 'https://raw.githubusercontent.com/ditabase/dits/master/dits/StringCompare.dit';
+pull StringCompare, JavaScript from 'https://raw.githubusercontent.com/ditabase/dits/master/dits/StringCompare.dit';
 
 class Person {|
     Str name_regex = '^[^~`!@#$%^&*()_\-=+{}[\];:"<>?/\\|\n\t]+$';
@@ -72,14 +72,6 @@ class Student {|
     |}
 |}
 
-Student s = Student('John Doe', 19, 'MAY_214', true);
-s.validate();
-print(s.ToString());
-
-Student s2 = Student('Sally Mack', 23, 'OAK_101G', false);
-s2.validate();
-print(s2.ToString());
-
 class Teacher {|
     Parents = [Person];
     listOf Str knownSubjects = ['english', 'math', 'art', 'science', 'history',
@@ -97,9 +89,9 @@ class Teacher {|
             this.Person.validate();
             this.room_num.validate();
         |>
-        for sub in <|this.knownSubjects|>:
-            if <|StringCompare(this.room_num, (|sub|))|>:
-                <|return|>
+        for sub in <|Teacher.knownSubjects|>:
+            if <|StringCompare(this.subject, '(|sub|)')|>:
+                <|return null|>
         raise NotImplementedError('invalid subject')
     |}
 
@@ -112,13 +104,52 @@ class Teacher {|
     |}
 |}
 
-Teacher t = Teacher('Jerry Gardner', 35, 'ERT_203b', 'Math');
+class TeachersAssistant {|
+    Parents = [Student, Teacher];
+    func Make(
+        Str name,
+        Num age,
+        Str dorm_num,
+        Str office_num,
+        Str subject,
+        Bool meal_plan
+    ) {|
+        // Notice that handling the `room_num` conflict is extremely easy.
+        this.Student.Make(name, age, dorm_num, meal_plan);
+        this.Teacher.Make(name, age, office_num, subject);
+    |}
+
+    func validate() {|
+        this.Student.validate();
+        this.Teacher.validate();
+    |}
+
+    sig Python Str func ToString() {|
+        base = <|this.Student.ToString()|> 
+        office_num = <|this.Teacher.room_num.value|>
+        subject = <|this.Teacher.subject|>
+        ta_part = (
+            'They are also a Teachers Assistant, '
+            f'teaching {subject} in room number {office_num}.'
+        )
+        out = base + ' ' + ta_part
+        <|return '(|out|)'|>
+    |}
+|}
+
+Student s = Student('John Doe', 19, 'MAY_214', true);
+s.validate();
+print(s.ToString());
+
+Student s2 = Student('Sally Mack', 23, 'OAK_101G', false);
+s2.validate();
+print(s2.ToString());
+
+Teacher t = Teacher('Jerry Gardner', 35, 'ERT_203B', 'Math');
 t.validate();
 print(t.ToString());
 
-/*
-class TeachersAssistant {|
-    Parents = [Student, Teacher];
-    
-|}
-*/
+TeachersAssistant ta = 
+TeachersAssistant('Jill Miller', 26, 'MAY_503', 'MAY_105', 'Computer Science', false);
+ta.validate();
+print(ta.ToString());

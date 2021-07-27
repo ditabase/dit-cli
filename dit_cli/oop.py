@@ -439,20 +439,41 @@ def _find_attr_in_self(
     This is is indirectly recursive with `_search_inherited_parents`, so this
     will be called several times to search through different containers.
     """
-    if var in con.attrs:
-        # Always check within our own attrs first
-        return con.attrs[var].get_thing()
-    if search_record and orig_inst:
-        if _do_prefixes_match(var, search_record):
-            if search_record in orig_inst.attrs:
-                # the prefixes might match, but the variable might not actually exist
-                return orig_inst.attrs[search_record].get_thing()
+    res = _search_current_attrs(var, con, orig_inst, search_record)
+    if res:
+        return res
     if isinstance(con, d_Inst):
         # If we're an instance, we only have one parent, recurse on that parent
         return _find_attr_in_self(var, con.parent, con)
     if isinstance(con, d_Class) and orig_inst:
+        # If we're a class, we might have parents, so we need to recurse
         return _search_inherited_parents(var, con, orig_inst, search_record)
     return None
+
+
+def _search_current_attrs(
+    var: d_Variable,
+    con: d_Container,
+    orig_inst: d_Inst = None,
+    search_record: d_Variable = None,
+) -> Optional[d_Thing]:
+    if var in con.attrs:
+        # Maybe its an exact match!
+        return con.attrs[var].get_thing()
+
+    if not search_record:
+        # if we're not searching through inherited parents, we can just return
+        return None
+
+    for target in (con, orig_inst):
+        # The var might be behind a prefix
+        # We need to check both the inheriting class and the original instance
+        if not target:
+            continue
+        if _do_prefixes_match(var, search_record):
+            if search_record in target.attrs:
+                # the prefixes might match, but the variable might not actually exist
+                return target.attrs[search_record].get_thing()
 
 
 def _do_prefixes_match(given_var: d_Variable, search_record: d_Variable) -> bool:
