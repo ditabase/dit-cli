@@ -1,18 +1,20 @@
 getConfig();
 pull JavaScript from 'https://raw.githubusercontent.com/ditabase/dits/master/langs/commonLangs.dit';
-sig JavaScript func flip() {|  
+sig JavaScript Str func flip() {|  
     if (Math.floor(Math.random() * 2) == 0) {      
-        console.log('Heads!');  } 
+        <|return 'Heads!'|>
+    } 
     else {      
-        console.log('Tails!');
+        <|return 'Tails!'|>
     }
 |}
-flip();
-flip();
-flip();
-flip();
-flip();
-flip();
+
+sig JavaScript func loop(Num times, Func action) {|
+    for (var i = 0; i < <|times|>; i++) {
+        <|print(action())|>
+    }
+|}
+loop(5, flip);
 
 /*  Run one:   -> Heads! Heads! Heads! Tails! Heads! Heads!
     Run two:   -> Tails! Tails! Heads! Tails! Heads! Heads!

@@ -44,8 +44,20 @@
     },
     {
       "type": "succeed",
+      "title": "listOf class",
+      "dit": "class A {|\n    func Make() {||}\n|}\nlistOf A aList = [A()];",
+      "expected": "Finished successfully\n"
+    },
+    {
+      "type": "succeed",
       "title": "print, list of everything",
       "dit": "print([null, true, 1, 'cat']);",
+      "expected": "[null, true, 1, \"cat\"]\n"
+    },
+    {
+      "type": "succeed",
+      "title": "print, list var",
+      "dit": "listOf Thing l = [null, true, 1, 'cat'];\nprint(l);",
       "expected": "[null, true, 1, \"cat\"]\n"
     },
     {

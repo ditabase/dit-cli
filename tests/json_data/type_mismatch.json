@@ -4,25 +4,25 @@
       "type": "fail",
       "title": "TypeMismatch, [] value assigned to String",
       "dit": "Str test = ['cat'];",
-      "expected": "Line: 1 Col: 19 (tests/fail.dit)\nStr test = ['cat'];\n                  ^\n\nTypeMismatchError: Cannot assign listOf ? to Str"
+      "expected": "Line: 1 Col: 10 (tests/fail.dit)\nStr test = ['cat'];\n         ^\n\nTypeMismatchError: Cannot assign listOf ? to Str"
     },
     {
       "type": "fail",
       "title": "TypeMismatch, '' value assigned to List",
       "dit": "listOf Str test = 'cat';",
-      "expected": "Line: 1 Col: 24 (tests/fail.dit)\nlistOf Str test = 'cat';\n                       ^\n\nTypeMismatchError: Cannot assign Str to listOf Str"
+      "expected": "Line: 1 Col: 17 (tests/fail.dit)\nlistOf Str test = 'cat';\n                ^\n\nTypeMismatchError: Cannot assign Str to listOf Str"
     },
     {
       "type": "fail",
       "title": "TypeMismatch, Str var assigned to List",
       "dit": "Str test = 'cat';\nlistOf Str test2 = test;",
-      "expected": "Line: 2 Col: 24 (tests/fail.dit)\nlistOf Str test2 = test;\n                       ^\n\nTypeMismatchError: Cannot assign Str to listOf Str"
+      "expected": "Line: 2 Col: 18 (tests/fail.dit)\nlistOf Str test2 = test;\n                 ^\n\nTypeMismatchError: Cannot assign Str to listOf Str"
     },
     {
       "type": "fail",
       "title": "TypeMismatch, List var assigned to String",
       "dit": "listOf Str test = ['cat'];\nStr test2 = test;",
-      "expected": "Line: 2 Col: 17 (tests/fail.dit)\nStr test2 = test;\n                ^\n\nTypeMismatchError: Cannot assign listOf Str to Str"
+      "expected": "Line: 2 Col: 11 (tests/fail.dit)\nStr test2 = test;\n          ^\n\nTypeMismatchError: Cannot assign listOf Str to Str"
     },
     {
       "type": "fail",
@@ -52,13 +52,13 @@
       "type": "fail",
       "title": "TypeMismatch, listOf Str had class",
       "dit": "listOf Str value = [class {||}];",
-      "expected": "Line: 1 Col: 32 (tests/fail.dit)\nlistOf Str value = [class {||}];\n                               ^\n\nTypeMismatchError: List of type 'Str' contained 'Class'"
+      "expected": "Line: 1 Col: 18 (tests/fail.dit)\nlistOf Str value = [class {||}];\n                 ^\n\nTypeMismatchError: List of type 'Str' contained 'Class'"
     },
     {
       "type": "fail",
       "title": "TypeMismatch, listOf Class had string",
       "dit": "listOf Class value = ['dog'];",
-      "expected": "Line: 1 Col: 29 (tests/fail.dit)\nlistOf Class value = ['dog'];\n                            ^\n\nTypeMismatchError: List of type 'Class' contained 'Str'"
+      "expected": "Line: 1 Col: 20 (tests/fail.dit)\nlistOf Class value = ['dog'];\n                   ^\n\nTypeMismatchError: List of type 'Class' contained 'Str'"
     },
     {
       "type": "fail",

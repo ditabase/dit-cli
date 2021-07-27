@@ -3,10 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, List, Optional
-
-if TYPE_CHECKING:
-    from dit_cli.interpret_context import InterpretContext
+from typing import List, Optional
 
 from dit_cli.color import Color, color
 from dit_cli.settings import CodeLocation
@@ -26,27 +23,28 @@ class Trace:
 class d_DitError(Exception):
     """Base Class for all dit exceptions"""
 
-    def __init__(self, message: str):
+    def __init__(self, message: str, loc: CodeLocation = None):
         self.warning = message
+        self.loc: CodeLocation = loc  # type: ignore
         super().__init__(self.warning)
         self.origin: Trace = None  # type: ignore
         self.traces: List[Trace] = []
 
-    def set_origin(self, filepath: str, loc: CodeLocation, code: str):
+    def set_origin(self, filepath: str, code: str):
         """Sets the location in code of this error.
         The location will be highlighted in the terminal by a carrot ^"""
-        self.origin = Trace(filepath, loc, code=code)
+        self.origin = Trace(filepath, self.loc, code=code)
 
-    def add_trace(self, filepath: str, loc: CodeLocation, caller: str):
+    def add_trace(self, filepath: str, trace_loc: CodeLocation, caller: str):
         """Adds a stack trace point for this error.
         The caller will named as 'at caller' in the trace"""
-        self.traces.append(Trace(filepath, loc, caller=caller))
+        self.traces.append(Trace(filepath, trace_loc, caller=caller))
 
     def get_cli_trace(self) -> str:
         """Combines the origin and all stacktraces into a single error
         message which can be printed to the terminal.
         Includes ANSI text coloring."""
-        if self.origin is None:
+        if not self.origin:
             # For some reason, the context was not filled in
             # This is correct for some errors.
             return self.warning
@@ -99,87 +97,84 @@ class d_DitError(Exception):
 
 
 class d_CodeError(d_DitError):
-    """Raised when a code block has any kind of language specifc error"""
+    """Raised when a code block has any kind of language specific error"""
 
-    def __init__(self, error: str, lang: str, file: str):
+    def __init__(self, error: str, lang: str, file: str, loc: CodeLocation = None):
         message = (
             f"Crash from {lang} in file {file}\n" f"Error message follows:\n\n{error}"
         )
-        super().__init__(_concat("CodeError", message))
+        super().__init__(_concat("CodeError", message), loc)
 
 
 class d_SyntaxError(d_DitError):
     """Raised when there anything goes wrong during paring the file"""
 
     def __init__(
-        self,
-        message: str,
-        inter: InterpretContext = None,
-        loc: Optional[CodeLocation] = None,
+        self, message: str, loc: Optional[CodeLocation] = None,
     ):
-        super().__init__(_concat("SyntaxError", message))
-        _set_origin(self, inter, loc)
+        super().__init__(_concat("SyntaxError", message), loc)
+        # _set_origin(self, loc)
 
 
 class d_NameError(d_DitError):
     """Raised when a name is accessed but does not exist"""
 
     def __init__(
-        self,
-        message: str,
-        inter: InterpretContext = None,
-        loc: Optional[CodeLocation] = None,
+        self, message: str, loc: Optional[CodeLocation] = None,
     ):
-        super().__init__(_concat("NameError", message))
-        _set_origin(self, inter, loc)
+        super().__init__(_concat("NameError", message), loc)
+        # _set_origin(self, loc)
 
 
 class d_AttributeError(d_DitError):
     """Raised when a name is accessed but does not exist"""
 
-    def __init__(self, message: str):
-        super().__init__(_concat("AttributeError", message))
+    def __init__(self, message: str, loc: CodeLocation = None):
+        super().__init__(_concat("AttributeError", message), loc)
 
 
 class d_TypeMismatchError(d_DitError):
     """Raised when something is assigned to a variable of an incompatible type"""
 
-    def __init__(self, message: str):
-        super().__init__(_concat("TypeMismatchError", message))
+    def __init__(self, message: str, loc: CodeLocation = None):
+        super().__init__(_concat("TypeMismatchError", message), loc)
 
 
 class d_FileError(d_DitError):
     """Raised when anything goes wrong with importing a file or URL,
     but NOT from the CLI. That file is checked directly in cli.py"""
 
-    def __init__(self, message: str):
-        super().__init__(_concat("FileError", message))
+    def __init__(self, message: str, loc: CodeLocation = None):
+        super().__init__(_concat("FileError", message), loc)
 
 
 class d_EndOfFileError(d_DitError):
     """Raised when the end of the file is reached unexpectedly"""
 
-    def __init__(self) -> None:
-        super().__init__(_concat("EndOfFileError", "Unexpected end of file"))
+    def __init__(self, loc: CodeLocation = None) -> None:
+        super().__init__(_concat("EndOfFileError", "Unexpected end of file"), loc)
 
 
 class d_EndOfClangError(d_DitError):
     """Raised when the end of a class is reached unexpectedly"""
 
-    def __init__(self, clang_name) -> None:
-        super().__init__(_concat("EndOfFileError", f"Unexpected end of {clang_name}"))
+    def __init__(self, clang_name, loc: CodeLocation = None) -> None:
+        super().__init__(
+            _concat("EndOfFileError", f"Unexpected end of {clang_name}"), loc
+        )
 
 
 class d_MissingPropError(d_DitError):
     """Raised when a language was missing a required property to be used
     as a a guest language"""
 
-    def __init__(self, lang: str, prop: str):
+    def __init__(self, lang: str, prop: str, loc: CodeLocation = None):
         super().__init__(
             _concat(
                 "MissingPropError",
                 f"lang '{lang}' was missing a required prop, '{prop}'",
-            )
+            ),
+            loc,
         )
 
 
@@ -187,17 +182,8 @@ class d_CriticalError(d_DitError):
     """Essentially an assertion. This exception should never be raised.
     Will error out to the command line like other exceptions."""
 
-    def __init__(self, message: str):
-        super().__init__(_concat("CriticalError", message))
-
-
-def _set_origin(
-    err: d_DitError, inter: InterpretContext = None, loc: Optional[CodeLocation] = None
-):
-    if inter is None:
-        return
-    loc = loc if loc is not None else inter.next_tok.loc
-    err.set_origin(inter.body.path, loc, inter.char_feed.get_line(loc))
+    def __init__(self, message: str, loc: CodeLocation = None):
+        super().__init__(_concat("CriticalError", message), loc)
 
 
 def _concat(prepend: str, message: str) -> str:

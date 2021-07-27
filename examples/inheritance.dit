@@ -1,0 +1,155 @@
+getConfig();
+
+pull Python, JavaScript from 'https://raw.githubusercontent.com/ditabase/dits/master/langs/commonLangs.dit';
+pull StringCompare, JavaScript from 'https://raw.githubusercontent.com/ditabase/dits/master/dits/StringCompare.dit';
+
+class Person {|
+    Str name_regex = '^[^~`!@#$%^&*()_\-=+{}[\];:"<>?/\\|\n\t]+$';
+    func Make(Str name, Num age) {|
+        Str this.name = name;
+        Num this.age = age;
+    |}
+
+    sig Python func validate() {|
+        if type(<|this.age|>) == float and not <|this.age|>.is_integer():
+            raise NotImplementedError('Age must be an integer')
+        
+        if <|this.age|> <= 0:
+            raise NotImplementedError('Age must be positive')
+
+        import re
+        if not re.search(<|Person.name_regex|>, <|this.name|>):
+            raise NotImplementedError('invalid name')
+    |}
+
+    sig Python Str func ToString() {|
+        name = <|this.name|>
+        age = <|this.age|>
+        out = f'{name} is {age} years old.'
+        <|return '(|out|)'|>
+    |}
+|}
+
+class RoomNumber {|
+    /*
+    * Room number is it's own class so that it can have it's own validator.
+    * I think classes like this will become a common pattern.
+    * A single value, possibly with nested sub-values,
+    * main variable is 'value', a validator and maybe a ToString.
+    * This definitely needs a particular name.
+    */
+    Str room_regex = '^[A-Z]{3}_[0-9]{3,4}[A-Z]?$';
+    func Make(Str value) {|
+        Str this.value = value;
+    |}
+
+    sig Python func validate() {|
+        import re
+        if not re.search(<|RoomNumber.room_regex|>, <|this.value|>):
+            raise NotImplementedError('invalid room number')
+    |}
+|}
+
+class Student {|
+    Parents = [Person];
+    func Make(Str name, Num age, Str room_num, Bool meal_plan) {|
+        this.Person.Make(name, age);
+        RoomNumber this.room_num = RoomNumber(room_num);
+        Bool this.meal_plan = meal_plan;
+    |}
+
+    func validate() {|
+        this.Person.validate();
+        this.room_num.validate();
+    |}
+
+    sig Python Str func ToString() {|
+        base = <|this.Person.ToString()|>[:-1]
+        room_num = <|this.room_num.value|>
+        meal_plan = '' if <|this.meal_plan|> else ' not'
+        out = f'{base}, lives in room {room_num}, and is{meal_plan} on a meal plan.'
+        <|return '(|out|)'|>
+    |}
+|}
+
+class Teacher {|
+    Parents = [Person];
+    listOf Str knownSubjects = ['english', 'math', 'art', 'science', 'history',
+    'music', 'geography', 'P.E', 'Physical Education', 'drama', 'biology', 'chemistry',
+    'physics', 'computer science', 'foreign languages', 'social studies', 'technology',
+    'philosophy', 'graphic design', 'literature', 'algebra', 'geometry'];
+    func Make(Str name, Num age, Str room_num, Str subject) {|
+        this.Person.Make(name, age);
+        RoomNumber this.room_num = RoomNumber(room_num);
+        Str this.subject = subject;
+    |}
+
+    sig Python func validate() {|
+        <|
+            this.Person.validate();
+            this.room_num.validate();
+        |>
+        for sub in <|Teacher.knownSubjects|>:
+            if <|StringCompare(this.subject, '(|sub|)')|>:
+                <|return null|>
+        raise NotImplementedError('invalid subject')
+    |}
+
+    sig Python Str func ToString() {|
+        base = <|this.Person.ToString()|>[:-1]
+        room_num = <|this.room_num.value|>
+        subject = <|this.subject|>
+        out = f'{base} and teaches {subject} in room number {room_num}.'
+        <|return '(|out|)'|>
+    |}
+|}
+
+class TeachersAssistant {|
+    Parents = [Student, Teacher];
+    func Make(
+        Str name,
+        Num age,
+        Str dorm_num,
+        Str office_num,
+        Str subject,
+        Bool meal_plan
+    ) {|
+        // Notice that handling the `room_num` conflict is extremely easy.
+        this.Student.Make(name, age, dorm_num, meal_plan);
+        this.Teacher.Make(name, age, office_num, subject);
+    |}
+
+    func validate() {|
+        this.Student.validate();
+        this.Teacher.validate();
+    |}
+
+    sig Python Str func ToString() {|
+        base = <|this.Student.ToString()|> 
+        office_num = <|this.Teacher.room_num.value|>
+        subject = <|this.Teacher.subject|>
+        ta_part = (
+            'They are also a Teachers Assistant, '
+            f'teaching {subject} in room number {office_num}.'
+        )
+        out = base + ' ' + ta_part
+        <|return '(|out|)'|>
+    |}
+|}
+
+Student s = Student('John Doe', 19, 'MAY_214', true);
+s.validate();
+print(s.ToString());
+
+Student s2 = Student('Sally Mack', 23, 'OAK_101G', false);
+s2.validate();
+print(s2.ToString());
+
+Teacher t = Teacher('Jerry Gardner', 35, 'ERT_203B', 'Math');
+t.validate();
+print(t.ToString());
+
+TeachersAssistant ta = 
+TeachersAssistant('Jill Miller', 26, 'MAY_503', 'MAY_105', 'Computer Science', false);
+ta.validate();
+print(ta.ToString());

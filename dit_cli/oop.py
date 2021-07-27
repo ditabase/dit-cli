@@ -1,7 +1,9 @@
 from __future__ import annotations
 
+import copy
 import json
 from dataclasses import dataclass
+from enum import Enum
 from typing import Callable, Dict, Iterator, List, Optional, Union
 from urllib.error import HTTPError, URLError
 from urllib.request import urlopen
@@ -13,7 +15,13 @@ from dit_cli.exceptions import (
     d_SyntaxError,
     d_TypeMismatchError,
 )
-from dit_cli.grammar import d_Grammar, prim_to_value, value_to_prim
+from dit_cli.grammar import (
+    PARENTS,
+    PRIORITY,
+    d_Grammar,
+    prim_to_value,
+    value_to_prim,
+)
 from dit_cli.settings import CodeLocation
 
 
@@ -47,6 +55,9 @@ class d_Thing(object):
         else:
             raise d_CriticalError("Thing __str__ called on non-null thing.")
 
+    def __repr__(self) -> str:
+        return self.name
+
     def get_data(self) -> None:
         if self.is_null:
             return None
@@ -70,7 +81,7 @@ class d_Thing(object):
 
     @classmethod
     def get_null_thing(cls) -> d_Thing:
-        if cls.null_singleton is None:
+        if not cls.null_singleton:
             cls.null_singleton = d_Thing()
             cls.null_singleton.grammar = d_Grammar.VALUE_NULL
             cls.null_singleton.public_type = d_Grammar.NULL.value
@@ -84,7 +95,7 @@ class d_Ref(object):
     def __init__(self, name: str, target: d_Thing) -> None:
         self.name = name
         self.target = target
-        if target.name is None:
+        if not target.name:
             target.name = name
 
     def __hash__(self) -> int:
@@ -211,29 +222,11 @@ def _check_list_type(list_: d_List) -> None:
 
     err = False
     for ele in _traverse(list_.list_):
-        ele: d_Thing
-        if ele.is_null:
-            continue
-        elif isinstance(list_.contained_type, d_Class) and not _is_subclass(
-            ele, list_.contained_type
-        ):
-            # mismatch class types.
-            # listOf Number numbers= [Bool('3')];
-            err = True
-        elif ele.grammar != list_.contained_type:
-            if ele.grammar == d_Grammar.VALUE_LIST:
-                # Nested lists are okay
-                # listOf Num grid = [[2, 6], [7, 8], [-1, -7]];
-                continue
-            else:
-                # Mismatched grammars
-                # listOf Class classes = ['clearly not a class'];
-                err = True
-
-        if err:
-            expected = _type_to_str(list_.contained_type)
-            actual = _thing_to_str(ele)
-            raise d_TypeMismatchError(f"List of type '{expected}' contained '{actual}'")
+        res = check_value(ele, Declarable(list_.contained_type))
+        if res:
+            raise d_TypeMismatchError(
+                f"List of type '{res.expected}' contained '{res.actual}'{res.extra}"
+            )
 
 
 def _traverse(item: Union[list, d_Thing]) -> Iterator[d_Thing]:
@@ -241,8 +234,10 @@ def _traverse(item: Union[list, d_Thing]) -> Iterator[d_Thing]:
     or just the item if it wasn't a list in the first place"""
     if isinstance(item, list):
         for i in item:
-            for j in _traverse(i):
-                yield j
+            yield from _traverse(i)
+    elif isinstance(item, d_List):
+        for j in item.list_:
+            yield from _traverse(j)
     else:
         yield item
 
@@ -303,64 +298,76 @@ def _simple_set_value(self: simple_types, val: d_Thing) -> None:
         )
 
 
+class d_Variable:
+    """
+    Stores a string name and a list of prefixes.
+    The prefixes are only used with inheritance.
+    In all other cases, it basically just uses the name.
+    Names are unique within each scope.
+    """
+
+    def __init__(self, name: str, prefix: Optional[List[d_Class]] = None) -> None:
+        self.name: str = name
+        self.prefix: List[d_Class] = prefix or []
+
+    def __hash__(self) -> int:
+        return hash((self.name, tuple(self.prefix)))
+
+    def __eq__(self, o: object) -> bool:
+        if not isinstance(o, d_Variable):
+            return False
+        elif self.name != o.name:
+            return False
+        elif self.prefix != o.prefix:
+            return False
+        return True
+
+    def __repr__(self) -> str:
+        out = "["
+        for c in self.prefix:
+            out += c.name + "."
+        out += self.name
+        return out + "]"
+
+
 class d_Container(d_Thing):
     def __init__(self) -> None:
         super().__init__()
-        self.attrs: Dict[str, Ref_Thing] = {}
+        self.attrs: Dict[d_Variable, Ref_Thing] = {}
 
     def find_attr(self, name: str, scope_mode: bool = False) -> Optional[d_Thing]:
+        var = d_Variable(name)
+        if isinstance(self, d_Inst):
+            var = self.compose_prefix(name)
         if scope_mode:
             if not isinstance(self, d_Body):
                 raise d_CriticalError("A Container was given for scope mode")
             # We need to check for this name in upper scopes
             # Str someGlobal = 'cat';
-            # class someClass {{ Str someInternal = someGlobal; }}
-            return _find_attr_in_scope(name, self)
+            # class someClass {| Str someInternal = someGlobal; |}
+            return _find_attr_in_scope(var, self)
         else:
             # We're dotting, so only 'self' counts, no upper scopes.
             # We also need to check for inherited parent classes
             # someInst.someMember = ...
-            return _find_attr_in_self(name, self)
+            return _find_attr_in_self(var, self)
 
     def set_value(self, val: d_Thing) -> None:
         self.is_null = val.is_null
 
-        if isinstance(self, d_Instance) and isinstance(val, d_Instance):
+        if isinstance(self, d_Inst) and isinstance(val, d_Inst):
             self.attrs = val.attrs
         elif type(self) == type(val):
-            self.attrs = val.attrs
-            self.parent_scope = val.parent_scope
-            self.view = val.view
-            self.path = val.path
+            self.attrs = val.attrs  # type: ignore
+            self.parent_scope = val.parent_scope  # type: ignore
+            self.view = val.view  # type: ignore
+            self.path = val.path  # type: ignore
         elif self.can_be_anything:
             super().set_value(val)
         else:  # isinstance(val, d_Thing):
             raise d_TypeMismatchError(
                 f"Cannot assign {val.public_type} to {self.public_type}"  # type: ignore
             )
-        """
-        elif isinstance(self, d_Dit) and isinstance(val, d_Dit):
-            self.attrs = val.attrs
-            self.parent_scope = val.parent_scope
-            self.view = val.view
-            self.path = val.path
-        elif isinstance(self, d_Class) and isinstance(val, d_Class):
-            self.attrs = val.attrs
-            self.parent_scope = val.parent_scope
-            self.view = val.view
-            self.path = val.path
-        elif isinstance(self, d_Lang) and isinstance(val, d_Lang):
-            self.attrs = val.attrs
-            self.parent_scope = val.parent_scope
-            self.view = val.view
-            self.path = val.path
-        elif isinstance(self, d_Func) and isinstance(val, d_Func):
-            self.attrs = val.attrs
-            self.parent_scope = val.parent_scope
-            self.view = val.view
-            self.path = val.path
-        
-        """
 
     def add_attr(
         self, dec: Declarable, value: Optional[d_Thing] = None, use_ref: bool = False
@@ -368,14 +375,14 @@ class d_Container(d_Thing):
         ref = None
         if dec.name is None:
             raise d_CriticalError("A declarable had no name")
-        if self.find_attr(dec.name):
-            # TODO: this could be naive with inheritance, not sure.
-            raise d_CriticalError(f"A duplicate attribute was found: '{dec.name}'")
-        if value is not None:
+
+        _check_for_duplicates(self, dec.name)
+
+        if value:
             res = check_value(value, dec)
-            if res is not None:
+            if res:
                 raise d_TypeMismatchError(
-                    f"Cannot assign {res.actual} to {res.expected}"
+                    f"Cannot assign {res.actual} to {res.expected}{res.extra}"
                 )
 
             if dec.type_ == d_Grammar.PRIMITIVE_THING:
@@ -389,39 +396,245 @@ class d_Container(d_Thing):
         else:
             value = _type_to_obj(dec)
 
-        if ref is not None:
-            self.attrs[ref.name] = ref
-        else:
-            self.attrs[value.name] = value
+        fin_val = ref or value
+        fin_var = d_Variable(fin_val.name)
+        if isinstance(self, d_Inst):
+            fin_var = self.compose_prefix(fin_val.name)
+
+        self.attrs[fin_var] = fin_val
         return value
 
 
-def _find_attr_in_scope(name: str, body: d_Body) -> Optional[d_Thing]:
-    if name in body.attrs:
-        return body.attrs[name].get_thing()
-    elif body.parent_scope is not None:
-        return _find_attr_in_scope(name, body.parent_scope)
+def _check_for_duplicates(thing: d_Container, name: str) -> None:
+    if isinstance(thing, d_Inst):
+        var = thing.compose_prefix(name)
+    else:
+        var = d_Variable(name)
+    if var in thing.attrs:
+        raise d_CriticalError(f"A duplicate attribute was found: '{name}'")
+
+
+def _find_attr_in_scope(var: d_Variable, body: d_Body) -> Optional[d_Thing]:
+    if var in body.attrs:
+        return body.attrs[var].get_thing()
+    elif body.parent_scope:
+        return _find_attr_in_scope(var, body.parent_scope)
     else:
         return None
 
 
-def _find_attr_in_self(name: str, con: d_Container) -> Optional[d_Thing]:
-    if name in con.attrs:
-        return con.attrs[name].get_thing()
-    elif isinstance(con, d_Instance):
-        return _find_attr_in_self(name, con.parent)
-    elif isinstance(con, d_Class):
-        for parent in con.parents:
-            return _find_attr_in_self(name, parent)
+def _find_attr_in_self(
+    var: d_Variable,
+    con: d_Container,
+    orig_inst: d_Inst = None,
+    search_record: d_Variable = None,
+) -> Optional[d_Thing]:
+    """
+    Find an attribute within the target container.
+    `var` is the original variable we were given, and `con` is the current container.
+    `orig_inst` is the instance we started checking in, which we store when
+    we start searching in inherited parent classes.
+    `search_record` lists every class we've checked through so currently.
+
+    This is is indirectly recursive with `_search_inherited_parents`, so this
+    will be called several times to search through different containers.
+    """
+    res = _search_current_attrs(var, con, orig_inst, search_record)
+    if res:
+        return res
+    if isinstance(con, d_Inst):
+        # If we're an instance, we only have one parent, recurse on that parent
+        return _find_attr_in_self(var, con.parent, con)
+    if isinstance(con, d_Class) and orig_inst:
+        # If we're a class, we might have parents, so we need to recurse
+        return _search_inherited_parents(var, con, orig_inst, search_record)
     return None
 
 
-class d_Instance(d_Container):
+def _search_current_attrs(
+    var: d_Variable,
+    con: d_Container,
+    orig_inst: d_Inst = None,
+    search_record: d_Variable = None,
+) -> Optional[d_Thing]:
+    if var in con.attrs:
+        # Maybe its an exact match!
+        return con.attrs[var].get_thing()
+
+    if not search_record:
+        # if we're not searching through inherited parents, we can just return
+        return None
+
+    for target in (con, orig_inst):
+        # The var might be behind a prefix
+        # We need to check both the inheriting class and the original instance
+        if not target:
+            continue
+        if _do_prefixes_match(var, search_record):
+            if search_record in target.attrs:
+                # the prefixes might match, but the variable might not actually exist
+                return target.attrs[search_record].get_thing()
+
+
+def _do_prefixes_match(given_var: d_Variable, search_record: d_Variable) -> bool:
+    """
+    Check if prefixes are close enough to match.
+    The `search_record` may not exactly match `given_var`.
+    We check from the end of each var until one has no items to match.
+    """
+    if search_record == given_var:
+        # Maybe they're a perfect match!
+        return True
+    elif search_record.name != given_var.name:
+        # If the names don't match, there's no point in checking the prefixes
+        return False
+    elif not given_var.prefix:
+        # if the given had no prefixes, we take the first match we can find
+        return True
+
+    giv_iter = iter(reversed(given_var.prefix))
+    ser_iter = iter(reversed(search_record.prefix))
+    giv = next(giv_iter, None)
+    ser = next(ser_iter, None)
+    while True:
+        if giv == ser:
+            # giv is the same as ser, we need to check the next set
+            giv = next(giv_iter, None)
+            ser = next(ser_iter, None)
+            if None in (giv, ser):
+                # If either are out of entries, then the prefixes are close enough
+                return True
+        else:
+            # we need to move all the way down ser to find at least one match
+            # for the current giv. If we can't find one, they aren't a match.
+            ser = next(ser_iter, None)
+            if not ser:
+                return False
+
+
+def _search_inherited_parents(
+    var: d_Variable,
+    class_: d_Class,
+    orig_inst: d_Inst,
+    search_record: d_Variable = None,
+) -> Optional[d_Thing]:
+    """
+    Search through the parents of `class_` to see if we can find `var`.
+    """
+    parents = class_.get_parents()
+    if not parents:
+        return None
+
+    # check if we're looking for an explicit parent
+    for parent in parents.list_:  # type: ignore
+        parent: d_Class
+        if var.name == parent.name:
+            orig_inst.clear_prefix_to_class()
+            orig_inst.add_parent_prefix(parent)
+            orig_inst.add_class_sep()
+            return parent
+
+    # Now we manually search the entire parent graph.
+    # search_record will remember the prefix of our current search context.
+    # We will use it to check the instance attrs for matches.
+    search_record = search_record or d_Variable(var.name)
+    for parent in parents.list_:  # type: ignore
+        search_record.prefix.append(parent)
+        orig_inst.add_parent_prefix(parent)
+        result = _find_attr_in_self(var, parent, orig_inst, search_record)
+        if result:
+            return result
+        search_record.prefix.pop()
+        orig_inst.pop_parent_prefix()
+
+
+class PrefixSeperator(Enum):
+    FUNC_SEP = 0
+    CLASS_SEP = 1
+
+
+class d_Inst(d_Container):
     def __init__(self) -> None:
         super().__init__()
-        self.public_type = "Instance"
-        self.grammar = d_Grammar.VALUE_INSTANCE
+        self.public_type = "Inst"
+        self.grammar = d_Grammar.VALUE_INST
         self.parent: d_Class = None  # type: ignore
+
+        self.cur_prefix: List[prefix_item] = []
+        """
+            More information in examples/name-conflicts.dit
+
+            Dit supports multiple dynamic inheritance. 
+            Classes may inherit multiple parents which assign to the same name. 
+            In many languages, if two different classes assign the attribute `value`,
+            the attribute is considered to be the same `value`, 
+            and the second assignment will overwrite the first.
+
+            In Dit, this is not the case. We want to keep the attributes separate,
+            so that you can inherit from parents without needing to carefully check
+            what attributes are already defined.
+
+            In Dit, this is not the case. We want to keep the attributes separate,
+            so that you can inherit from parents without needing to carefully check
+            what attributes are already defined. 
+            We do this by hiding attribute assignments behind their parent names.
+            We keep track of what class assigned which attributes, 
+            and store the variable name behind a list of prefixes.
+
+            `cur_prefix` is the current prefix stack for this instance.
+            It contains a list of each class that:
+                - was searched through when searching for a variable name
+                - was explicitly dotted, followed by a `CLASS_SEP` marker
+                - has a function called, followed by a `FUNC_SEP` marker
+
+            Examples of a prefix stack:
+                - `[A, FUNC_SEP, B, 'value']`
+                - `[A, FUNC_SEP, B,  FUNC_SEP, C, 'value']`
+                - `[Z, CLASS_SEP, 'value']`
+        """
+
+    def clear_prefix_to_func(self):
+        _clear_prefix_to_sep(self, [PrefixSeperator.FUNC_SEP])
+
+    def clear_prefix_to_class(self):
+        _clear_prefix_to_sep(
+            self, [PrefixSeperator.CLASS_SEP, PrefixSeperator.FUNC_SEP]
+        )
+
+    def add_parent_prefix(self, class_: d_Class):
+        self.cur_prefix.append(class_)
+
+    def pop_parent_prefix(self):
+        self.cur_prefix.pop()
+
+    def add_class_sep(self):
+        self.cur_prefix.append(PrefixSeperator.CLASS_SEP)
+
+    def pop_class_sep(self):
+        raise NotImplementedError
+
+    def add_func_sep(self):
+        self.cur_prefix.append(PrefixSeperator.FUNC_SEP)
+
+    def pop_func_sep(self):
+        self.clear_prefix_to_func()
+        self.cur_prefix.pop()
+        self.clear_prefix_to_func()
+
+    def compose_prefix(self, name: str) -> d_Variable:
+        var = d_Variable(name)
+        var.prefix = [c for c in self.cur_prefix if isinstance(c, d_Class)]
+        return var
+
+
+def _clear_prefix_to_sep(inst: d_Inst, seperators: List[PrefixSeperator]):
+    while True:
+        if not inst.cur_prefix:
+            break
+        elif inst.cur_prefix[-1] in seperators:
+            break
+        else:
+            inst.cur_prefix.pop()
 
 
 class d_Body(d_Container):
@@ -458,35 +671,27 @@ class d_Body(d_Container):
 
 def _type_to_obj(dec: Declarable) -> d_Thing:
     thing: d_Thing = None  # type: ignore
-    if dec.type_ is None:
+    if not dec.type_:
         raise d_CriticalError("A declarable had no type")
     elif isinstance(dec.type_, d_Class):
-        thing = d_Instance()
+        thing = d_Inst()
         thing.parent = dec.type_
-
-    if dec.listof:
+    elif dec.listof:
         thing = d_List()
         # this prim_to_value might fail with classes
         thing.contained_type = prim_to_value(dec.type_)  # type: ignore
     elif dec.type_ == d_Grammar.PRIMITIVE_THING:
         thing = d_Thing()
         thing.can_be_anything = True
-    elif dec.type_ == d_Grammar.PRIMITIVE_STR:
-        thing = d_Str()
-    elif dec.type_ == d_Grammar.PRIMITIVE_CLASS:
-        thing = d_Class()
-    elif dec.type_ == d_Grammar.PRIMITIVE_INSTANCE:
-        thing = d_Instance()
-    elif dec.type_ == d_Grammar.PRIMITIVE_FUNC:
-        thing = d_Func()
-    elif dec.type_ == d_Grammar.PRIMITIVE_DIT:
-        thing = d_Dit()
-
-    if thing is None:
-        raise d_CriticalError("Unrecognized type for declaration")
     else:
+        # equivalent to thing = d_Str(), just with the Object Dispatch
+        thing = OBJECT_DISPATCH[dec.type_]()
+
+    if thing:
         thing.name = dec.name
         return thing
+    else:
+        raise d_CriticalError("Unrecognized type for declaration")
 
 
 class d_Dit(d_Body):
@@ -530,7 +735,18 @@ class d_Class(d_Body):
         super().__init__()
         self.public_type = "Class"
         self.grammar = d_Grammar.VALUE_CLASS
-        self.parents: List[d_Class] = []
+
+    def get_parents(self) -> Optional[d_List]:
+        p = d_Variable(PARENTS)
+        if p not in self.attrs:
+            return None
+        parents = self.attrs[p]
+        if not isinstance(parents, d_List):
+            raise d_TypeMismatchError("Parents must be a list")
+        parents.contained_type = d_Grammar.VALUE_CLASS
+        parents.can_be_anything = False
+        _check_list_type(parents)  # Parents must be a list of Classes
+        return parents
 
 
 class d_Lang(d_Body):
@@ -538,14 +754,18 @@ class d_Lang(d_Body):
         super().__init__()
         self.public_type = "Lang"
         self.grammar = d_Grammar.VALUE_LANG
-        self.parents: List[d_Lang] = []
 
     def add_attr(self, dec: Declarable, value: Optional[d_Thing]) -> d_Thing:
         result = super().add_attr(dec, value=value)
-        priority = 0
 
-        if "Priority" in self.attrs:
-            item = self.attrs["Priority"]
+        # We set the custom 'priority_num' of the new attribute
+        # to the current lang 'Priority'
+        # Every variable must keep track of the priority at the time it was declared.
+        priority = 0
+        p = d_Variable(PRIORITY)
+
+        if p in self.attrs:
+            item = self.attrs[p]
             if not isinstance(item, d_Str):
                 raise d_TypeMismatchError("Priority must be of type Str")
             priority = int(item.str_)
@@ -562,7 +782,7 @@ class d_Lang(d_Body):
 
     def get_prop(self, name: str) -> str:
         res = self.find_attr(name)
-        if res is None:
+        if not res:
             raise d_MissingPropError(self.name, name)
         elif not isinstance(res, d_Str):
             raise d_SyntaxError(
@@ -571,17 +791,20 @@ class d_Lang(d_Body):
         return res.str_
 
 
-def _combine_langs(lang1: d_Lang, lang2: d_Lang) -> Dict[str, Ref_Thing]:
-    lang1.attrs.pop("Priority", None)
-    lang2.attrs.pop("Priority", None)
+def _combine_langs(lang1: d_Lang, lang2: d_Lang) -> Dict[d_Variable, Ref_Thing]:
+    # First remove priority values
+    # the priority has already been individually assigned to each variable
+    pri_var = d_Variable(PRIORITY)
+    lang1.attrs.pop(pri_var, None)
+    lang2.attrs.pop(pri_var, None)
     set1, set2 = set(lang1.attrs), set(lang2.attrs)
     # Start by pulling all the items that don't have the same names into a list
-    out: Dict[str, Ref_Thing] = {}
-    for unique_name in set1.symmetric_difference(set2):
-        if unique_name in lang1.attrs:
-            out[unique_name] = lang1.attrs[unique_name]
+    out: Dict[d_Variable, Ref_Thing] = {}
+    for unique_var in set1.symmetric_difference(set2):
+        if unique_var in lang1.attrs:
+            out[unique_var] = lang1.attrs[unique_var]
         else:
-            out[unique_name] = lang2.attrs[unique_name]
+            out[unique_var] = lang2.attrs[unique_var]
 
     # Add the matching names to the list, based on priority
     for match_name in set1.intersection(set2):
@@ -595,6 +818,8 @@ class d_Func(d_Body):
         super().__init__()
         self.public_type = "Function"
         self.grammar = d_Grammar.VALUE_FUNC
+        # allows for a different set of attributes for each recursive function call
+        self.attr_stack: List[Dict[d_Variable, Ref_Thing]] = []
 
         self.py_func: Callable = None  # type: ignore
         self.call_loc: CodeLocation = None  # type: ignore
@@ -604,6 +829,32 @@ class d_Func(d_Body):
         self.parameters: List[Declarable] = []
         self.code: bytearray = None  # type: ignore
         self.guest_func_path: str = None  # type: ignore
+
+    def pub_name(self) -> str:
+        return f"{self.name}()" if self.name else "<anonymous function>()"
+
+    def new_call(self) -> None:
+        if self.is_built_in:
+            return
+        elif not self.attr_stack:
+            # We only have the original attrs, we just need to put that on the stack
+            self.attr_stack.append(self.attrs)
+        else:
+            # This is a recursive call, we need a new attr on the stack
+            self.attr_stack.append({})
+            self.attrs = self.attr_stack[-1]
+
+    def end_call(self) -> None:
+        if self.is_built_in:
+            self.attrs.clear()
+        elif len(self.attr_stack) == 1:
+            # We don't want to destroy the original attrs, just pop and clear it
+            self.attr_stack.pop()
+            self.attrs.clear()
+        else:
+            # Finished a recursive call, so pop the stack and reassign the attrs
+            self.attr_stack.pop()
+            self.attrs = self.attr_stack[-1]
 
     def get_mock(self, code: str) -> d_Func:
         mock_func: d_Func = d_Func.from_str("mock_exe_ditlang", code, self.guest_func_path)  # type: ignore
@@ -616,6 +867,7 @@ class d_Func(d_Body):
 
 
 d_Type = Union[d_Grammar, d_Class]
+prefix_item = Union[d_Class, PrefixSeperator]
 
 
 class FlowControlException(Exception):
@@ -629,19 +881,18 @@ class ReturnController(FlowControlException):
     """Raised when a function executes a return statement"""
 
     def __init__(self, value: d_Thing, func: d_Func, orig_loc: CodeLocation) -> None:
-
         if value.grammar == d_Grammar.NULL:
             super().__init__(Token(d_Grammar.NULL, orig_loc))
         return_declarable = Declarable(type_=func.return_, listof=func.return_list)
         res = check_value(value, return_declarable)
-        if res is not None:
+        if res:
             raise d_TypeMismatchError(
-                f"Expected '{res.expected}' for return, got '{res.actual}'"
+                f"Expected '{res.expected}' for return, got '{res.actual}'{res.extra}"
             )
         if isinstance(value, d_List):
             super().__init__(Token(d_Grammar.VALUE_LIST, orig_loc, thing=value))
         elif isinstance(func.return_, d_Class):
-            raise NotImplementedError
+            super().__init__(Token(d_Grammar.VALUE_INST, orig_loc, thing=value))
         elif isinstance(value, d_Thing):  # type: ignore
             super().__init__(Token(func.return_, func.call_loc, thing=value))
 
@@ -650,6 +901,7 @@ class ReturnController(FlowControlException):
 class CheckResult:
     expected: str
     actual: str
+    extra: str = ""
 
 
 def check_value(thing: d_Thing, dec: Declarable) -> Optional[CheckResult]:
@@ -670,43 +922,46 @@ def check_value(thing: d_Thing, dec: Declarable) -> Optional[CheckResult]:
         # listOf Str test = 'cat';
         # Str test = ['cat'];
         return _get_check_result(thing, dec)
-    elif dec.listof and isinstance(thing, d_List) and thing.contained_type is None:
+    elif dec.listof and isinstance(thing, d_List) and not thing.contained_type:
         # a list doesn't know its own type when initially declared, so we'll check
         # listOf Str test = ['cat'];
+        # sig listOf Person func test() {|return [Person("bob")];|}
         thing.contained_type = _get_gram_or_class(prim_to_value, type_=dec.type_)
         _check_list_type(thing)
         return
     elif not isinstance(dec.type_, d_Class):
         if value_to_prim(dec.type_) != _get_gram_or_class(value_to_prim, thing=thing):
             # Not matching grammars
-            # Str test = func (){{}};
+            # Str test = func (){||};
             # listOf Class = ['cat'];
             return _get_check_result(thing, dec)
-    elif not _is_subclass(thing, dec.type_):
+    elif isinstance(thing, d_Inst) and not _is_subclass(thing, dec.type_):
         # not matching class types
-        # sig listOf Bool func test() {{return [Bool('true')];}}
-        # listOf Number numbers = test();
-        # Number count = Bool('true');
-        # Number count = 'cat';
-        return _get_check_result(thing, dec)
+        # sig Person func getPerson() {|return Shape("bob");|}
+        # Person per = Shape();
+        # setPerson(Shape());
+        exp = f"Inst<{dec.type_.name}>"
+        act = f"Inst<{thing.parent.name}>"
+        extra = f"\n'{thing.parent.name}' is not a subclass of '{dec.type_.name}'"
+        return CheckResult(exp, act, extra)
 
 
 def _get_check_result(thing: d_Thing, dec: Declarable) -> CheckResult:
     return CheckResult(expected=_dec_to_str(dec), actual=_thing_to_str(thing))
 
 
-def _is_subclass(thing: d_Thing, target: d_Class) -> bool:
-    if isinstance(thing, d_List):
-        sub = thing.contained_type
-    elif not isinstance(thing, d_Instance):
+def _is_subclass(inst: d_Thing, class_: d_Class) -> bool:
+    if not isinstance(inst, d_Inst):
         return False
-    else:
-        sub = thing.parent
-
-    if sub is target:
+    if inst.parent is class_:
         return True
-    else:
-        raise NotImplementedError
+
+    # I'm not sure there are any cases where cur_prefix would be assigned,
+    # but just in case, I'm saving and reassigning it.
+    stored_prefix = copy.deepcopy(inst.cur_prefix)
+    res = inst.find_attr(class_.name)
+    inst.cur_prefix = stored_prefix
+    return bool(res)
 
 
 def _dec_to_str(dec: Declarable) -> str:
@@ -732,7 +987,7 @@ def _type_to_str(type_: d_Type) -> str:
 def _get_gram_or_class(
     func: Callable, thing: Optional[d_Thing] = None, type_: Optional[d_Type] = None
 ) -> d_Type:
-    if thing is not None:
+    if thing:
         if isinstance(thing, d_List):
             type_ = thing.contained_type
         else:
@@ -795,6 +1050,7 @@ class JobType(Enum):
     CALL_FUNC = "call_func"
     EXE_DITLANG = "exe_ditlang"
     DITLANG_CALLBACK = "ditlang_callback"
+    RETURN_KEYWORD = "return_keyword"
     FINISH_FUNC = "finish_func"
     CRASH = "crash"
     HEART = "heart"
@@ -821,3 +1077,17 @@ class GuestDaemonJob:
         }
         temp = json.dumps(py_json) + "\n"
         return temp.encode()
+
+
+OBJECT_DISPATCH = {
+    d_Grammar.PRIMITIVE_THING: d_Thing,
+    d_Grammar.PRIMITIVE_STR: d_Str,
+    d_Grammar.PRIMITIVE_BOOL: d_Bool,
+    d_Grammar.PRIMITIVE_NUM: d_Num,
+    d_Grammar.PRIMITIVE_JSON: d_JSON,
+    d_Grammar.PRIMITIVE_CLASS: d_Class,
+    d_Grammar.PRIMITIVE_INST: d_Inst,
+    d_Grammar.PRIMITIVE_FUNC: d_Func,
+    d_Grammar.PRIMITIVE_DIT: d_Dit,
+    d_Grammar.PRIMITIVE_LANG: d_Lang,
+}

@@ -31,7 +31,7 @@ class JPEG {|
 // store the binary payload inline, like this?
 // actually, since thinking about this, I already don't like it.
 // I think the payload bay should still be encapsulated, at the bottom of the file
-// A Payload construct can discuss and describe payloads in the payload bay seperately
+// A Payload construct can discuss and describe payloads in the payload bay separately
 payload myImage JPEG 495034 {|
     A8 D5 FF 00
 |}

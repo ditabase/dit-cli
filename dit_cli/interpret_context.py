@@ -5,14 +5,7 @@ from typing import Optional
 from dit_cli.built_in import BUILT_INS
 from dit_cli.exceptions import d_EndOfFileError, d_SyntaxError
 from dit_cli.grammar import DOUBLES, KEYWORDS, SINGLES, d_Grammar
-from dit_cli.oop import (
-    Declarable,
-    Token,
-    d_Body,
-    d_Container,
-    d_Func,
-    d_Instance,
-)
+from dit_cli.oop import Declarable, Token, d_Body, d_Container, d_Func, d_Inst
 from dit_cli.settings import CodeLocation
 
 
@@ -22,7 +15,7 @@ class CharFeed:
         self.loc: CodeLocation = loc
 
     def eof(self, target: Optional[int] = None) -> bool:
-        if target is None:
+        if not target:
             target = self.loc.pos + 1
         return target >= len(self.view)
 
@@ -61,6 +54,9 @@ class CharFeed:
     def _dev(self) -> str:
         return bytes(self.view[self.loc.pos : self.loc.pos + 30]).decode()
 
+    def _starts_with(self, value: str) -> bool:
+        return self._dev().lstrip().startswith(value)
+
 
 class InterpretContext:
     def __init__(self, body: d_Body) -> None:
@@ -80,7 +76,7 @@ class InterpretContext:
         self.dec: Declarable = Declarable()
         self.equaling: bool = False
         self.dotted_body: d_Container = None  # type: ignore
-        self.dotted_inst: d_Instance = None  # type: ignore
+        self.dotted_inst: d_Inst = None  # type: ignore
         self.comma_depth: int = 0
         self.declaring_func: d_Func = None  # type: ignore
         self.terminal_loc: CodeLocation = None  # type: ignore
@@ -107,23 +103,23 @@ class InterpretContext:
             return _handle_eof(self)
 
         res = _clear_whitespace_and_comments(self)
-        if res is not None:
+        if res:
             return res
 
         res = _find_double_chars(self)
-        if res is not None:
+        if res:
             return res
 
         res = _find_single_chars(self)
-        if res is not None:
+        if res:
             return res
 
         res = _find_digit(self)
-        if res is not None:
+        if res:
             return res
 
         res = _find_words(self, find_word)
-        if res is not None:
+        if res:
             return res
 
         raise d_SyntaxError(f"Unrecognized token '{self.char_feed.current()}'")
@@ -189,21 +185,12 @@ def _find_digit(inter: InterpretContext) -> Optional[Token]:
         return Token(d_Grammar.DIGIT, lok, cur)
 
 
-FIRST_LETTER = re.compile(r"[A-Za-z_]")
 LETTER = re.compile(r"[A-Za-z0-9_-]")
 
 
 def _find_words(inter: InterpretContext, find_word: bool) -> Optional[Token]:
     token_loc = copy.deepcopy(inter.char_feed.loc)
-    word = ""
-    while LETTER.match(inter.char_feed.current()):
-        word += inter.char_feed.current()
-        if inter.char_feed.eof():
-            inter.eof = True
-            break
-        else:
-            inter.char_feed.pop()
-
+    word = _get_word(inter)
     if word:
         # Keywords first
         for grammar in KEYWORDS:
@@ -224,6 +211,18 @@ def _find_words(inter: InterpretContext, find_word: bool) -> Optional[Token]:
             return Token(d_Grammar.NEW_NAME, token_loc, word=word)
     else:
         return None
+
+
+def _get_word(inter: InterpretContext) -> Optional[str]:
+    word = ""
+    while LETTER.match(inter.char_feed.current()):
+        word += inter.char_feed.current()
+        if inter.char_feed.eof():
+            inter.eof = True
+            break
+        else:
+            inter.char_feed.pop()
+    return word
 
 
 def _handle_eof(inter: InterpretContext) -> Token:
