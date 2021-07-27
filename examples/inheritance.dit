@@ -36,7 +36,7 @@ class RoomNumber {|
     * I think classes like this will become a common pattern.
     * A single value, possibly with nested sub-values,
     * main variable is 'value', a validator and maybe a ToString.
-    * This definetly needs a particular name.
+    * This definitely needs a particular name.
     */
     Str room_regex = '^[A-Z]{3}_[0-9]{3,4}[A-Z]?$';
     func Make(Str value) {|

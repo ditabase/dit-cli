@@ -1,6 +1,6 @@
 /* 
     This demos the KirbyLang's recursion ability. 
-    It can happily handle direct and indirect recusion.
+    It can happily handle direct and indirect recursion.
     You should avoid recursion like this, since it's slow, but it does work.
     The last example is a better way to do it.
 */

@@ -170,7 +170,7 @@ class Fruit {|
 
     // Guest langs currently can only use socket servers to 
     // execute code, which is somewhat slow. 
-    // In the future, I want to add formal polyglot/Foriegn Function Interface
+    // In the future, I want to add formal polyglot/Foreign Function Interface
     // This would require specially configuring a certain guestLang to have tighter
     // coupling to the dit HostLang (which is currently Python).
     // If you can tell python how to natively execute your language, 
@@ -179,7 +179,7 @@ class Fruit {|
     // I also expect shortcuts to be a thing. Essentially, the dit serves
     // just as the documentation and unit testing for your solution.
     // Skip the dit technical ecosystem and code a custom solution.
-    // Think, multithreaded C meant for a specific supercomputer,
+    // Think, multi-threaded C meant for a specific supercomputer,
     // that performs all the same tasks as dit, but does it much more efficiently.
 
     sig Str func ToString() {|
