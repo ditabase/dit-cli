@@ -59,11 +59,13 @@ def preprocess(func: d_Func) -> None:
         + export_string
     )
     file_extension = func.lang.get_prop("file_extension")
+    # TODO: give imported dits a unique name, probably based on file name
+    par_name = func.parent_scope.name or "imported_dit"
     func.guest_func_path = (
         "/tmp/dit/"
         + func.lang.name
         + "_func_"
-        + func.parent_scope.name
+        + par_name
         + "_"
         + func.name
         + "."
