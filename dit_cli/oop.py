@@ -222,29 +222,11 @@ def _check_list_type(list_: d_List) -> None:
 
     err = False
     for ele in _traverse(list_.list_):
-        ele: d_Thing
-        if ele.is_null:
-            continue
-        elif isinstance(list_.contained_type, d_Class) and not _is_subclass(
-            ele, list_.contained_type
-        ):
-            # mismatch class types.
-            # listOf Number numbers= [Bool('3')];
-            err = True
-        elif ele.grammar != list_.contained_type:
-            if ele.grammar == d_Grammar.VALUE_LIST:
-                # Nested lists are okay
-                # listOf Num grid = [[2, 6], [7, 8], [-1, -7]];
-                continue
-            else:
-                # Mismatched grammars
-                # listOf Class classes = ['clearly not a class'];
-                err = True
-
-        if err:
-            expected = _type_to_str(list_.contained_type)
-            actual = _thing_to_str(ele)
-            raise d_TypeMismatchError(f"List of type '{expected}' contained '{actual}'")
+        res = check_value(ele, Declarable(list_.contained_type))
+        if res:
+            raise d_TypeMismatchError(
+                f"List of type '{res.expected}' contained '{res.actual}'{res.extra}"
+            )
 
 
 def _traverse(item: Union[list, d_Thing]) -> Iterator[d_Thing]:
@@ -252,8 +234,10 @@ def _traverse(item: Union[list, d_Thing]) -> Iterator[d_Thing]:
     or just the item if it wasn't a list in the first place"""
     if isinstance(item, list):
         for i in item:
-            for j in _traverse(i):
-                yield j
+            yield from _traverse(i)
+    elif isinstance(item, d_List):
+        for j in item.list_:
+            yield from _traverse(j)
     else:
         yield item
 

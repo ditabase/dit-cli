@@ -90,6 +90,27 @@
       "title": "guest, all param & return",
       "dit": "getConfig();\npull JavaScript from '/home/isaiah/general/dits/langs/commonLangs.dit';\n\nsig JavaScript Bool func bool(Bool v1) {| <|return v1;|> |}\nsig JavaScript Num func num(Num v1) {| <|return v1;|> |}\nsig JavaScript Str func string(Str v1) {| <|return v1;|> |}\nsig JavaScript listOf Num func list(listOf Num v1) {| <|return v1;|> |}\nsig JavaScript JSON func json(JSON v1) {| <|return v1;|> |}\n\nprint(bool(true));\nprint(num(5));\nprint(string('cat'));\nprint(list([1,2,3]));\nprint(json({\"item1\": \"dog\"}));\n",
       "expected": "true\n5\ncat\n[1, 2, 3]\n{\"item1\": \"dog\"}"
+    },
+    {
+      "long": true,
+      "type": "succeed",
+      "title": "guest, jsFibonacci",
+      "dit": "getConfig();\npull JavaScript from 'https://raw.githubusercontent.com/ditabase/dits/master/langs/commonLangs.dit';\nsig JavaScript Num func jsFibonacci(Num n) {|\n    let n = <|n|>;\n    if (n <= 0) {\n        <|return 0|>;\n    } else if (n < 3) {\n        <|return 1|>;\n    }\n    let p1 = <|jsFibonacci((|n-1|))|>;\n    let p2 = <|jsFibonacci((|n-2|))|>;\n    <|return (|p1 + p2|)|>;\n|}\nprint(jsFibonacci(4));",
+      "expected": "3"
+    },
+    {
+      "long": true,
+      "type": "succeed",
+      "title": "guest, pyFibonacci",
+      "dit": "getConfig();\npull Python from 'https://raw.githubusercontent.com/ditabase/dits/master/langs/commonLangs.dit';\nsig Python Num func pyFibonacci(Num n) {|\n    n = <|n|>\n    if n <= 0:\n        <|return 0|>\n    elif n < 3:\n        <|return 1|>\n    p1 = <|pyFibonacci((|n-1|))|>\n    p2 = <|pyFibonacci((|n-2|))|>\n    <|return (|p1 + p2|)|>\n|}\nprint(pyFibonacci(4));",
+      "expected": "3"
+    },
+    {
+      "long": true,
+      "type": "succeed",
+      "title": "guest, luaFibonacci",
+      "dit": "getConfig();\npull Lua from 'https://raw.githubusercontent.com/ditabase/dits/master/langs/commonLangs.dit';\nsig Lua Num func luaFibonacci(Num n) {|\n    local n = <|n|>\n    if n <= 0 then\n        <|return 0|>\n    elseif n < 3 then\n        <|return 1|>\n    end\n    local p1 = <|luaFibonacci((|n-1|))|>\n    local p2 = <|luaFibonacci((|n-2|))|>\n    <|return (|p1 + p2|)|>\n|}\nprint(luaFibonacci(4));",
+      "expected": "3"
     }
   ]
 }

@@ -7,10 +7,64 @@
       "expected": "Finished successfully\n"
     },
     {
-      "type": "succeed",
+      "type": "fail",
       "title": "inheritance, B a = A(), non-parent",
       "dit": "class B {||}\nclass A {|\n    func Make() {||}\n|}\nB a = A();",
       "expected": "Line: 5 Col: 5 (tests/fail.dit)\nB a = A();\n    ^\n\nTypeMismatchError: Cannot assign Inst<A> to Inst<B>\n'A' is not a subclass of 'B'"
+    },
+    {
+      "type": "succeed",
+      "title": "inheritance, B a = getB(), parent",
+      "dit": "class B {||}\nclass A {|\n    Parents = [B];\n    func Make() {||}\n|}\nsig B func getB() {|\n    return A();\n|}\nB a = getB();",
+      "expected": "Finished successfully\n"
+    },
+    {
+      "type": "fail",
+      "title": "inheritance, B a = getB(), non-parent",
+      "dit": "class B {||}\nclass A {|\n    func Make() {||}\n|}\nsig B func getB() {|\n    return A();\n|}\nB a = getB();",
+      "expected": "Line: 6 Col: 5 (tests/fail.dit)\n    return A();\n    ^\n\nTypeMismatchError: Expected 'Inst<B>' for return, got 'Inst<A>'\n'A' is not a subclass of 'B'\n\tat getB (tests/fail.dit):8:7"
+    },
+    {
+      "type": "succeed",
+      "title": "inheritance, A a = A(), parent",
+      "dit": "class B {||}\nclass A {|\n    Parents = [B];\n    func Make() {||}\n|}\nA a = A();",
+      "expected": "Finished successfully\n"
+    },
+    {
+      "type": "fail",
+      "title": "inheritance, A a = B(), parent",
+      "dit": "class B {|\n    func Make() {||}\n|}\nclass A {|\n    Parents = [B];\n    func Make() {||}\n|}\nA a = B();",
+      "expected": "Line: 8 Col: 5 (tests/fail.dit)\nA a = B();\n    ^\n\nTypeMismatchError: Cannot assign Inst<B> to Inst<A>\n'B' is not a subclass of 'A'"
+    },
+    {
+      "type": "succeed",
+      "title": "inheritance, listOf B, parent",
+      "dit": "class B {||}\nclass A {|\n    Parents = [B];\n    func Make() {||}\n|}\nlistOf B bList = [A()];",
+      "expected": "Finished successfully\n"
+    },
+    {
+      "type": "fail",
+      "title": "inheritance, listOf B, non-parent",
+      "dit": "class B {||}\nclass A {|\n    func Make() {||}\n|}\nlistOf B bList = [A()];",
+      "expected": "Line: 5 Col: 16 (tests/fail.dit)\nlistOf B bList = [A()];\n               ^\n\nTypeMismatchError: List of type 'Inst<B>' contained 'Inst<A>'\n'A' is not a subclass of 'B'"
+    },
+    {
+      "type": "succeed",
+      "title": "inheritance, func arg, parent",
+      "dit": "class B {||}\nclass A {|\n    Parents = [B];\n    func Make() {||}\n|}\nfunc doThing(B b) {||}\ndoThing(A());",
+      "expected": "Finished successfully\n"
+    },
+    {
+      "type": "fail",
+      "title": "inheritance, func arg, non-parent",
+      "dit": "class B {||}\nclass A {|\n    func Make() {||}\n|}\nfunc doThing(B b) {||}\ndoThing(A());",
+      "expected": "Line: 6 Col: 9 (tests/fail.dit)\ndoThing(A());\n        ^\n\nTypeMismatchError: doThing() expected 'Inst<B>', got 'Inst<A>'\n'A' is not a subclass of 'B'"
+    },
+    {
+      "type": "fail",
+      "title": "inheritance, complete name conflicts",
+      "dit": "class Z {|\n    func Make() {|\n        this.value = 'z';\n    |}\n|}\n\nclass I {|\n    Parents = [Z];\n    func Make() {|\n        this.value = 'i';\n        this.Z.Make();\n        this.Z.value = 'zi';\n    |}\n|}\n\nclass H {|\n    Parents = [Z];\n    func Make() {|\n        this.value = 'h';\n        this.Z.Make();\n        this.Z.value = 'zh';\n    |}\n|}\n\nclass G {|\n    Parents = [Z];\n    func Make() {|\n        this.value = 'g';\n        this.Z.Make();\n        this.Z.value = 'zg';\n    |}\n|}\n\nclass F {|\n    Parents = [Z];\n    func Make() {|\n        this.value = 'f';\n        this.Z.Make();\n        this.Z.value = 'zf';\n    |}\n|}\n\nclass E {|\n    Parents = [H, I];\n    func Make() {|\n        this.value = 'e';\n        this.H.Make();\n        this.I.Make();\n    |}\n|}\n\nclass D {|\n    Parents = [F, G];\n    func Make() {|\n        this.value = 'd';\n        this.F.Make();\n        this.G.Make();\n    |}\n|}\n\nclass C {|\n    Parents = [E];\n    func Make() {|\n        this.value = 'c';\n        this.E.Make();  \n    |}\n|}\n\nclass B {|\n    Parents = [D];\n    func Make() {|\n        this.value = 'b';\n        this.D.Make();\n    |}\n|}\n\nclass A {|\n    Parents = [B, C];\n    func Make() {|\n        this.value = 'a';\n        this.B.Make();\n        this.C.Make();\n    |}\n|}\n\nA a = A();\n\n\nprint(a.value); // prints 'a'\n\nprint(a.B.value); // prints 'b'\nprint(a.D.value); // prints 'd'\nprint(a.F.value); // prints 'f'\nprint(a.G.value); // prints 'g'\n\nprint(a.C.value); // prints 'c'\nprint(a.E.value); // prints 'e'\nprint(a.H.value); // prints 'h'\nprint(a.I.value); // prints 'i'\n\nprint(a.Z.value); // prints 'zf'\nprint(a.G.Z.value); // prints 'zg'\nprint(a.H.Z.value); // prints 'zh'\nprint(a.I.Z.value); // prints 'zi'",
+      "expected": "a\nb\nd\nf\ng\nc\ne\nh\ni\nzf\nzg\nzh\nzi"
     }
   ]
 }

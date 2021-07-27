@@ -130,11 +130,7 @@ def _listof(inter: InterpretContext) -> None:
     if inter.next_tok.grammar in PRIMITIVES:
         _primitive(inter)
     elif inter.next_tok.grammar in DOTABLES:
-        type_ = _expression_dispatch(inter)
-        if isinstance(type_, d_Class):
-            inter.dec.type_ = type_
-        else:
-            raise NotImplementedError
+        _expression_dispatch(inter)
 
     else:
         raise d_SyntaxError("Expected type for listOf declaration")
@@ -795,7 +791,9 @@ def _job_loop(job: GuestDaemonJob) -> None:
         if res.type_ == JobType.FINISH_FUNC:
             break
         elif res.type_ == JobType.EXE_DITLANG:
-            mock_func = func.get_mock(res.result)  # type: ignore
+            if not isinstance(res.result, str):
+                raise NotImplementedError
+            mock_func = job.func.get_mock(res.result)
             value = interpret(mock_func)
             job.type_ = JobType.DITLANG_CALLBACK
             if not value:
