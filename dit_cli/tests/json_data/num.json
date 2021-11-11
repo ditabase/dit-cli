@@ -1,0 +1,124 @@
+{
+  "dits": [
+    {
+      "type": "succeed",
+      "title": "num, 0",
+      "dit": "Num n = 0;",
+      "expected": "Finished successfully\n"
+    },
+    {
+      "type": "succeed",
+      "title": "num, 1",
+      "dit": "Num n = 1;",
+      "expected": "Finished successfully\n"
+    },
+    {
+      "type": "succeed",
+      "title": "num, 10",
+      "dit": "Num n = 10;",
+      "expected": "Finished successfully\n"
+    },
+    {
+      "type": "succeed",
+      "title": "num, -1",
+      "dit": "Num n = -1;",
+      "expected": "Finished successfully\n"
+    },
+    {
+      "type": "succeed",
+      "title": "num, +1",
+      "dit": "Num n = +1;",
+      "expected": "Finished successfully\n"
+    },
+    {
+      "type": "succeed",
+      "title": "num, 0.0",
+      "dit": "Num n = 0.0;",
+      "expected": "Finished successfully\n"
+    },
+    {
+      "type": "succeed",
+      "title": "num, 1e1",
+      "dit": "Num n = 1e1;",
+      "expected": "Finished successfully\n"
+    },
+    {
+      "type": "succeed",
+      "title": "num, 1E1",
+      "dit": "Num n = 1E1;",
+      "expected": "Finished successfully\n"
+    },
+    {
+      "type": "succeed",
+      "title": "num, 1e-1",
+      "dit": "Num n = 1e-1;",
+      "expected": "Finished successfully\n"
+    },
+    {
+      "type": "succeed",
+      "title": "num, 1e+1",
+      "dit": "Num n = 1e+1;",
+      "expected": "Finished successfully\n"
+    },
+    {
+      "type": "succeed",
+      "title": "num, -1e+1",
+      "dit": "Num n = -1e+1;",
+      "expected": "Finished successfully\n"
+    },
+    {
+      "type": "succeed",
+      "title": "num, +1e-1",
+      "dit": "Num n = +1e-1;",
+      "expected": "Finished successfully\n"
+    },
+    {
+      "type": "succeed",
+      "title": "print, -1e+10",
+      "dit": "print(-1e+10);",
+      "expected": "-10000000000.0\n"
+    },
+    {
+      "type": "succeed",
+      "title": "print, num var",
+      "dit": "Num n = 350; print(n);",
+      "expected": "350\n"
+    },
+    {
+      "type": "succeed",
+      "title": "num, thing",
+      "dit": "n = 1;",
+      "expected": "Finished successfully\n"
+    },
+    {
+      "type": "fail",
+      "title": "minus, no digit",
+      "dit": "Num n = -;",
+      "expected": "Line: 1 Col: 10 (tests/fail.dit)\nNum n = -;\n         ^\n\nSyntaxError: Expected digit.\nOther arithmetic ops are not yet supported."
+    },
+    {
+      "type": "fail",
+      "title": "minus, whitespace then digit",
+      "dit": "Num n = - 5;",
+      "expected": "Line: 1 Col: 10 (tests/fail.dit)\nNum n = - 5;\n         ^\n\nSyntaxError: Expected digit.\nOther arithmetic ops are not yet supported."
+    },
+    {
+      "type": "fail",
+      "title": "plus, no digit",
+      "dit": "Num n = +;",
+      "expected": "Line: 1 Col: 10 (tests/fail.dit)\nNum n = +;\n         ^\n\nSyntaxError: Expected digit.\nOther arithmetic ops are not yet supported."
+    },
+    {
+      "type": "fail",
+      "title": "plus, whitespace then digit",
+      "dit": "Num n = + 5;",
+      "expected": "Line: 1 Col: 10 (tests/fail.dit)\nNum n = + 5;\n         ^\n\nSyntaxError: Expected digit.\nOther arithmetic ops are not yet supported."
+    },
+    {
+      "type": "fail",
+      "title": "num, leading zero",
+      "dit": "Num n = 045;",
+      "expected": "Line: 1 Col: 9 (tests/fail.dit)\nNum n = 045;\n        ^\n\nSyntaxError: Leading zeros are not allowed"
+    }
+  ]
+}

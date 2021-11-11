@@ -21,7 +21,7 @@ def main():
     if sys.stdin.isatty() and args.filepath.name == "<stdin>":
         parser.error("must provide one of filepath or stdin pipe")
     code = args.filepath.read()
-    start_daemon()
+    # start_daemon()
     run_string(code, args.filepath.name)
 
 

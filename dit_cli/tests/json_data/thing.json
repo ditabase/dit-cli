@@ -1,0 +1,34 @@
+{
+  "dits": [
+    {
+      "type": "fail",
+      "title": "Thing, bare primitive",
+      "dit": "Thing",
+      "expected": "Line: 1 Col: 5 (tests/fail.dit)\nThing\n    ^\n\nSyntaxError: Expected a new name to follow type"
+    },
+    {
+      "type": "fail",
+      "title": "Thing, duplicate",
+      "dit": "Thing test;\nThing test;",
+      "expected": "Line: 2 Col: 7 (tests/fail.dit)\nThing test;\n      ^\n\nSyntaxError: 'test' has already been declared"
+    },
+    {
+      "type": "succeed",
+      "title": "Thing, value assignment",
+      "dit": "Thing test;\ntest = true;\ntest = 1;\ntest = null;\ntest = 'cat';\ntest = ['dog', class {||}];\ntest = class {||};\nclass A {|func Make(Str someParam) {||}|}\ntest = A('banana');\ntest = lang {||};\ntest = import 'tests/import.dit';\ntest = func (){||};",
+      "expected": "Finished successfully\n"
+    },
+    {
+      "type": "succeed",
+      "title": "Thing, var assignment",
+      "dit": "Thing thg;\nStr test1 = 'cat';\nlistOf Class test2 = [class {||}, class {||}];\nClass test3 = class {||};\nDit test4 = import 'tests/import.dit';\nFunc test5 = func (){||};\nclass A {|func Make(Str someParam) {||}|}\nInst test6 = A('cat');\nthg = test1;\nthg = test2;\nthg = test3;\nthg = test4;\nthg = test5;\nthg = test6;",
+      "expected": "Finished successfully\n"
+    },
+    {
+      "type": "succeed",
+      "title": "Thing, no primitive assignment",
+      "dit": "someVar = 'cat';\notherVar = 'dog';\nclass A {|\n    classVar = 'bird';\n    classVar2 = ['maybe', 'a', 'list'];\n    func Make(Str test) {|\n        tempVar = 'moon';\n        this.instVar = test;\n        this.instVar2 = 'keyboard';\n    |}\n|}\na = A('bottle');",
+      "expected": "Finished successfully\n"
+    }
+  ]
+}

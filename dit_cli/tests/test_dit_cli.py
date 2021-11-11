@@ -8,7 +8,10 @@ from dit_cli.cli import run_string
 from dit_cli.lang_daemon import start_daemon
 
 os.environ["NO_COLOR"] = "1"
-PATH = "tests/json_data"
+if "PYODIDE" in os.environ:
+    PATH = "/lib/python3.9/site-packages/dit_cli/tests/json_data"
+else:
+    PATH = "tests/json_data"
 
 
 def load_from_json():
@@ -20,7 +23,8 @@ def load_from_json():
 
 
 def pytest_generate_tests(metafunc: Metafunc):
-    start_daemon()
+    # start_daemon()
+    print("cwd: " + str(os.listdir()))
     for fixture in metafunc.fixturenames:
         if fixture == "dit_json":
             test_dicts = list(load_from_json())
@@ -37,6 +41,7 @@ def pytest_generate_tests(metafunc: Metafunc):
 def test_dits(dit_json, capfd):
     if "long" in dit_json and not pytest.all_val:  # type: ignore
         pytest.skip("Long test")
+    # res = driver.execute_async_script(f'run_string({dit_json["dit"]}, "tests/fail.dit"')
     run_string(dit_json["dit"], "tests/fail.dit")
     output, err = capfd.readouterr()
 

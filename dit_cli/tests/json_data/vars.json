@@ -1,0 +1,76 @@
+{
+  "dits": [
+    {
+      "type": "fail",
+      "title": "var, Bare primitive",
+      "dit": "Str",
+      "expected": "Line: 1 Col: 3 (tests/fail.dit)\nStr\n  ^\n\nSyntaxError: Expected a new name to follow type"
+    },
+    {
+      "type": "fail",
+      "title": "equals, EOF",
+      "dit": "Str test =",
+      "expected": "Line: 1 Col: 10 (tests/fail.dit)\nStr test =\n         ^\n\nEndOfFileError: Unexpected end of file"
+    },
+    {
+      "type": "fail",
+      "title": "equals, named func",
+      "dit": "Func test = func other() {||}",
+      "expected": "Line: 1 Col: 11 (tests/fail.dit)\nFunc test = func other() {||}\n          ^\n\nSyntaxError: A named declaration cannot be used for assignment"
+    },
+    {
+      "type": "fail",
+      "title": "equals, named import",
+      "dit": "Dit test = import other from 'tests/import.dit';",
+      "expected": "Line: 1 Col: 10 (tests/fail.dit)\nDit test = import other from 'tests/import.dit';\n         ^\n\nSyntaxError: A named declaration cannot be used for assignment"
+    },
+    {
+      "type": "fail",
+      "title": "equals, named class",
+      "dit": "Class test = class other {||}",
+      "expected": "Line: 1 Col: 12 (tests/fail.dit)\nClass test = class other {||}\n           ^\n\nSyntaxError: A named declaration cannot be used for assignment"
+    },
+    {
+      "type": "succeed",
+      "title": "equals, undeclared var",
+      "dit": "test = 'Hello';",
+      "expected": "Finished successfully\n"
+    },
+    {
+      "type": "succeed",
+      "title": "Str declare and assign",
+      "dit": "Str test = 'cat';",
+      "expected": "Finished successfully\n"
+    },
+    {
+      "type": "succeed",
+      "title": "Str declare, then assign",
+      "dit": "Str test;\ntest = 'cat';",
+      "expected": "Finished successfully\n"
+    },
+    {
+      "type": "succeed",
+      "title": "Str assignment to existing string",
+      "dit": "Str test = 'cat';Str test2 = test;",
+      "expected": "Finished successfully\n"
+    },
+    {
+      "type": "succeed",
+      "title": "equals, anon func",
+      "dit": "Func test = func () {||};",
+      "expected": "Finished successfully\n"
+    },
+    {
+      "type": "succeed",
+      "title": "equals, anon import",
+      "dit": "Dit test = import 'tests/import.dit';",
+      "expected": "Finished successfully\n"
+    },
+    {
+      "type": "succeed",
+      "title": "equals, anon class",
+      "dit": "Class test = class {||};",
+      "expected": "Finished successfully\n"
+    }
+  ]
+}

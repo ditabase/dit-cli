@@ -1,0 +1,22 @@
+{
+  "dits": [
+    {
+      "type": "succeed",
+      "title": "null, value assignment",
+      "dit": "Bool test1 = null;\nNum test2 = null;\nStr test3 = null;\nlistOf Str test4 = null;\nJSON test5 = null;\nInst test6 = null;\nClass test7 = null;\nLang test8 = null;\nDit test9 = null;\nFunc test10 = null;\n",
+      "expected": "Finished successfully\n"
+    },
+    {
+      "type": "succeed",
+      "title": "null, var assignment",
+      "dit": "Thing nullVar = null;\nBool test1 = nullVar;\nNum test2 = nullVar;\nStr test3 = nullVar;\nlistOf Str test4 = nullVar;\nJSON test5 = nullVar;\nInst test6 = nullVar;\nClass test7 = nullVar;\nLang test8 = nullVar;\nDit test9 = nullVar;\nFunc test10 = nullVar;\n",
+      "expected": "Finished successfully\n"
+    },
+    {
+      "type": "succeed",
+      "title": "null, unassigned assignment",
+      "dit": "Thing nullVar;\nBool test1 = nullVar;\nNum test2 = nullVar;\nStr test3 = nullVar;\nlistOf Str test4 = nullVar;\nJSON test5 = nullVar;\nInst test6 = nullVar;\nClass test7 = nullVar;\nLang test8 = nullVar;\nDit test9 = nullVar;\nFunc test10 = nullVar;\n",
+      "expected": "Finished successfully\n"
+    }
+  ]
+}

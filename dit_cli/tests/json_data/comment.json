@@ -1,0 +1,40 @@
+{
+  "dits": [
+    {
+      "type": "fail",
+      "title": "comment, single forward slash",
+      "dit": "/",
+      "expected": "Line: 1 Col: 1 (tests/fail.dit)\n/\n^\n\nEndOfFileError: Unexpected end of file"
+    },
+    {
+      "type": "fail",
+      "title": "comment, single multiline open",
+      "dit": "/*",
+      "expected": "Line: 1 Col: 2 (tests/fail.dit)\n/*\n ^\n\nEndOfFileError: Unexpected end of file"
+    },
+    {
+      "type": "succeed",
+      "title": "comment, singleline after declare",
+      "dit": "Str test;//This is the whole dit",
+      "expected": "Finished successfully\n"
+    },
+    {
+      "type": "succeed",
+      "title": "comment, multiline on multiple lines",
+      "dit": "/*\nThis is \nthe whole dit\n*/",
+      "expected": "Finished successfully\n"
+    },
+    {
+      "type": "succeed",
+      "title": "comment, multiline, then EOF",
+      "dit": "/* Normal */",
+      "expected": "Finished successfully\n"
+    },
+    {
+      "type": "succeed",
+      "title": "comment, singleline, then EOF",
+      "dit": "// Normal",
+      "expected": "Finished successfully\n"
+    }
+  ]
+}

@@ -1,0 +1,46 @@
+{
+  "dits": [
+    {
+      "type": "fail",
+      "title": "Missing semicolon after implicit thing declare",
+      "dit": "test = 'cat'",
+      "expected": "Line: 1 Col: 13 (tests/fail.dit)\ntest = 'cat'\n            ^\n\nSyntaxError: Expected ';'"
+    },
+    {
+      "type": "fail",
+      "title": "Missing semicolon after Str declare",
+      "dit": "Str test",
+      "expected": "Line: 1 Col: 9 (tests/fail.dit)\nStr test\n        ^\n\nSyntaxError: Expected ';'"
+    },
+    {
+      "type": "fail",
+      "title": "Missing semicolon after Str declare and assignment",
+      "dit": "Str test = 'cat'",
+      "expected": "Line: 1 Col: 17 (tests/fail.dit)\nStr test = 'cat'\n                ^\n\nSyntaxError: Expected ';'"
+    },
+    {
+      "type": "fail",
+      "title": "Missing semicolon after list assignment",
+      "dit": "listOf Str test = ['Hello', 'world']",
+      "expected": "Line: 1 Col: 37 (tests/fail.dit)\nlistOf Str test = ['Hello', 'world']\n                                    ^\n\nSyntaxError: Expected ';'"
+    },
+    {
+      "type": "fail",
+      "title": "Missing semicolon after anon import",
+      "dit": "import 'tests/empty.dit'",
+      "expected": "Line: 1 Col: 25 (tests/fail.dit)\nimport 'tests/empty.dit'\n                        ^\n\nSyntaxError: Expected ';'"
+    },
+    {
+      "type": "fail",
+      "title": "Missing semicolon after full import",
+      "dit": "import dit from 'tests/empty.dit'",
+      "expected": "Line: 1 Col: 34 (tests/fail.dit)\nimport dit from 'tests/empty.dit'\n                                 ^\n\nSyntaxError: Expected ';'"
+    },
+    {
+      "type": "fail",
+      "title": "Missing semicolon after anon class",
+      "dit": "Class A = class {||}",
+      "expected": "Line: 1 Col: 21 (tests/fail.dit)\nClass A = class {||}\n                    ^\n\nSyntaxError: Expected ';'"
+    }
+  ]
+}

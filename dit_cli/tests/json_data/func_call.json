@@ -1,0 +1,58 @@
+{
+  "dits": [
+    {
+      "type": "fail",
+      "title": "func call, return type, no return",
+      "dit": "sig Str func test() {||}\ntest();",
+      "expected": "Line: 2 Col: 1 (tests/fail.dit)\ntest();\n^\n\nSyntaxError: test() expected a return"
+    },
+    {
+      "type": "fail",
+      "title": "func call, Ditlang, 2 parameters, 1 argument",
+      "dit": "func test(Str a, Str b) {|\nStr testA = a;\nStr testB = b;\n|}\ntest('cat');",
+      "expected": "Line: 5 Col: 12 (tests/fail.dit)\ntest('cat');\n           ^\n\nSyntaxError: test() missing 1 required arguments"
+    },
+    {
+      "type": "fail",
+      "title": "func call, Ditlang, 2 parameters, 3 arguments",
+      "dit": "func test(Str a, Str b) {|\nStr testA = a;\nStr testB = b;\n|}\ntest('cat', 'dog', 'bird');",
+      "expected": "Line: 5 Col: 27 (tests/fail.dit)\ntest('cat', 'dog', 'bird');\n                          ^\n\nSyntaxError: test() given 1 too many arguments"
+    },
+    {
+      "type": "fail",
+      "title": "func call, Ditlang, missing return statement",
+      "dit": "sig Str func test() {||}\ntest();",
+      "expected": "Line: 2 Col: 1 (tests/fail.dit)\ntest();\n^\n\nSyntaxError: test() expected a return"
+    },
+    {
+      "type": "fail",
+      "title": "func call, Ditlang, unexpected return",
+      "dit": "func ditReturn(){|\n    return 'cat';\n|}\nditReturn();",
+      "expected": "Line: 2 Col: 5 (tests/fail.dit)\n    return 'cat';\n    ^\n\nTypeMismatchError: Expected 'void' for return, got 'Str'\n\tat ditReturn (tests/fail.dit):4:1"
+    },
+    {
+      "type": "succeed",
+      "title": "func call, Ditlang, 2 parameters",
+      "dit": "func test(Str a, Str b) {|\nStr testA = a;\nStr testB = b;\n|}\ntest('cat', 'dog');",
+      "expected": "Finished successfully\n"
+    },
+    {
+      "type": "succeed",
+      "title": "func call, simple string return",
+      "dit": "sig Str func test1() {|\n    return 'cat';\n|}\nStr test2 = test1();",
+      "expected": "Finished successfully\n"
+    },
+    {
+      "type": "succeed",
+      "title": "func call, Ditlang, dotted class return",
+      "dit": "sig Class func test() {|\nreturn class {|Str output = 'cat';|};\n|}\nStr test2 = test().output;",
+      "expected": "Finished successfully\n"
+    },
+    {
+      "type": "succeed",
+      "title": "func call, multiple calls, 1 var",
+      "dit": "Str test = 'cat';\nsig Str func doNothing(Str dumb) {|\n    return dumb;\n|}\ntest = doNothing(test);\nprint(test);\ntest = doNothing(test);\nprint(test);",
+      "expected": "cat\ncat\n"
+    }
+  ]
+}

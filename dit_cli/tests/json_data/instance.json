@@ -1,0 +1,46 @@
+{
+  "dits": [
+    {
+      "type": "fail",
+      "title": "instance, no Make",
+      "dit": "class A {||}\nA a = A();",
+      "expected": "Line: 2 Col: 8 (tests/fail.dit)\nA a = A();\n       ^\n\nSyntaxError: Class 'A' does not define a Make"
+    },
+    {
+      "type": "succeed",
+      "title": "instance, simple instantiation",
+      "dit": "class A {|\n    func Make(){||}\n|}\nA a = A();",
+      "expected": "Finished successfully\n"
+    },
+    {
+      "type": "succeed",
+      "title": "instance, assignment to this",
+      "dit": "class A {|\n    func Make(){|\n        Str this.value = 'cat';\n    |}\n|}\nA a = A();",
+      "expected": "Finished successfully\n"
+    },
+    {
+      "type": "succeed",
+      "title": "instance, printing instance variable",
+      "dit": "class A {|\n    func Make(){|\n        Str this.value = 'cat';\n    |}\n|}\nA a = A();\nprint(a.value);",
+      "expected": "cat\n"
+    },
+    {
+      "type": "succeed",
+      "title": "instance, whole shebang",
+      "dit": "class A {|\n    func Make(Str custom) {|\n        Str this.hello = 'hello world!';\n        Str this.otherValue = custom;\n    |}\n\n    func out(){|\n        print(this.hello);\n        print(this.otherValue);\n        print(this.yes());\n    |}\n\n    sig Str func yes(){|\n        return 'Oh yes, it certainly is!';\n    |}\n|}\n\nA a = A(\"And isn't it beautiful?\");\na.out();\n",
+      "expected": "hello world!\nAnd isn't it beautiful?\nOh yes, it certainly is!\n"
+    },
+    {
+      "type": "succeed",
+      "title": "instance, used as argument",
+      "dit": "class A {|\n    func Make() {|\n        Str this.value = 'cat';\n    |}\n|}\nfunc test(A a) {|\n    print(a.value);\n|}\ntest(A());",
+      "expected": "cat\n"
+    },
+    {
+      "type": "succeed",
+      "title": "instance, used for return",
+      "dit": "class A {|\n    func Make() {|\n        Str this.value = 'cat';\n    |}\n|}\nsig A func test() {|\n    return A();\n|}\nprint(test().value);",
+      "expected": "cat\n"
+    }
+  ]
+}

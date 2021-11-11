@@ -1,0 +1,154 @@
+{
+  "dits": [
+    {
+      "type": "fail",
+      "title": "import, bare import",
+      "dit": "import",
+      "expected": "Line: 1 Col: 6 (tests/fail.dit)\nimport\n     ^\n\nSyntaxError: Expected a name or filepath string for import"
+    },
+    {
+      "type": "fail",
+      "title": "import, nonsense after import",
+      "dit": "import String",
+      "expected": "Line: 1 Col: 13 (tests/fail.dit)\nimport String\n            ^\n\nSyntaxError: Expected 'from'"
+    },
+    {
+      "type": "fail",
+      "title": "import, only name",
+      "dit": "import dit",
+      "expected": "Line: 1 Col: 10 (tests/fail.dit)\nimport dit\n         ^\n\nSyntaxError: Expected 'from'"
+    },
+    {
+      "type": "fail",
+      "title": "import, name from, but no path",
+      "dit": "import dit from",
+      "expected": "Line: 1 Col: 15 (tests/fail.dit)\nimport dit from\n              ^\n\nSyntaxError: Expected a filepath string for import"
+    },
+    {
+      "type": "fail",
+      "title": "import, null string",
+      "dit": "Str test = null;\nimport dit from test;",
+      "expected": "Line: 2 Col: 17 (tests/fail.dit)\nimport dit from test;\n                ^\n\nSyntaxError: Cannot import from null"
+    },
+    {
+      "type": "fail",
+      "title": "import, filepath is a list",
+      "dit": "import dit from ['troll'];",
+      "expected": "Line: 1 Col: 17 (tests/fail.dit)\nimport dit from ['troll'];\n                ^\n\nSyntaxError: Expected a filepath string for import"
+    },
+    {
+      "type": "fail",
+      "title": "import, filepath is a Class",
+      "dit": "import dit from class {|Str test = 'nope';|};",
+      "expected": "Line: 1 Col: 17 (tests/fail.dit)\nimport dit from class {|Str test = 'nope';|};\n                ^\n\nSyntaxError: Expected a filepath string for import"
+    },
+    {
+      "type": "fail",
+      "title": "import, filepath is a Class",
+      "dit": "import dit from class {|Str test = 'nope';|};",
+      "expected": "Line: 1 Col: 17 (tests/fail.dit)\nimport dit from class {|Str test = 'nope';|};\n                ^\n\nSyntaxError: Expected a filepath string for import"
+    },
+    {
+      "type": "fail",
+      "title": "import, dotted VALUE_CLASS, not a String",
+      "dit": "class storage {|Func path = func(){||};|}\nimport dit from storage.path;",
+      "expected": "Line: 2 Col: 29 (tests/fail.dit)\nimport dit from storage.path;\n                            ^\n\nSyntaxError: Expected str value, not Function"
+    },
+    {
+      "type": "fail",
+      "title": "import, local file DNE",
+      "dit": "import 'tests/doesNotExist.dit';",
+      "expected": "Line: 1 Col: 32 (tests/fail.dit)\nimport 'tests/doesNotExist.dit';\n                               ^\n\nFileError: Import failed, file not found"
+    },
+    {
+      "type": "fail",
+      "title": "import, local file no permission",
+      "dit": "import '/root/noPermission.dit';",
+      "expected": "Line: 1 Col: 32 (tests/fail.dit)\nimport '/root/noPermission.dit';\n                               ^\n\nFileError: Import failed, permission denied"
+    },
+    {
+      "type": "fail",
+      "title": "import, remote file 404 error",
+      "dit": "import 'https://raw.githubusercontent.com/ditabase/dits/master/dits/DNE.dit';",
+      "expected": "Line: 1 Col: 77 (tests/fail.dit)\nimport 'https://raw.githubusercontent.com/ditabase/dits/master/dits/DNE.dit';\n                                                                            ^\n\nFileError: Import failed, HTTP Error 404: Not Found"
+    },
+    {
+      "type": "fail",
+      "title": "import, failure in remote dit",
+      "dit": "import 'https://raw.githubusercontent.com/ditabase/dits/master/dits/Fail.dit';",
+      "expected": "Line: 1 Col: 31 (https://raw.githubusercontent.com/ditabase/dits/master/dits/Fail.dit)\nStr test = 'Missing Semicolon'\n                              ^\n\nSyntaxError: Expected ';'\n\tat import (https://raw.githubusercontent.com/ditabase/dits/master/dits/Fail.dit):1:1"
+    },
+    {
+      "type": "fail",
+      "title": "import, missing new name in monkey patch",
+      "dit": "import dit from 'tests/import.dit';\nStr dit = 'dog';",
+      "expected": "Line: 2 Col: 9 (tests/fail.dit)\nStr dit = 'dog';\n        ^\n\nSyntaxError: 'dit' has already been declared"
+    },
+    {
+      "type": "fail",
+      "title": "import, name has already been declared",
+      "dit": "Str test = 'cat';\nimport test from 'tests/import.dit';",
+      "expected": "Line: 2 Col: 8 (tests/fail.dit)\nimport test from 'tests/import.dit';\n       ^\n\nSyntaxError: 'test' has already been declared"
+    },
+    {
+      "type": "succeed",
+      "title": "import, local anon",
+      "dit": "Dit dit = import 'tests/import.dit';",
+      "expected": "Finished successfully\n"
+    },
+    {
+      "type": "succeed",
+      "title": "import, local full",
+      "dit": "import dit from 'tests/import.dit';",
+      "expected": "Finished successfully\n"
+    },
+    {
+      "type": "succeed",
+      "title": "import, github anon",
+      "dit": "Dit dit = import 'https://raw.githubusercontent.com/ditabase/dits/master/dits/Test.dit';",
+      "expected": "Finished successfully\n"
+    },
+    {
+      "type": "succeed",
+      "title": "import, github full",
+      "dit": "import dit from 'https://raw.githubusercontent.com/ditabase/dits/master/dits/Test.dit';",
+      "expected": "Finished successfully\n"
+    },
+    {
+      "type": "succeed",
+      "title": "import, VALUE_STRING for filepath",
+      "dit": "Str path = 'tests/import.dit';\nimport dit from path;",
+      "expected": "Finished successfully\n"
+    },
+    {
+      "type": "succeed",
+      "title": "import, dotted VALUE_CLASS for filepath",
+      "dit": "class storage {|Str path = 'tests/import.dit';|}\nimport dit from storage.path;",
+      "expected": "Finished successfully\n"
+    },
+    {
+      "type": "succeed",
+      "title": "import, VALUE_IMPORT referenced in assignment",
+      "dit": "import dit from 'tests/import.dit';\nStr test = dit.value;",
+      "expected": "Finished successfully\n"
+    },
+    {
+      "type": "succeed",
+      "title": "import, VALUE_IMPORT monkey patched",
+      "dit": "import dit from 'tests/import.dit';\nStr dit.patch = 'dog';",
+      "expected": "Finished successfully\n"
+    },
+    {
+      "type": "succeed",
+      "title": "import, anon import referenced in string assignment",
+      "dit": "Str test = import 'tests/import.dit'.value;",
+      "expected": "Finished successfully\n"
+    },
+    {
+      "type": "succeed",
+      "title": "import, anon import referenced in list assignment",
+      "dit": "listOf Str test = [import 'tests/import.dit'.value, import 'tests/import.dit'.value];",
+      "expected": "Finished successfully\n"
+    }
+  ]
+}

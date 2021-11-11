@@ -1,0 +1,40 @@
+{
+  "dits": [
+    {
+      "type": "succeed",
+      "title": "bool, true",
+      "dit": "Bool b = true;",
+      "expected": "Finished successfully\n"
+    },
+    {
+      "type": "succeed",
+      "title": "bool, false",
+      "dit": "Bool b = false;",
+      "expected": "Finished successfully\n"
+    },
+    {
+      "type": "succeed",
+      "title": "bool thing",
+      "dit": "b = true;",
+      "expected": "Finished successfully\n"
+    },
+    {
+      "type": "succeed",
+      "title": "print, true",
+      "dit": "print(true);",
+      "expected": "true\n"
+    },
+    {
+      "type": "succeed",
+      "title": "print, false",
+      "dit": "print(false);",
+      "expected": "false\n"
+    },
+    {
+      "type": "succeed",
+      "title": "print, bool var",
+      "dit": "Bool b = true; print(b);",
+      "expected": "true\n"
+    }
+  ]
+}

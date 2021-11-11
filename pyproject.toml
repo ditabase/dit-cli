@@ -20,6 +20,8 @@ pytest = "^5.2"
 pylint = "^2.4.4"
 black = "^19.10b0"
 flake8 = "^3.7.9"
+selenium = "^3.141.0"
+webdriver-manager = "^3.4.2"
 
 [tool.poetry.scripts]
 dit = "dit_cli.cli:main"

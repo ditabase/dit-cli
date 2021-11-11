@@ -1,0 +1,6 @@
+class A {|
+    Str a = 'the letter a';
+    class B {|
+        Str b = 'the letter b';
+    |}
+|}
